@@ -231,7 +231,7 @@ function obtenerButacasVendidas(sala, fechaFuncion, horaFuncion) {
         .filter(v => Number(v.sala) === Number(sala))
         .filter(v => (v.fechaFuncion === undefined && v.horaFuncion === undefined)
             || (v.fechaFuncion === fechaFuncion && v.horaFuncion === horaFuncion))
-        .forEach(v => v.asientos.forEach(id => vendidas.add(id)));
+        .forEach(v => v.asientos.forEach(id => vendidas.add(typeof id === 'object' ? id.id : id)));
     return vendidas;
 }
 
@@ -240,10 +240,38 @@ function obtenerButacasVendidas(sala, fechaFuncion, horaFuncion) {
 function obtenerButacasVendidasTotalPorSala(sala) {
     const ventas = JSON.parse(localStorage.getItem(LS_VENTAS_ASIENTOS)) || [];
     const vendidas = new Set();
-    ventas.filter(v => Number(v.sala) === Number(sala)).forEach(v => v.asientos.forEach(id => vendidas.add(id)));
+    ventas.filter(v => Number(v.sala) === Number(sala)).forEach(v => v.asientos.forEach(id => vendidas.add(typeof id === 'object' ? id.id : id)));
     return vendidas;
 }
 
+<<<<<<< Updated upstream
+=======
+/**
+ * MÓDULO 9: butacas de una sala que están vendidas en al menos una función FUTURA (fecha+hora
+ * aún no pasada). Esta es la que usa Admin > Salas para decidir qué se puede editar: una butaca
+ * comprometida con un ticket futuro nunca se toca; el resto de la sala se edita libre.
+ * Los registros de venta guardados sin fecha/hora (de antes del fix de Módulo 2) se tratan como
+ * bloqueantes siempre, por seguridad (no se puede saber si ya pasaron).
+ */
+function obtenerButacasVendidasFuturasPorSala(sala) {
+    const ventas = JSON.parse(localStorage.getItem(LS_VENTAS_ASIENTOS)) || [];
+    const ahora = new Date();
+    const vendidas = new Set();
+    ventas.filter(v => Number(v.sala) === Number(sala)).forEach(v => {
+        let esFutura = true;
+        if (v.fechaFuncion && v.horaFuncion && typeof resolverFechaISODeEtiqueta === 'function') {
+            const iso = resolverFechaISODeEtiqueta(v.fechaFuncion);
+            if (iso) {
+                const dt = new Date(`${iso}T${v.horaFuncion}:00`);
+                if (!isNaN(dt.getTime())) esFutura = dt.getTime() >= ahora.getTime();
+            }
+        }
+        if (esFutura) v.asientos.forEach(id => vendidas.add(typeof id === 'object' ? id.id : id));
+    });
+    return vendidas;
+}
+
+>>>>>>> Stashed changes
 /* ============================================================================
    FIX — BLOQUEO TEMPORAL REAL DE BUTACAS (Módulo 2 lo declaraba pero nunca lo usaba)
    ------------------------------------------------------------------------

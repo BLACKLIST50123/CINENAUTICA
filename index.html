@@ -42,9 +42,18 @@
             <a href="#" class="text-white hover:text-brand-yellow transition-colors" onclick="intentarSalirDelFlujoDeCompra(() => cambiarVista(vistaActualVisible, 'vista-inicio')); return false;">Inicio</a>
             <a href="#" class="text-white hover:text-brand-yellow transition-colors" onclick="intentarSalirDelFlujoDeCompra(() => abrirVistaPromociones()); return false;">Promociones</a>
             <!-- FASE 3: Dulcería directa -->
+<<<<<<< Updated upstream
             <a href="#" class="text-white hover:text-brand-yellow transition-colors" onclick="intentarSalirDelFlujoDeCompra(() => abrirDulceriaDirecta()); return false;">Dulcería</a>
             <!-- FASE 2: Socio Cinerama -->
             <a href="#" class="text-white hover:text-brand-yellow transition-colors" onclick="intentarSalirDelFlujoDeCompra(() => cambiarVista(vistaActualVisible, 'vista-beneficios')); return false;">Socio Cinerama</a>
+=======
+            <a href="#" class="text-white hover:text-brand-yellow transition-colors"
+                onclick="intentarSalirDelFlujoDeCompra(() => abrirDulceriaDirecta()); return false;">Dulcería</a>
+            <!-- FASE 2: Socio Náutica -->
+            <a href="#" id="link-nav-socio" class="text-brand-yellow font-bold [text-shadow:0_0_10px_rgba(250,204,21,0.6)] hover:[text-shadow:0_0_15px_rgba(250,204,21,0.9)] hover:text-yellow-300 transition-all"
+                onclick="intentarSalirDelFlujoDeCompra(() => cambiarVista(vistaActualVisible, 'vista-beneficios')); return false;">Socio
+                Náutica</a>
+>>>>>>> Stashed changes
             <!-- FASE 4: Ubicación -->
             <a href="#" class="text-white hover:text-brand-yellow transition-colors" onclick="intentarSalirDelFlujoDeCompra(() => abrirVistaUbicacion()); return false;">Ubicación</a>
             <!-- FASE 4: Contacto -->
@@ -108,6 +117,7 @@
             <button onclick="toggleMenuMovil(false)" class="text-gray-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <nav class="flex flex-col p-6 gap-1 font-semibold text-white overflow-y-auto">
+<<<<<<< Updated upstream
             <a href="#" class="py-3 border-b border-white/5 hover:text-brand-yellow transition-colors" onclick="toggleMenuMovil(false); intentarSalirDelFlujoDeCompra(() => cambiarVista(vistaActualVisible, 'vista-inicio')); return false;"><i class="fa-solid fa-house w-6"></i> Inicio</a>
             <a href="#" class="py-3 border-b border-white/5 hover:text-brand-yellow transition-colors" onclick="toggleMenuMovil(false); intentarSalirDelFlujoDeCompra(() => abrirVistaPromociones()); return false;"><i class="fa-solid fa-tags w-6"></i> Promociones</a>
             <a href="#" class="py-3 border-b border-white/5 hover:text-brand-yellow transition-colors" onclick="toggleMenuMovil(false); intentarSalirDelFlujoDeCompra(() => abrirDulceriaDirecta()); return false;"><i class="fa-solid fa-popcorn w-6"></i> Dulcería</a>
@@ -115,6 +125,35 @@
             <a href="#" class="py-3 border-b border-white/5 hover:text-brand-yellow transition-colors" onclick="toggleMenuMovil(false); intentarSalirDelFlujoDeCompra(() => abrirVistaUbicacion()); return false;"><i class="fa-solid fa-location-dot w-6"></i> Ubicación</a>
             <a href="#" class="py-3 border-b border-white/5 hover:text-brand-yellow transition-colors" onclick="toggleMenuMovil(false); intentarSalirDelFlujoDeCompra(() => irAVistaContacto()); return false;"><i class="fa-solid fa-envelope w-6"></i> Contáctenos</a>
             <a href="#" id="link-nav-admin-movil" class="hidden py-3 border-b border-white/5 text-brand-yellow hover:text-white transition-colors" onclick="toggleMenuMovil(false); abrirPanelAdministrador(); return false;"><i class="fa-solid fa-user-shield w-6"></i> Admin</a>
+=======
+            <a href="#" class="py-3 border-b border-white/5 hover:text-brand-yellow transition-colors"
+                onclick="toggleMenuMovil(false); intentarSalirDelFlujoDeCompra(() => cambiarVista(vistaActualVisible, 'vista-inicio')); return false;"><i
+                    class="fa-solid fa-house w-6"></i> Inicio</a>
+            <a href="#" class="py-3 border-b border-white/5 hover:text-brand-yellow transition-colors"
+                onclick="toggleMenuMovil(false); intentarSalirDelFlujoDeCompra(() => abrirVistaPromociones()); return false;"><i
+                    class="fa-solid fa-tags w-6"></i> Promociones</a>
+            <a href="#" class="py-3 border-b border-white/5 hover:text-brand-yellow transition-colors"
+                onclick="toggleMenuMovil(false); intentarSalirDelFlujoDeCompra(() => abrirDulceriaDirecta()); return false;"><i
+                    class="fa-solid fa-popcorn w-6"></i> Dulcería</a>
+            <a href="#" id="link-nav-socio-movil"
+                class="py-3 border-b border-white/5 text-brand-yellow font-bold [text-shadow:0_0_10px_rgba(250,204,21,0.6)] hover:text-yellow-300 transition-all"
+                onclick="toggleMenuMovil(false); intentarSalirDelFlujoDeCompra(() => cambiarVista(vistaActualVisible, 'vista-beneficios')); return false;"><i
+                    class="fa-solid fa-star w-6 text-brand-yellow"></i> Socio Náutica</a>
+            <a href="#" class="py-3 border-b border-white/5 hover:text-brand-yellow transition-colors"
+                onclick="toggleMenuMovil(false); intentarSalirDelFlujoDeCompra(() => abrirVistaUbicacion()); return false;"><i
+                    class="fa-solid fa-location-dot w-6"></i> Ubicación</a>
+            <a href="#" class="py-3 border-b border-white/5 hover:text-brand-yellow transition-colors"
+                onclick="toggleMenuMovil(false); intentarSalirDelFlujoDeCompra(() => irAVistaContacto()); return false;"><i
+                    class="fa-solid fa-envelope w-6"></i> Contáctenos</a>
+            <a href="#" id="link-nav-admin-movil"
+                class="hidden py-3 border-b border-white/5 text-brand-yellow hover:text-white transition-colors"
+                onclick="toggleMenuMovil(false); abrirPanelAdministrador(); return false;"><i
+                    class="fa-solid fa-user-shield w-6"></i> Admin</a>
+            <a href="#" id="link-nav-venta-movil"
+                class="hidden py-3 border-b border-white/5 text-brand-yellow hover:text-white transition-colors"
+                onclick="toggleMenuMovil(false); intentarSalirDelFlujoDeCompra(() => abrirNuevaVentaCounter()); return false;"><i
+                    class="fa-solid fa-cash-register w-6"></i> Nueva Venta</a>
+>>>>>>> Stashed changes
         </nav>
         <div class="mt-auto p-6 border-t border-white/10 flex flex-col gap-3">
             <div id="menu-invitado-movil" class="flex flex-col gap-3">
@@ -1001,11 +1040,257 @@
                         <div class="grid grid-cols-7 gap-1.5 text-center text-[11px] text-gray-500 font-bold uppercase mb-2">
                             <span>Dom</span><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span>
                         </div>
+<<<<<<< Updated upstream
                         <div id="admin-calendario-grid" class="grid grid-cols-7 gap-1.5"></div>
                         <div class="mt-6 flex flex-wrap gap-4 text-xs">
                             <div class="flex items-center gap-2"><div class="w-4 h-4 rounded bg-brand-red"></div><span class="text-gray-400">Feriado</span></div>
                             <div class="flex items-center gap-2"><div class="w-4 h-4 rounded bg-brand-yellow"></div><span class="text-gray-400">Día no laborable</span></div>
                             <div class="flex items-center gap-2"><div class="w-4 h-4 rounded border border-white/20"></div><span class="text-gray-400">Normal</span></div>
+=======
+
+                        <button onclick="descargarPDF('comprobante-imprimible', 'Comprobante_Náutica.pdf')"
+                            class="mt-6 bg-gray-700 hover:bg-gray-600 text-white py-3 px-6 rounded-full font-bold shadow-lg transition-colors flex items-center gap-2 w-full justify-center">
+                            <i class="fa-solid fa-file-invoice"></i> Descargar Comprobante
+                        </button>
+                    </div>
+                </div>
+
+                <button onclick="location.reload()"
+                    class="mt-12 text-brand-yellow hover:text-white font-bold transition-colors underline">Volver al
+                    Inicio</button>
+            </div>
+        </div>
+
+        <!-- ============================================================
+         FASE 1: VISTA "MIS COMPRAS" (Historial)
+         ============================================================ -->
+        <div id="vista-historial"
+            class="hidden w-full bg-dark-900 min-h-screen pb-32 opacity-0 transition-opacity duration-300 absolute top-0 left-0 z-30 pt-24">
+            <div class="max-w-[1200px] mx-auto px-6 md:px-12">
+                <button onclick="cambiarVista('vista-historial', 'vista-inicio')"
+                    class="text-white/60 hover:text-white mb-6 flex items-center gap-2 transition-colors">
+                    <i class="fa-solid fa-arrow-left"></i> Volver al Inicio
+                </button>
+                <div class="flex items-center gap-3 mb-10">
+                    <i class="fa-solid fa-receipt text-3xl text-brand-yellow"></i>
+                    <div>
+                        <h2 class="text-3xl md:text-4xl font-bold text-white">Mis Compras</h2>
+                        <div class="h-1 w-20 bg-brand-red rounded-full mt-2"></div>
+                    </div>
+                </div>
+
+                <div id="grid-historial-compras" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
+                    <!-- Tickets inyectados vía JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+         FASE 2: VISTA "SOCIO NAUTICA" (Beneficios)
+         ============================================================ -->
+        <div id="vista-beneficios"
+            class="hidden w-full bg-dark-900 min-h-screen pb-32 opacity-0 transition-opacity duration-300 absolute top-0 left-0 z-30 pt-20">
+            <!-- Hero -->
+            <section
+                class="relative py-24 px-6 md:px-12 text-center overflow-hidden bg-gradient-to-b from-brand-dark-red/30 via-dark-900 to-dark-900">
+                <div class="absolute inset-0 opacity-10 bg-cover bg-center"
+                    style="background-image:url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070');">
+                </div>
+                <div class="relative z-10 max-w-3xl mx-auto">
+                    <span
+                        class="px-4 py-1.5 bg-brand-yellow text-black text-xs font-bold rounded-full uppercase tracking-wider">Programa
+                        de Lealtad</span>
+                    <h1 class="text-4xl md:text-6xl font-bold text-white mt-6 mb-4">Socio <span
+                            class="text-brand-red">Náutica</span></h1>
+                    <p class="text-gray-300 text-lg md:text-xl">Vive el cine como nunca antes. Acumula beneficios cada
+                        vez que nos visitas.</p>
+                </div>
+            </section>
+
+            <!-- MÓDULO 7: panel real del socio logueado — código, nivel, puntos y estado de sus beneficios.
+             Se rellena en vivo desde renderizarVistaBeneficios() (cliente.js). Oculto para invitados. -->
+            <section id="panel-socio-beneficios"
+                class="hidden max-w-[1200px] mx-auto px-6 md:px-12 -mt-12 relative z-10 flex flex-col gap-6">
+                
+                <!-- Tarjeta de Perfil -->
+                <div class="bg-dark-800 border border-white/10 rounded-2xl p-6 shadow-2xl flex flex-col md:flex-row items-center gap-6">
+                    <div class="w-20 h-20 rounded-full bg-brand-yellow text-black flex items-center justify-center text-3xl font-bold shadow-[0_0_15px_rgba(250,204,21,0.5)]" id="perfil-inicial">
+                        N
+                    </div>
+                    <div class="flex-1 text-center md:text-left">
+                        <h2 class="text-2xl font-bold text-white mb-1" id="perfil-nombre">Cargando...</h2>
+                        <p class="text-gray-400 text-sm"><i class="fa-solid fa-envelope mr-1"></i> <span id="perfil-correo">...</span> &bull; <i class="fa-solid fa-id-card mx-1"></i> DNI: <span id="perfil-dni">...</span></p>
+                    </div>
+                </div>
+
+                <div
+                    class="bg-dark-800 border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div
+                        class="md:col-span-1 flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-white/10 pb-6 md:pb-0 md:pr-6">
+                        <span id="beneficios-nivel-badge"
+                            class="px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3">Bronce</span>
+                        <p class="text-5xl font-bold text-white" id="beneficios-puntos-actuales">0</p>
+                        <p class="text-gray-400 text-xs uppercase font-bold mt-1">Puntos disponibles</p>
+                        <p class="text-gray-500 text-xs mt-3 font-mono flex items-center gap-2">
+                            <span id="beneficios-codigo-socio">CIN-000000</span>
+                            <button type="button" onclick="copiarCodigoSocio(usuarioActual?.codigoSocio)"
+                                title="Copiar código de socio"
+                                class="text-gray-500 hover:text-brand-yellow transition-colors">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                        </p>
+                        <!-- MÓDULO 8: carnet digital a pantalla completa para enseñarlo en counter -->
+                        <button type="button" onclick="abrirCarnetSocio()"
+                            class="mt-4 bg-brand-yellow hover:bg-yellow-400 text-black px-5 py-2.5 rounded-xl font-bold text-sm transition-colors"><i
+                                class="fa-solid fa-id-card mr-2"></i>Mostrar mi carnet</button>
+                    </div>
+                    <div class="md:col-span-2 flex flex-col justify-center gap-4">
+                        <div>
+                            <div class="flex justify-between text-xs text-gray-400 mb-1">
+                                <span id="beneficios-progreso-texto">Bronce</span>
+                                <span id="beneficios-progreso-siguiente"></span>
+                            </div>
+                            <div class="w-full h-2 bg-dark-900 rounded-full overflow-hidden">
+                                <div id="beneficios-progreso-barra"
+                                    class="h-full bg-brand-yellow rounded-full transition-all" style="width:0%"></div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                            <div class="bg-dark-900 rounded-xl p-3 flex items-center gap-2">
+                                <i class="fa-solid fa-cake-candles text-brand-yellow"></i>
+                                <span id="beneficios-estado-cumpleanos" class="text-gray-300">—</span>
+                            </div>
+                            <div class="bg-dark-900 rounded-xl p-3 flex items-center gap-2">
+                                <i class="fa-solid fa-people-line text-green-400"></i>
+                                <span id="beneficios-estado-fila" class="text-gray-300">—</span>
+                            </div>
+                        </div>
+                        <p class="text-gray-500 text-xs">Muestra tu código de socio en counter para canjear puntos o
+                            reclamar tu beneficio de cumpleaños.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3 columnas de beneficios (informativo, siempre visible) -->
+            <section class="max-w-[1200px] mx-auto px-6 md:px-12 py-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="beneficio-card bg-dark-800 border border-white/5 rounded-2xl p-8 text-center shadow-xl">
+                    <div
+                        class="w-16 h-16 mx-auto rounded-full bg-brand-red/10 border border-brand-red/30 flex items-center justify-center mb-6">
+                        <i class="fa-solid fa-star text-3xl text-brand-red"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">Acumula Puntos</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">Gana puntos por cada entrada y producto de dulcería
+                        que compres, y canjéalos por descuentos en tu próxima compra.</p>
+                </div>
+                <div class="beneficio-card bg-dark-800 border border-white/5 rounded-2xl p-8 text-center shadow-xl">
+                    <div
+                        class="w-16 h-16 mx-auto rounded-full bg-brand-yellow/10 border border-brand-yellow/30 flex items-center justify-center mb-6">
+                        <i class="fa-solid fa-cake-candles text-3xl text-brand-yellow"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">Entrada Gratis por Cumpleaños</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">Durante el mes de tu cumpleaños, reclama en counter
+                        una entrada 2D totalmente gratis.</p>
+                </div>
+                <div class="beneficio-card bg-dark-800 border border-white/5 rounded-2xl p-8 text-center shadow-xl">
+                    <div
+                        class="w-16 h-16 mx-auto rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center mb-6">
+                        <i class="fa-solid fa-people-line text-3xl text-green-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">Fila Preferencial</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">Desde el nivel Plata, accede a una fila exclusiva
+                        de atención rápida en boletería y dulcería.</p>
+                </div>
+            </section>
+
+            <!-- Historial de compras (nueva sección al final) -->
+            <section id="beneficios-historial-compras" class="hidden max-w-[1200px] mx-auto px-6 md:px-12 pb-24">
+                <h3 class="text-2xl font-bold text-white mb-6"><i class="fa-solid fa-clock-rotate-left text-brand-yellow mr-2"></i>Historial de Compras</h3>
+                <div class="bg-dark-800 border border-white/10 rounded-2xl p-6 shadow-xl overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[700px]">
+                        <thead>
+                            <tr class="text-gray-400 text-sm border-b border-white/10">
+                                <th class="pb-3 font-medium">Ticket</th>
+                                <th class="pb-3 font-medium">Fecha</th>
+                                <th class="pb-3 font-medium">Detalle</th>
+                                <th class="pb-3 font-medium text-right">Total</th>
+                                <th class="pb-3 font-medium text-center">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="beneficios-historial-tabla" class="text-sm">
+                            <!-- JS fill -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="text-center pb-24 px-6" id="beneficios-cta-invitado">
+                <button
+                    onclick="usuarioActual ? mostrarToast('Ya eres parte de Náutica. ¡Sigue acumulando!', 'info') : abrirModalRegistro()"
+                    class="bg-brand-red hover:bg-brand-dark-red text-white px-10 py-4 rounded-full font-bold text-lg shadow-lg shadow-red-500/30 transition-all transform hover:scale-105">
+                    Únete a Socio Náutica
+                </button>
+            </section>
+        </div>
+
+        <!-- ============================================================
+         FASE 7: VISTA DE PROMOCIONES
+         ============================================================ -->
+        <div id="vista-promociones"
+            class="hidden w-full bg-dark-900 min-h-screen pb-32 opacity-0 transition-opacity duration-300 absolute top-0 left-0 z-30 pt-20">
+            <section
+                class="relative py-20 px-6 md:px-12 text-center overflow-hidden bg-gradient-to-b from-brand-red/20 via-dark-900 to-dark-900">
+                <div class="relative z-10 max-w-3xl mx-auto">
+                    <span
+                        class="px-4 py-1.5 bg-brand-red text-white text-xs font-bold rounded-full uppercase tracking-wider">Ofertas
+                        Vigentes</span>
+                    <h1 class="text-4xl md:text-6xl font-bold text-white mt-6 mb-4">Promociones <span
+                            class="text-brand-yellow">Náutica</span></h1>
+                    <p class="text-gray-300 text-lg md:text-xl">Aprovecha nuestros descuentos y combos especiales.
+                        Vigencia y condiciones según cada promoción.</p>
+                </div>
+            </section>
+
+            <section class="max-w-[1200px] mx-auto px-6 md:px-12 py-16">
+                <div id="grid-promociones" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Tarjetas inyectadas vía JS -->
+                </div>
+            </section>
+        </div>
+
+        <!-- ============================================================
+         FASE 4: VISTA DE UBICACIÓN (Mapa Leaflet)
+         ============================================================ -->
+        <div id="vista-ubicacion"
+            class="hidden w-full bg-dark-900 min-h-screen pb-32 opacity-0 transition-opacity duration-300 absolute top-0 left-0 z-30 pt-24">
+            <div class="max-w-[1200px] mx-auto px-6 md:px-12">
+                <button onclick="cambiarVista('vista-ubicacion', 'vista-inicio')"
+                    class="text-white/60 hover:text-white mb-6 flex items-center gap-2 transition-colors">
+                    <i class="fa-solid fa-arrow-left"></i> Volver al Inicio
+                </button>
+                <div class="flex items-center gap-3 mb-8">
+                    <i class="fa-solid fa-location-dot text-3xl text-brand-yellow"></i>
+                    <div>
+                        <h2 class="text-3xl md:text-4xl font-bold text-white">Nuestra Ubicación</h2>
+                        <div class="h-1 w-20 bg-brand-red rounded-full mt-2"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-20">
+                    <div class="lg:col-span-2">
+                        <div id="mapa-ubicacion"></div>
+                    </div>
+                    <div class="bg-dark-800 border border-white/5 rounded-2xl p-6 shadow-xl h-max">
+                        <h3 class="text-xl font-bold text-white mb-4">Cine Náutica</h3>
+                        <div class="space-y-4 text-gray-300 text-sm">
+                            <p class="flex items-start gap-3"><i class="fa-solid fa-map-pin text-brand-red mt-1"></i>
+                                Megaplaza Chimbote, Av. Principal, Chimbote, Áncash, Perú</p>
+                            <p class="flex items-start gap-3"><i class="fa-solid fa-clock text-brand-red mt-1"></i>
+                                Todos los días, 11:00 a.m. – 11:30 p.m.</p>
+                            <p class="flex items-start gap-3"><i class="fa-solid fa-phone text-brand-red mt-1"></i>
+                                (043) 123-456</p>
+                            <p class="flex items-start gap-3"><i class="fa-solid fa-car text-brand-red mt-1"></i>
+                                Estacionamiento disponible dentro del centro comercial.</p>
+>>>>>>> Stashed changes
                         </div>
                     </div>
                 </div>

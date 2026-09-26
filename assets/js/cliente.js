@@ -22,7 +22,7 @@ const TRANSICIONES_PERMITIDAS_EN_FLUJO_COMPRA = new Set([
     'vista-horarios|vista-asientos', 'vista-asientos|vista-horarios',
     'vista-asientos|vista-dulceria', 'vista-dulceria|vista-asientos',
     'vista-dulceria|vista-pago', 'vista-pago|vista-dulceria',
-    'vista-pago|vista-ticket'
+    'vista-pago|vista-ticket', 'vista-asientos|vista-ticket'
 ]);
 
 async function cambiarVista(idDesde, idHacia) {
@@ -414,7 +414,15 @@ const renderizarContenidoHorarios = (pelicula, fechasDisponibles) => {
 
     let horariosHTML = '';
     const funcionesDelDia = pelicula.horarios[estadoPedido.fecha];
+    
+    let formatoOriginal = null;
+    if (estadoPedido.modoReubicar && estadoPedido.ticketReubicando && estadoPedido.ticketReubicando.detalle) {
+        formatoOriginal = estadoPedido.ticketReubicando.detalle.split(' • ')[2];
+    }
+
     funcionesDelDia.forEach(funcion => {
+        if (formatoOriginal && funcion.formato !== formatoOriginal) return;
+
         horariosHTML += `
             <div class="bg-dark-800 rounded-xl p-5 border border-white/5 mb-6">
                 <h4 class="text-lg font-bold text-white mb-4 border-l-4 border-brand-red pl-3">${funcion.formato}</h4>
@@ -654,11 +662,14 @@ window.clickAsiento = (asientoId) => {
         else btn.classList.add('bg-green-600');
         liberarAsientoBloqueado(estadoPedido.sala || 1, estadoPedido.fecha, estadoPedido.hora, asientoId); // FIX bloqueo temporal
     } else {
-        // Módulo 6: límite máximo de asientos por transacción.
-        if (estadoPedido.asientos.length >= MAX_ASIENTOS_POR_COMPRA) {
-            mostrarToast(`Solo puedes seleccionar hasta ${MAX_ASIENTOS_POR_COMPRA} asientos por compra.`, 'error');
+        // Límite de asientos por transacción o por reubicación
+        const limiteAsientos = estadoPedido.modoReubicar ? estadoPedido.cantidadAsientosRequeridos : MAX_ASIENTOS_POR_COMPRA;
+        
+        if (estadoPedido.asientos.length >= limiteAsientos) {
+            mostrarToast(estadoPedido.modoReubicar ? `Debes reubicar exactamente ${limiteAsientos} asientos.` : `Solo puedes seleccionar hasta ${limiteAsientos} asientos por compra.`, 'error');
             return;
         }
+<<<<<<< Updated upstream
         // Módulo 2: ya no se pregunta el tipo de entrada; el precio lo determina
         // automáticamente la tarifa vigente de la función (calcularTarifaFuncionActual).
         estadoPedido.asientos.push({
@@ -669,6 +680,98 @@ window.clickAsiento = (asientoId) => {
         btn.classList.remove('bg-green-600', 'hover:bg-green-500');
         btn.classList.add('selected');
         bloquearAsientoTemporalmente(estadoPedido.sala || 1, estadoPedido.fecha, estadoPedido.hora, asientoId); // FIX bloqueo temporal
+=======
+
+        const esAccesible = btn.dataset.accesible === 'true';
+
+        if (esAccesible) {
+            const confirmado = await confirmarAccion({
+                titulo: 'Asiento Accesible',
+                mensaje: 'Este espacio está reservado para personas en silla de ruedas o con movilidad reducida. ¿Deseas ocuparlo?',
+                tipo: 'info',
+                textoConfirmar: 'Sí, continuar',
+                textoCancelar: 'Cancelar'
+            });
+            if (!confirmado) return;
+        }
+
+        const procesarSeleccion = () => {
+            let catalogoTipos = obtenerCatalogoTiposEntrada();
+
+            if (estadoPedido.modoReubicar && estadoPedido.ticketReubicando && estadoPedido.ticketReubicando.asientos) {
+                const contadorOriginal = {};
+                estadoPedido.ticketReubicando.asientos.forEach(a => {
+                    const tipoObj = typeof a === 'object' ? a.tipoEntradaId : obtenerTipoEntradaPorDefecto().id;
+                    contadorOriginal[tipoObj] = (contadorOriginal[tipoObj] || 0) + 1;
+                });
+                estadoPedido.asientos.forEach(a => {
+                    if (contadorOriginal[a.tipoEntradaId]) contadorOriginal[a.tipoEntradaId]--;
+                });
+                catalogoTipos = catalogoTipos.filter(t => contadorOriginal[t.id] > 0);
+            }
+
+            let htmlTipos = catalogoTipos.map(t => {
+                let precio = calcularPrecioAsientoPorTipo(t.id);
+                let esConadis = t.nombre.toUpperCase().includes('CONADIS');
+                let extraClasses = (esAccesible && esConadis) ? 'border-brand-yellow shadow-[0_0_15px_rgba(250,204,21,0.5)] bg-brand-yellow/10' : 'border-white/10 hover:border-brand-red bg-dark-900';
+                
+                return `
+                    <button type="button" class="w-full ${extraClasses} rounded-xl p-3 flex justify-between items-center transition-colors mb-2 text-left border" onclick="seleccionarTipoAsientoTemp('${t.id}')">
+                        <div>
+                            <p class="${(esAccesible && esConadis) ? 'text-brand-yellow' : 'text-white'} font-bold text-sm">${t.nombre}</p>
+                            ${t.descuentoPct > 0 ? `<p class="text-brand-yellow text-xs">-${t.descuentoPct}% Dcto.</p>` : ''}
+                        </div>
+                        <span class="text-white font-bold">${formatearMoneda(precio)}</span>
+                    </button>
+                `;
+            }).join('');
+
+            const modalDiv = document.createElement('div');
+            modalDiv.id = 'modal-seleccion-tipo-asiento';
+            modalDiv.className = 'fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 opacity-100 transition-opacity duration-200';
+            modalDiv.innerHTML = `
+                <div class="bg-dark-800 p-6 rounded-2xl border border-white/10 shadow-2xl max-w-sm w-full relative transform scale-100 transition-transform duration-200">
+                    <button onclick="document.getElementById('modal-seleccion-tipo-asiento').remove()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+                    <h3 class="text-xl font-bold text-white mb-1">Elegir tipo de entrada</h3>
+                    <p class="text-gray-400 text-sm mb-4">Para el asiento <span class="text-brand-yellow font-bold">${asientoId}</span></p>
+                    <div class="max-h-[60vh] overflow-y-auto hide-scrollbar">
+                        ${htmlTipos}
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modalDiv);
+
+            window.seleccionarTipoAsientoTemp = async (tipoEntradaId) => {
+                const tipo = obtenerTipoEntradaPorId(tipoEntradaId);
+                modalDiv.remove(); // Cerramos el modal de selección primero
+
+                const esConadis = tipo.nombre.toUpperCase().includes('CONADIS');
+                if (esConadis) {
+                    const confirmado = await confirmarAccion({
+                        titulo: 'Aviso CONADIS',
+                        mensaje: 'Deberás presentar tu carnet de CONADIS físico al ingresar a la sala. De no hacerlo, deberás pagar la diferencia en boletería. ¿Estás de acuerdo?',
+                        tipo: 'info',
+                        textoConfirmar: 'Sí, estoy de acuerdo',
+                        textoCancelar: 'Elegir otro tipo'
+                    });
+                    if (!confirmado) return; // Si cancela, no se selecciona la butaca
+                }
+
+                estadoPedido.asientos.push({
+                    id: asientoId,
+                    tipoEntradaId: tipo.id,
+                    tipoLabel: tipo.nombre,
+                    precio: calcularPrecioAsientoPorTipo(tipo.id)
+                });
+                btn.classList.remove('bg-green-600', 'hover:bg-green-500', 'asiento-cliente-accesible');
+                btn.classList.add('selected', 'bg-brand-red');
+                bloquearAsientoTemporalmente(estadoPedido.sala || 1, estadoPedido.fecha, estadoPedido.hora, asientoId);
+                actualizarResumenAsientos();
+            };
+        };
+
+        procesarSeleccion();
+>>>>>>> Stashed changes
     }
     actualizarResumenAsientos();
 };
@@ -845,7 +948,98 @@ window.intentarSalirDelFlujoDeCompra = intentarSalirDelFlujoDeCompra;
    9. DULCERÍA (incluye FASE 3 — flujo directo sin película)
    ============================================================================ */
 
+<<<<<<< Updated upstream
 window.irADulceria = () => {
+=======
+window.irADulceria = async () => {
+    // MODO REUBICACIÓN: Interceptar el flujo aquí y terminar
+    if (estadoPedido.modoReubicar) {
+        if (estadoPedido.asientos.length !== estadoPedido.cantidadAsientosRequeridos) {
+            mostrarToast(`Debes seleccionar exactamente ${estadoPedido.cantidadAsientosRequeridos} asientos para la reubicación.`, 'error');
+            return;
+        }
+
+        const respuesta = await pedirMotivoContingencia({
+            titulo: 'Resolución de Reubicación',
+            opciones: [
+                'Reubicación por mantenimiento de sala',
+                'Cambio de horario solicitado por cliente',
+                'Fallas técnicas'
+            ]
+        });
+
+        if (!respuesta) return;
+
+        const ordenOriginal = estadoPedido.ticketReubicando;
+
+        // Liberar asientos antiguos y registrar nuevos
+        let ventasAsientos = JSON.parse(localStorage.getItem(LS_VENTAS_ASIENTOS)) || [];
+        ventasAsientos = ventasAsientos.filter(va => va.id !== ordenOriginal.codigo);
+        ventasAsientos.push({
+            id: ordenOriginal.codigo,
+            pelicula: estadoPedido.pelicula.id,
+            fechaFuncion: estadoPedido.fecha,
+            horaFuncion: estadoPedido.hora,
+            sala: estadoPedido.sala,
+            asientos: estadoPedido.asientos.map(s => typeof s === 'object' ? s.id : s),
+            expiraAt: null
+        });
+        localStorage.setItem(LS_VENTAS_ASIENTOS, JSON.stringify(ventasAsientos));
+
+        // Actualizar la orden original
+        const ventasGlobal = JSON.parse(localStorage.getItem(LS_VENTAS_GENERAL)) || [];
+        const idx = ventasGlobal.findIndex(v => v.codigo === ordenOriginal.codigo);
+        if (idx !== -1) {
+            ventasGlobal[idx].idPelicula = estadoPedido.pelicula.id;
+            ventasGlobal[idx].peliculaTitulo = estadoPedido.pelicula.titulo;
+            ventasGlobal[idx].fechaFuncion = estadoPedido.fecha;
+            ventasGlobal[idx].horaFuncion = estadoPedido.hora;
+            ventasGlobal[idx].sala = estadoPedido.sala;
+            ventasGlobal[idx].asientos = [...estadoPedido.asientos];
+            ventasGlobal[idx].estado = 'activa';
+            ventasGlobal[idx].contingencia = {
+                tipo: 'reubicacion',
+                motivo: respuesta.motivo,
+                observaciones: respuesta.observaciones,
+                fecha: new Date().toISOString()
+            };
+            localStorage.setItem(LS_VENTAS_GENERAL, JSON.stringify(ventasGlobal));
+        }
+
+        mostrarToast(`Ticket ${ordenOriginal.codigo} reubicado con éxito.`, 'exito');
+        
+        // Limpiar banderas de reubicación pero NO limpiar estadoPedido aún
+        delete estadoPedido.modoReubicar;
+        delete estadoPedido.ticketReubicando;
+        delete estadoPedido.cantidadAsientosRequeridos;
+        document.getElementById('banner-modo-reubicar').classList.add('hidden');
+
+        // --- Mostrar el ticket actualizado en pantalla ---
+        document.querySelector('#vista-ticket h2').textContent = '¡Reubicación Exitosa!';
+        document.querySelector('#vista-ticket p.text-gray-400.text-lg').textContent = 'Tu nuevo horario está confirmado. Descarga tu ticket actualizado.';
+        const bloquePuntosTicket = document.getElementById('ticket-puntos-ganados');
+        if (bloquePuntosTicket) bloquePuntosTicket.classList.add('hidden');
+        
+        document.getElementById('pdf-titulo-pelicula').textContent = estadoPedido.pelicula.titulo;
+        document.getElementById('pdf-formato').textContent = estadoPedido.formato.toUpperCase();
+        document.getElementById('pdf-fecha').textContent = estadoPedido.fecha;
+        document.getElementById('pdf-hora').textContent = estadoPedido.hora;
+        document.getElementById('pdf-cine').textContent = `${estadoPedido.cine || 'Cine Náutica'} - Sala ${estadoPedido.sala || 1}`;
+        document.getElementById('pdf-asientos').textContent = estadoPedido.asientos.map(s => s.id).join(', ') || '—';
+        document.getElementById('pdf-codigo').textContent = ordenOriginal.codigo.replace('CR-', '');
+        
+        document.getElementById('pdf-dulces').innerHTML = '<li class="text-gray-500 font-normal">Revisar boleta original.</li>';
+        
+        // Ocultar la parte de la boleta (ya que es solo reubicación)
+        const comprobanteContenedor = document.getElementById('comprobante-imprimible');
+        if (comprobanteContenedor) comprobanteContenedor.parentElement.classList.add('hidden');
+
+        cambiarVista('vista-asientos', 'vista-ticket');
+        setTimeout(() => limpiarEstadoPedido(), 350);
+        return;
+    }
+
+>>>>>>> Stashed changes
     renderizarGridDulceria('all');
     actualizarResumenFinal();
     aplicarModoDirectoUI();
@@ -1654,6 +1848,166 @@ window.abrirMisCompras = () => {
     cambiarVista(vistaActualVisible, 'vista-historial');
 };
 
+<<<<<<< Updated upstream
+=======
+/* ============================================================================
+   14. MÓDULO 7 — VISTA "SOCIO CINERAMA" DINÁMICA
+   ============================================================================ */
+
+/** Pinta el panel real de puntos/nivel/beneficios del socio logueado en #vista-beneficios (o lo oculta para invitados). */
+function renderizarVistaBeneficios() {
+    const panel = document.getElementById('panel-socio-beneficios');
+    const ctaInvitado = document.getElementById('beneficios-cta-invitado');
+    if (!panel) return;
+
+    // MÓDULO 8: una cuenta de counter/admin no es socio: sin panel y sin invitación a registrarse (la vista ni se abre; esto es la red de seguridad).
+    if (usuarioActual && !usuarioEsSocio(usuarioActual)) {
+        panel.classList.add('hidden');
+        if (ctaInvitado) ctaInvitado.classList.add('hidden');
+        return;
+    }
+
+    if (!usuarioActual) {
+        panel.classList.add('hidden');
+        if (ctaInvitado) ctaInvitado.classList.remove('hidden');
+        return;
+    }
+
+    panel.classList.remove('hidden');
+    if (ctaInvitado) ctaInvitado.classList.add('hidden');
+
+    const puntos = usuarioActual.puntos || 0;
+    const nivel = obtenerNivelSocio(puntos);
+    const siguienteNivel = obtenerSiguienteNivelSocio(puntos);
+
+    const badge = document.getElementById('beneficios-nivel-badge');
+    badge.textContent = `Nivel ${nivel.nombre}`;
+    badge.style.backgroundColor = `${nivel.colorHex}22`;
+    badge.style.color = nivel.colorHex;
+    badge.style.border = `1px solid ${nivel.colorHex}55`;
+
+    document.getElementById('beneficios-puntos-actuales').textContent = puntos;
+    document.getElementById('beneficios-codigo-socio').textContent = usuarioActual.codigoSocio || '—';
+
+    const progresoTexto = document.getElementById('beneficios-progreso-texto');
+    const progresoSiguiente = document.getElementById('beneficios-progreso-siguiente');
+    const progresoBarra = document.getElementById('beneficios-progreso-barra');
+    if (siguienteNivel) {
+        const rango = siguienteNivel.minPuntos - nivel.minPuntos;
+        const avance = puntos - nivel.minPuntos;
+        const porcentaje = Math.min(100, Math.round((avance / rango) * 100));
+        progresoTexto.textContent = `Nivel ${nivel.nombre}`;
+        progresoSiguiente.textContent = `Faltan ${siguienteNivel.minPuntos - puntos} pts para ${siguienteNivel.nombre}`;
+        progresoBarra.style.width = `${porcentaje}%`;
+    } else {
+        progresoTexto.textContent = `Nivel ${nivel.nombre} (máximo)`;
+        progresoSiguiente.textContent = '¡Nivel más alto alcanzado!';
+        progresoBarra.style.width = '100%';
+    }
+
+    const cumple = ValidadoresSocio.tieneBeneficioCumpleanosDisponible(usuarioActual);
+    const estadoCumple = document.getElementById('beneficios-estado-cumpleanos');
+    estadoCumple.textContent = cumple.ok ? '¡Disponible este mes! Reclámalo en counter.' : cumple.motivo;
+
+    const fila = ValidadoresSocio.tieneFilaPreferencial(usuarioActual);
+    const estadoFila = document.getElementById('beneficios-estado-fila');
+    estadoFila.textContent = fila.ok ? 'Fila preferencial activa' : fila.motivo;
+
+    // Llenar Tarjeta de Perfil
+    const inicial = (usuarioActual.nombre || 'N').charAt(0).toUpperCase();
+    document.getElementById('perfil-inicial').textContent = inicial;
+    document.getElementById('perfil-nombre').textContent = usuarioActual.nombre || 'Socio';
+    document.getElementById('perfil-correo').textContent = usuarioActual.correo || '—';
+    document.getElementById('perfil-dni').textContent = usuarioActual.dni || '—';
+
+    // Llenar Historial de Compras
+    const tablaContenedor = document.getElementById('beneficios-historial-compras');
+    const tbody = document.getElementById('beneficios-historial-tabla');
+    const compras = usuarioActual.compras || [];
+
+    if (compras.length > 0) {
+        let html = '';
+        compras.forEach(compra => {
+            const esReembolsada = compra.estado === 'reembolsada';
+            const badgeColor = esReembolsada ? 'bg-gray-500' : 'bg-green-500/20 text-green-400 border border-green-500/30';
+            const badgeText = esReembolsada ? 'REEMBOLSADA' : 'COMPLETADA';
+            
+            let detalleStr = compra.peliculaTitulo || compra.pelicula || 'Productos de Dulcería';
+            if (compra.fechaFuncion) detalleStr += ` <span class="text-gray-500 block text-xs">${compra.fechaFuncion} &bull; ${compra.horaFuncion || ''}</span>`;
+            
+            html += `
+                <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+                    <td class="py-4 font-mono text-gray-300">${compra.codigo}</td>
+                    <td class="py-4 text-gray-400">${new Date(compra.fechaCompra || Date.now()).toLocaleDateString('es-PE')}</td>
+                    <td class="py-4 text-white">${detalleStr}</td>
+                    <td class="py-4 text-right text-brand-yellow font-bold">S/ ${(compra.total || 0).toFixed(2)}</td>
+                    <td class="py-4 text-center">
+                        <span class="px-2 py-1 rounded text-[10px] font-bold ${badgeColor}">${badgeText}</span>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+        tablaContenedor.classList.remove('hidden');
+    } else {
+        tablaContenedor.classList.add('hidden');
+    }
+}
+
+/* ============================================================================
+   MÓDULO 8 — CARNET DIGITAL DE SOCIO
+   ------------------------------------------------------------------------
+   Tarjeta a pantalla completa pensada para enseñarla en counter: el cajero
+   lee el código (o lo escribe en el buscador de la venta) sin tener que
+   pedirle nada más al cliente. Solo para socios.
+   ============================================================================ */
+
+window.abrirCarnetSocio = () => {
+    if (!usuarioEsSocio(usuarioActual)) {
+        mostrarToast('El carnet es solo para socios Náutica.', 'info');
+        return;
+    }
+    const socio = buscarSocio(usuarioActual.correo) || usuarioActual; // saldo siempre fresco
+    const puntos = socio.puntos || 0;
+    const nivel = obtenerNivelSocio(puntos);
+
+    document.getElementById('carnet-socio-nombre').textContent = socio.nombre;
+    document.getElementById('carnet-socio-codigo').textContent = socio.codigoSocio || '—';
+    document.getElementById('carnet-socio-puntos').textContent = puntos;
+
+    const badge = document.getElementById('carnet-socio-nivel');
+    badge.textContent = `Nivel ${nivel.nombre}`;
+    badge.style.backgroundColor = `${nivel.colorHex}22`;
+    badge.style.color = nivel.colorHex;
+    badge.style.border = `1px solid ${nivel.colorHex}88`;
+
+    const tarjeta = document.getElementById('carnet-socio-tarjeta');
+    tarjeta.style.borderColor = nivel.colorHex;
+    tarjeta.style.boxShadow = `0 0 60px ${nivel.colorHex}40`;
+    document.getElementById('carnet-socio-franja').style.background = `linear-gradient(90deg, ${nivel.colorHex}, ${nivel.colorHex}55)`;
+
+    const modal = document.getElementById('modal-carnet-socio');
+    modal.classList.remove('hidden');
+    setTimeout(() => { modal.classList.remove('opacity-0'); tarjeta.classList.remove('scale-95'); }, 10);
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', cerrarCarnetConEscape);
+};
+
+function cerrarCarnetConEscape(ev) {
+    if (ev.key === 'Escape') cerrarCarnetSocio();
+}
+
+window.cerrarCarnetSocio = () => {
+    const modal = document.getElementById('modal-carnet-socio');
+    if (!modal || modal.classList.contains('hidden')) return;
+    modal.classList.add('opacity-0');
+    document.getElementById('carnet-socio-tarjeta').classList.add('scale-95');
+    setTimeout(() => modal.classList.add('hidden'), 200);
+    document.body.style.overflow = '';
+    document.removeEventListener('keydown', cerrarCarnetConEscape);
+};
+
+>>>>>>> Stashed changes
 /** Alterna la visibilidad del modal de perfil (Nombre, Correo, método de pago). */
 window.toggleUserProfile = () => window.abrirModalPerfil();
 
@@ -1943,3 +2297,204 @@ window.cerrarModalLegal = () => {
     document.getElementById('legal-contenido').classList.add('scale-95');
     setTimeout(() => modal.classList.add('hidden'), 200);
 };
+<<<<<<< Updated upstream
+=======
+
+/* ============================================================================
+   MÓDULO: ATENCIÓN AL CLIENTE (CONTINGENCIAS Y REUBICACIÓN)
+   ============================================================================ */
+
+window.abrirModalAtencionCliente = () => {
+    document.getElementById('input-busqueda-atencion').value = '';
+    document.getElementById('atencion-resultado').innerHTML = '';
+    document.getElementById('atencion-resultado').classList.add('hidden');
+    const modal = document.getElementById('modal-atencion-cliente');
+    modal.classList.remove('hidden');
+    setTimeout(() => { modal.classList.remove('opacity-0'); modal.querySelector('.bg-dark-800').classList.remove('scale-95'); }, 10);
+};
+
+window.cerrarModalAtencionCliente = () => {
+    const modal = document.getElementById('modal-atencion-cliente');
+    modal.classList.add('opacity-0');
+    modal.querySelector('.bg-dark-800').classList.add('scale-95');
+    setTimeout(() => { modal.classList.add('hidden'); }, 200);
+};
+
+window.buscarOrdenAtencionCliente = (e) => {
+    e.preventDefault();
+    const query = document.getElementById('input-busqueda-atencion').value.trim().toUpperCase();
+    const ventas = JSON.parse(localStorage.getItem(LS_VENTAS_GENERAL)) || [];
+
+    // Buscar por código de ticket directo o compras de un DNI
+    let resultados = ventas.filter(v => v.codigo === query || v.numeroDoc === query);
+
+    const contenedor = document.getElementById('atencion-resultado');
+    if (resultados.length === 0) {
+        contenedor.innerHTML = `<p class="text-brand-red text-center py-4">No se encontró ninguna orden con "${query}".</p>`;
+        contenedor.classList.remove('hidden');
+        return;
+    }
+
+    // Renderizamos los resultados (normalmente será uno si es por código, o varios si es por DNI)
+    let html = '';
+    resultados.forEach(compra => {
+        const estadoPelicula = compra.estado || 'activa';
+
+        let esCancelada = false;
+        // Verificamos si la función está cancelada en baseDatosPeliculas
+        const p = baseDatosPeliculas[compra.idPelicula];
+        if (p && p.horarios && p.horarios[compra.fechaFuncion]) {
+            p.horarios[compra.fechaFuncion].forEach(formato => {
+                formato.horas.forEach(h => {
+                    const horaRaw = h.hora || h;
+                    const hSala = h.sala || 1;
+                    const hEstado = h.estado || 'programada';
+                    // Extraer solo el número de la sala si es objeto
+                    const salaNum = typeof compra.sala === 'string' ? Number(compra.sala.replace('sala_', '')) : Number(compra.sala);
+                    if (horaRaw === compra.horaFuncion && Number(hSala) === salaNum && hEstado === 'cancelada') {
+                        esCancelada = true;
+                    }
+                });
+            });
+        }
+
+        const badgeColor = compra.estado === 'reembolsada' ? 'bg-gray-500' : (esCancelada ? 'bg-brand-red' : 'bg-green-500');
+        const badgeText = compra.estado === 'reembolsada' ? 'REEMBOLSADA' : (esCancelada ? 'FUNCIÓN CANCELADA' : 'VÁLIDA');
+
+        // Determinar título
+        const titulo = compra.pelicula || compra.peliculaTitulo || 'Pedido de Dulcería';
+        const formatoStr = compra.formato ? `(${compra.formato})` : '';
+        const salaStr = compra.sala ? `&bull; Sala ${typeof compra.sala === 'string' ? compra.sala.replace('sala_', '') : compra.sala}` : '';
+
+        html += `
+            <div class="bg-dark-900 border border-white/10 rounded-xl p-4 mb-2">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <span class="text-white font-bold text-lg">${compra.codigo}</span>
+                        <span class="ml-2 ${badgeColor} text-white text-xs font-bold px-2 py-1 rounded">${badgeText}</span>
+                    </div>
+                    <div class="text-right text-gray-400 text-sm">
+                        ${compra.fechaFuncion || ''} ${compra.horaFuncion ? '&bull; ' + compra.horaFuncion : ''} ${salaStr}
+                    </div>
+                </div>
+                <p class="text-white text-sm mb-1">${titulo} ${formatoStr}</p>
+                <p class="text-gray-400 text-sm mb-3">${compra.asientos ? compra.asientos.length : 0} Asientos: ${compra.asientos ? compra.asientos.map(s => typeof s === 'object' ? s.id : s).join(', ') : 'Ninguno'}</p>
+        `;
+
+        if (esCancelada && compra.estado !== 'reembolsada') {
+            html += `
+                <div class="flex gap-2 mt-2 pt-3 border-t border-white/10">
+                    <button onclick="reembolsarOrden('${compra.codigo}')" class="flex-1 bg-dark-800 border border-gray-600 hover:border-white text-white py-2 rounded font-bold transition-colors text-sm">Reembolsar</button>
+                    <button onclick="iniciarReubicacion('${compra.codigo}')" class="flex-1 bg-brand-yellow hover:bg-brand-yellow/80 text-black py-2 rounded font-bold transition-colors text-sm">Reubicar</button>
+                </div>
+            `;
+        }
+        html += `</div>`;
+    });
+
+    contenedor.innerHTML = html;
+    contenedor.classList.remove('hidden');
+};
+
+window.reembolsarOrden = async (idOrden) => {
+    const respuesta = await pedirMotivoContingencia({
+        titulo: 'Reembolsar Orden',
+        opciones: [
+            'Cancelación de función por mantenimiento',
+            'Fallas técnicas en la sala',
+            'Problemas con el cliente',
+            'Error en la compra (Duplicado, etc.)'
+        ]
+    });
+    
+    if (!respuesta) return;
+
+    const confirmar = await confirmarAccion({
+        titulo: '¿Reembolsar Orden?',
+        mensaje: `Se reembolsará el ticket ${idOrden} y se liberarán sus asientos.\n\nMotivo: ${respuesta.motivo}\n\nEsta acción no se puede deshacer.`,
+        tipo: 'advertencia', textoConfirmar: 'Sí, Reembolsar', textoCancelar: 'Cancelar'
+    });
+    if (!confirmar) return;
+
+    const ventasGlobal = JSON.parse(localStorage.getItem(LS_VENTAS_GENERAL)) || [];
+    const idx = ventasGlobal.findIndex(v => v.codigo === idOrden);
+    if (idx === -1) return;
+
+    const orden = ventasGlobal[idx];
+    orden.estado = 'reembolsada';
+    orden.contingencia = {
+        tipo: 'reembolso',
+        motivo: respuesta.motivo,
+        observaciones: respuesta.observaciones,
+        fecha: new Date().toISOString()
+    };
+    localStorage.setItem(LS_VENTAS_GENERAL, JSON.stringify(ventasGlobal));
+
+    // Liberar los asientos
+    let ventasAsientos = JSON.parse(localStorage.getItem(LS_VENTAS_ASIENTOS)) || [];
+    ventasAsientos = ventasAsientos.filter(va => va.id !== idOrden);
+    localStorage.setItem(LS_VENTAS_ASIENTOS, JSON.stringify(ventasAsientos));
+
+    // Liberar temporales por si acaso
+    limpiarEstadoPedido();
+
+    mostrarToast(`La orden ${idOrden} ha sido reembolsada y los asientos liberados.`, 'exito');
+    cerrarModalAtencionCliente();
+};
+
+window.iniciarReubicacion = (idOrden) => {
+    const ventasGlobal = JSON.parse(localStorage.getItem(LS_VENTAS_GENERAL)) || [];
+    const orden = ventasGlobal.find(v => v.codigo === idOrden);
+    if (!orden) return;
+
+    estadoPedido.modoReubicar = true;
+    estadoPedido.ticketReubicando = orden;
+    estadoPedido.cantidadAsientosRequeridos = orden.asientos ? orden.asientos.length : 0;
+
+    document.getElementById('banner-reubicar-ticket').textContent = idOrden;
+    document.getElementById('banner-modo-reubicar').classList.remove('hidden');
+
+    cerrarModalAtencionCliente();
+    
+    if (orden.idPelicula) {
+        const formatoOriginal = orden.detalle ? orden.detalle.split(' • ')[2] : null;
+        let tieneHorariosValidos = false;
+        
+        const pelicula = baseDatosPeliculas[orden.idPelicula];
+        if (pelicula && pelicula.horarios && formatoOriginal) {
+            for (const fecha in pelicula.horarios) {
+                if (pelicula.horarios[fecha].some(f => f.formato === formatoOriginal)) {
+                    tieneHorariosValidos = true;
+                    break;
+                }
+            }
+        }
+
+        if (!tieneHorariosValidos && formatoOriginal) {
+            alertaBonita({ 
+                titulo: 'Reubicación No Posible', 
+                mensaje: `Ya no hay funciones disponibles en formato ${formatoOriginal} para esta película.\n\nPara cambiar de película o formato, debes realizar el reembolso primero.`, 
+                tipo: 'advertencia' 
+            });
+            return;
+        }
+
+        abrirHorarios(orden.idPelicula);
+        mostrarToast(`Reubicación de ticket ${idOrden}. Selecciona un horario en formato ${formatoOriginal} y EXACTAMENTE ${estadoPedido.cantidadAsientosRequeridos} asientos.`, 'info');
+    } else {
+        cambiarVista(vistaActualVisible, 'vista-inicio');
+        mostrarToast(`Modo Reubicación activo. Selecciona una nueva función y EXACTAMENTE ${estadoPedido.cantidadAsientosRequeridos} asientos.`, 'info');
+    }
+};
+
+window.cancelarModoReubicacion = () => {
+    delete estadoPedido.modoReubicar;
+    delete estadoPedido.ticketReubicando;
+    delete estadoPedido.cantidadAsientosRequeridos;
+
+    document.getElementById('banner-modo-reubicar').classList.add('hidden');
+    limpiarEstadoPedido();
+    cambiarVista(vistaActualVisible, 'vista-inicio');
+    mostrarToast('Reubicación cancelada.', 'info');
+};
+>>>>>>> Stashed changes

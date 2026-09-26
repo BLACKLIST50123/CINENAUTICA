@@ -1274,6 +1274,132 @@ function renderizarAdminSalas() {
     if (btnGuardar) btnGuardar.classList.toggle('boton-cambios-pendientes', haySalaCambiosSinGuardar);
 }
 
+<<<<<<< Updated upstream
+=======
+/* MÓDULO 9: checkboxes de qué formatos soporta la sala seleccionada (se guardan en el borrador,
+   como el resto de la edición de sala: no se persisten hasta "Guardar Cambios"). */
+function renderizarFormatosSalaAdmin(sala) {
+    const contenedor = document.getElementById('admin-sala-formatos');
+    if (!contenedor) return;
+    const soportados = sala.formatosSoportados || [];
+    contenedor.innerHTML = obtenerCatalogoFormatos().map(f => `
+        <label class="flex items-center gap-1.5 bg-dark-900 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-gray-300 cursor-pointer hover:border-brand-yellow/50 transition-colors">
+            <input type="checkbox" value="${f.id}" onchange="toggleFormatoSalaAdmin('${f.id}', this.checked)" class="accent-brand-yellow" ${soportados.includes(f.id) ? 'checked' : ''}> ${f.nombre}
+        </label>
+    `).join('');
+}
+
+window.toggleFormatoSalaAdmin = (formatoId, marcado) => {
+    const sala = obtenerBorradorSalaActual();
+    if (!Array.isArray(sala.formatosSoportados)) sala.formatosSoportados = [];
+    if (marcado && !sala.formatosSoportados.includes(formatoId)) sala.formatosSoportados.push(formatoId);
+    if (!marcado) sala.formatosSoportados = sala.formatosSoportados.filter(id => id !== formatoId);
+    marcarSalaComoModificada();
+};
+
+function obtenerFuncionesFuturasPorSala(id_sala) {
+    const salaNum = Number(id_sala.replace('sala_', ''));
+    let futuras = [];
+    Object.values(baseDatosPeliculas).forEach(pelicula => {
+        if (!pelicula.horarios) return;
+        Object.entries(pelicula.horarios).forEach(([fecha, formatos]) => {
+            formatos.forEach(formato => {
+                formato.horas.forEach(h => {
+                    const horaRaw = typeof h === 'object' ? h.hora : h;
+                    const hSala = typeof h === 'object' && h.sala ? h.sala : 1;
+                    const hEstado = typeof h === 'object' && h.estado ? h.estado : 'programada';
+                    
+                    if (Number(hSala) === salaNum && hEstado !== 'cancelada') {
+                        futuras.push({ pelicula: pelicula.id, fecha, hora: horaRaw });
+                    }
+                });
+            });
+        });
+    });
+    return futuras;
+}
+
+function cancelarFuncionesFuturasPorSala(id_sala) {
+    const salaNum = Number(id_sala.replace('sala_', ''));
+    let funcionesCanceladas = [];
+
+    Object.values(baseDatosPeliculas).forEach(pelicula => {
+        if (!pelicula.horarios) return;
+        Object.entries(pelicula.horarios).forEach(([fecha, formatos]) => {
+            formatos.forEach(formato => {
+                formato.horas = formato.horas.map(h => {
+                    const horaRaw = typeof h === 'object' ? h.hora : h;
+                    const hSala = typeof h === 'object' && h.sala ? h.sala : 1;
+                    const hEstado = typeof h === 'object' && h.estado ? h.estado : 'programada';
+                    
+                    if (Number(hSala) === salaNum && hEstado !== 'cancelada') {
+                        funcionesCanceladas.push({ fecha, hora: horaRaw, sala: hSala });
+                        return { hora: horaRaw, sala: hSala, estado: 'cancelada' };
+                    }
+                    return h;
+                });
+            });
+        });
+    });
+    guardarCarteleraEnStorage();
+
+    // Remover las butacas ocupadas de las funciones canceladas para liberar la sala física
+    if (funcionesCanceladas.length > 0) {
+        let ventasAsientos = JSON.parse(localStorage.getItem(LS_VENTAS_ASIENTOS)) || [];
+        ventasAsientos = ventasAsientos.filter(va => {
+            const esCancelada = funcionesCanceladas.some(fc => 
+                fc.fecha === va.fechaFuncion && 
+                fc.hora === va.horaFuncion && 
+                Number(fc.sala) === Number(va.sala)
+            );
+            return !esCancelada;
+        });
+        localStorage.setItem(LS_VENTAS_ASIENTOS, JSON.stringify(ventasAsientos));
+    }
+}
+
+window.toggleEstadoSalaAdmin = async (marcado) => {
+    const sala = obtenerBorradorSalaActual();
+    const nuevoEstado = marcado ? 'activa' : 'mantenimiento';
+    
+    if (nuevoEstado === 'mantenimiento') {
+        const funciones = obtenerFuncionesFuturasPorSala(sala.id_sala);
+        if (funciones.length > 0) {
+            const msj = `Hay ${funciones.length} función/es programada(s) desde hoy en adelante para esta sala. Pasarla a mantenimiento cancelará todas estas funciones automáticamente. ¿Estás seguro?`;
+            const confirmado = await confirmarAccion({ titulo: '¿Pasar a mantenimiento?', mensaje: msj, tipo: 'peligro', textoConfirmar: 'Sí, cancelar funciones y pasar a mantenimiento', textoCancelar: 'Cancelar' });
+            if (!confirmado) {
+                renderizarAdminSalas(); 
+                return;
+            }
+            sala.cancelarFuncionesPendientes = true;
+        }
+    } else {
+        sala.cancelarFuncionesPendientes = false;
+    }
+    
+    sala.estado = nuevoEstado;
+    marcarSalaComoModificada();
+    renderizarAdminSalas();
+};
+
+/**
+ * MÓDULO 9 — POLÍTICA DE EDICIÓN DE SALAS:
+ * - Una butaca YA VENDIDA para una función futura nunca se toca (ni su estructura ni su estado):
+ *   evita invalidar o cambiar el precio de un ticket que un cliente ya compró.
+ * - "Generar Cuadrícula Base" (regenerar toda la sala) se bloquea si la sala tiene AL MENOS UNA
+ *   butaca vendida a futuro, porque podría eliminar o renumerar esa butaca comprometida.
+ * - Todo lo demás (butacas sin vender: estructura, mantenimiento, tipo, formatos soportados)
+ *   se sigue editando libre, aunque otras butacas de la misma sala sí tengan venta futura.
+ */
+function renderizarAvisoBloqueoSala(bloqueadasPorVenta) {
+    const aviso = document.getElementById('admin-sala-bloqueo-aviso');
+    if (!aviso) return;
+    if (bloqueadasPorVenta.size === 0) { aviso.classList.add('hidden'); return; }
+    aviso.classList.remove('hidden');
+    aviso.innerHTML = `<i class="fa-solid fa-lock mr-1"></i><b>${bloqueadasPorVenta.size} butaca(s)</b> tienen una venta para una función futura y no se pueden editar. "Generar Cuadrícula Base" también está bloqueado mientras existan.`;
+}
+
+>>>>>>> Stashed changes
 window.generarMatriz = async () => {
     const filas = Number(document.getElementById('admin-sala-filas').value);
     const columnas = Number(document.getElementById('admin-sala-columnas').value);
