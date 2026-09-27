@@ -20,32 +20,36 @@
 /* ---------- 1. Base y variables de marca ---------- */
 body {
     font-family: 'Inter', sans-serif;
-    background-color: #050505;
+    background-color: #050B14;
     color: #fdfcfa;
 }
 
 :root {
+    --brand-blue: #0A7EB1;
+    --brand-dark-blue: #075A80;
+    --brand-yellow: #DC9E3F;
+    --brand-light-yellow: #FFFEAD;
+    --brand-green: #22c55e;
+    --brand-dark-green: #16a34a;
     --brand-red: #DC2026;
     --brand-dark-red: #7E1616;
-    --brand-yellow: #FCC252;
-    --brand-light-yellow: #FFFEAD;
     --altura-navbar: 72px;
 }
 
-.text-brand-red {
-    color: var(--brand-red);
+.text-brand-blue {
+    color: var(--brand-blue);
 }
 
-.bg-brand-red {
-    background-color: var(--brand-red);
+.bg-brand-blue {
+    background-color: var(--brand-blue);
 }
 
-.hover\:bg-brand-dark-red:hover {
-    background-color: var(--brand-dark-red);
+.hover\:bg-brand-dark-blue:hover {
+    background-color: var(--brand-dark-blue);
 }
 
-.border-brand-red {
-    border-color: var(--brand-red);
+.border-brand-blue {
+    border-color: var(--brand-blue);
 }
 
 .text-brand-yellow {
@@ -81,7 +85,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--brand-red);
+    background: var(--brand-blue);
 }
 
 /* ---------- 3. Carrusel principal (Home) ---------- */
@@ -119,7 +123,7 @@ body {
 
 /* ---------- 5. Utilidades ---------- */
 .gradient-text {
-    background: linear-gradient(90deg, var(--brand-yellow) 0%, var(--brand-red) 100%);
+    background: linear-gradient(90deg, var(--brand-yellow) 0%, var(--brand-blue) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -312,7 +316,7 @@ body {
     top: -12px;
     width: 24px;
     height: 24px;
-    background-color: #111111;
+    background-color: #0D1627;
     border-radius: 50%;
 }
 
@@ -346,9 +350,9 @@ body {
     pointer-events: auto;
     min-width: 260px;
     max-width: 360px;
-    background-color: #111111;
+    background-color: #0D1627;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-left: 4px solid var(--brand-red);
+    border-left: 4px solid var(--brand-blue);
     border-radius: 0.75rem;
     padding: 0.85rem 1rem;
     color: #fdfcfa;
@@ -366,7 +370,7 @@ body {
 }
 
 .toast-cinerama.toast-error {
-    border-left-color: var(--brand-red);
+    border-left-color: var(--brand-blue);
 }
 
 .toast-cinerama.toast-info {
@@ -403,12 +407,12 @@ body {
 
 /* Estado de error en campos de formulario (Fase 6) */
 .campo-invalido {
-    border-color: var(--brand-red) !important;
-    box-shadow: 0 0 0 1px var(--brand-red);
+    border-color: var(--brand-blue) !important;
+    box-shadow: 0 0 0 1px var(--brand-blue);
 }
 
 .mensaje-error-campo {
-    color: var(--brand-red);
+    color: var(--brand-blue);
     font-size: 0.75rem;
     margin-top: 0.25rem;
     display: block;
@@ -434,13 +438,13 @@ body {
 }
 
 .leaflet-popup-content-wrapper {
-    background: #111111;
+    background: #0D1627;
     color: #fdfcfa;
     border-radius: 0.75rem;
 }
 
 .leaflet-popup-tip {
-    background: #111111;
+    background: #0D1627;
 }
 
 .leaflet-popup-content-wrapper a,
@@ -454,7 +458,7 @@ body {
 }
 
 .admin-tab-btn.activo {
-    background-color: var(--brand-red);
+    background-color: var(--brand-blue);
     color: #fff;
 }
 
@@ -600,7 +604,7 @@ body {
     width: 42px;
     height: 42px;
     border: 3px solid rgba(255, 255, 255, 0.15);
-    border-top-color: var(--brand-red);
+    border-top-color: var(--brand-blue);
     border-radius: 50%;
     animation: girarSpinner 0.7s linear infinite;
 }
@@ -703,7 +707,7 @@ body {
     border-radius: 999px;
     font-size: 11px;
     font-weight: 700;
-    background: #1a1a1a;
+    background: #1A2845;
     border: 1px solid rgba(255, 255, 255, 0.12);
     color: #9ca3af;
     cursor: pointer;
@@ -717,13 +721,13 @@ body {
 }
 
 .chip-selector-activo {
-    background: var(--brand-red);
-    border-color: var(--brand-red);
+    background: var(--brand-blue);
+    border-color: var(--brand-blue);
     color: #fff;
 }
 
 .chip-selector-activo:hover {
-    border-color: var(--brand-red);
+    border-color: var(--brand-blue);
 }
 
 /* ============================================================================
@@ -751,7 +755,7 @@ body {
 .admin-dia-calendario {
     aspect-ratio: 1;
     border-radius: 8px;
-    background: #1a1a1a;
+    background: #1A2845;
     border: 1px solid rgba(255, 255, 255, 0.08);
     color: #d1d5db;
     font-size: 12px;
@@ -766,8 +770,8 @@ body {
 }
 
 .admin-dia-feriado {
-    background: var(--brand-red);
-    border-color: var(--brand-red);
+    background: var(--brand-blue);
+    border-color: var(--brand-blue);
     color: #fff;
 }
 
@@ -809,7 +813,7 @@ body {
 }
 
 .grid-horarios-wrapper::-webkit-scrollbar-thumb:hover {
-    background: var(--brand-red);
+    background: var(--brand-blue);
 }
 
 .grid-horarios-wrapper::-webkit-scrollbar-corner {
@@ -834,7 +838,7 @@ body {
     position: sticky;
     top: 0;
     z-index: 30;
-    background: #111111;
+    background: #0D1627;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     padding: 12px 8px;
     text-align: center;
@@ -850,7 +854,7 @@ body {
     position: sticky;
     left: 0;
     z-index: 40;
-    background: #111111;
+    background: #0D1627;
 }
 
 .grid-horarios-header-cell .sala-formato-tag {
@@ -922,7 +926,7 @@ body {
     cursor: pointer;
     z-index: 10;
     transition: transform 0.15s ease, box-shadow 0.15s ease, z-index 0s;
-    border-left: 3px solid var(--brand-red);
+    border-left: 3px solid var(--brand-blue);
     display: flex;
     flex-direction: column;
 }
@@ -1041,13 +1045,13 @@ body {
 }
 
 .grid-funcion-card-acciones .btn-eliminar {
-    color: var(--brand-red);
+    color: var(--brand-blue);
 }
 
 .grid-funcion-card-acciones .btn-eliminar:hover {
-    background: var(--brand-red);
+    background: var(--brand-blue);
     color: #fff;
-    border-color: var(--brand-red);
+    border-color: var(--brand-blue);
 }
 
 /* --- Bloque de limpieza (patrón rayado más notorio) --- */
@@ -1123,7 +1127,7 @@ body {
     align-items: center;
     gap: 10px;
     padding: 10px 16px;
-    background: #111111;
+    background: #0D1627;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     color: #fff;
@@ -1136,11 +1140,11 @@ body {
 
 .datepicker-trigger:hover {
     border-color: rgba(255, 255, 255, 0.25);
-    background: #1a1a1a;
+    background: #1A2845;
 }
 
 .datepicker-trigger i {
-    color: var(--brand-red);
+    color: var(--brand-blue);
 }
 
 .datepicker-dropdown {
@@ -1148,7 +1152,7 @@ body {
     top: calc(100% + 8px);
     left: 0;
     z-index: 50;
-    background: #111111;
+    background: #0D1627;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 16px;
     padding: 16px;
@@ -1177,7 +1181,7 @@ body {
     width: 32px;
     height: 32px;
     border-radius: 8px;
-    background: #1a1a1a;
+    background: #1A2845;
     border: 1px solid rgba(255, 255, 255, 0.08);
     color: #fff;
     display: flex;
@@ -1250,9 +1254,9 @@ body {
 }
 
 .datepicker-dropdown .dp-dia.dp-seleccionado {
-    background: var(--brand-red);
+    background: var(--brand-blue);
     color: #fff;
-    border-color: var(--brand-red);
+    border-color: var(--brand-blue);
 }
 
 .datepicker-dropdown .dp-dia.dp-otro-mes {
@@ -1331,7 +1335,7 @@ body {
     left: 0;
     right: 0;
     height: 2px;
-    background: var(--brand-red);
+    background: var(--brand-blue);
     z-index: 12;
     pointer-events: none;
     box-shadow: 0 0 8px rgba(220, 32, 38, 0.4);
@@ -1345,7 +1349,7 @@ body {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: var(--brand-red);
+    background: var(--brand-blue);
 }
 
 /* --- Estado vacío del grid --- */

@@ -1,4 +1,4 @@
-/* ============================================================================
+﻿/* ============================================================================
    CINE NÁUTICA — MODALES.JS — Componente reutilizable de confirmación / alerta
    ------------------------------------------------------------------------
    Parte de la arquitectura modular de la app (Módulo 1 — infraestructura).
@@ -31,20 +31,20 @@ function crearModalConfirmacionSiNoExiste() {
                 <i id="confirmacion-global-icono" class="fa-solid text-2xl"></i>
             </div>
             <h3 id="confirmacion-global-titulo" class="text-white font-bold text-lg text-center mb-2"></h3>
-            <p id="confirmacion-global-mensaje" class="text-gray-400 text-sm text-center mb-6 leading-relaxed whitespace-pre-line"></p>
+            <p id="confirmacion-global-mensaje" class="text-slate-400 text-sm text-center mb-6 leading-relaxed whitespace-pre-line"></p>
             <div id="confirmacion-global-barra-tiempo-track" class="hidden w-full h-1 bg-white/10 rounded-full overflow-hidden mb-6 -mt-3">
                 <div id="confirmacion-global-barra-tiempo" class="h-full bg-brand-yellow rounded-full" style="width:100%"></div>
             </div>
             <div class="flex gap-3">
                 <button id="confirmacion-global-btn-cancelar" type="button" class="flex-1 bg-dark-900 hover:bg-dark-700 border border-white/10 text-white py-2.5 rounded-xl font-bold text-sm transition-colors">Cancelar</button>
-                <button id="confirmacion-global-btn-confirmar" type="button" class="flex-1 bg-brand-red hover:bg-brand-dark-red text-white py-2.5 rounded-xl font-bold text-sm transition-colors">Confirmar</button>
+                <button id="confirmacion-global-btn-confirmar" type="button" class="flex-1 bg-brand-blue hover:bg-brand-dark-blue text-white py-2.5 rounded-xl font-bold text-sm transition-colors">Confirmar</button>
             </div>
         </div>`;
     document.body.appendChild(div);
 }
 
 const ESTILOS_MODAL_CONFIRMACION = {
-    peligro: { bg: 'bg-brand-red/15', color: 'text-brand-red', icono: 'fa-triangle-exclamation', btn: 'bg-brand-red hover:bg-brand-dark-red' },
+    peligro: { bg: 'bg-brand-blue/15', color: 'text-brand-blue', icono: 'fa-triangle-exclamation', btn: 'bg-brand-blue hover:bg-brand-dark-blue' },
     advertencia: { bg: 'bg-brand-yellow/15', color: 'text-brand-yellow', icono: 'fa-circle-exclamation', btn: 'bg-brand-yellow hover:bg-yellow-400 text-black' },
     info: { bg: 'bg-blue-500/15', color: 'text-blue-400', icono: 'fa-circle-info', btn: 'bg-blue-600 hover:bg-blue-700' }
 };
@@ -182,7 +182,7 @@ window.solicitarMotivoContingencia = ({
                 <h3 class="text-white font-bold text-lg text-center mb-4">${titulo}</h3>
                 
                 <div class="mb-4 text-left">
-                    <label class="block text-gray-400 text-xs font-bold mb-1">Motivo</label>
+                    <label class="block text-slate-400 text-xs font-bold mb-1">Motivo</label>
                     <select id="${idModal}-motivo" class="w-full bg-dark-900 border border-white/10 text-white rounded-lg p-2.5 focus:border-brand-yellow outline-none transition-colors">
                         ${opcionesMotivo.map(m => `<option value="${m}">${m}</option>`).join('')}
                         <option value="Otro">Otro...</option>
@@ -190,7 +190,7 @@ window.solicitarMotivoContingencia = ({
                 </div>
                 
                 <div class="mb-6 text-left">
-                    <label class="block text-gray-400 text-xs font-bold mb-1">Observaciones (Opcional)</label>
+                    <label class="block text-slate-400 text-xs font-bold mb-1">Observaciones (Opcional)</label>
                     <textarea id="${idModal}-obs" rows="2" placeholder="Detalles adicionales..." class="w-full bg-dark-900 border border-white/10 text-white rounded-lg p-2.5 focus:border-brand-yellow outline-none transition-colors resize-none"></textarea>
                 </div>
 

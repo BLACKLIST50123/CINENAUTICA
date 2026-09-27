@@ -15,8 +15,8 @@
 /** Crea la cuenta admin de demostración si aún no existe (solo la primera vez). */
 function asegurarAdminDemo() {
     let usuarios = JSON.parse(localStorage.getItem(LS_USUARIOS)) || [];
-    if (!usuarios.find(u => u.correo === 'admin@cinerama.com')) {
-        usuarios.push({ nombre: 'Administrador Náutica', correo: 'admin@cinerama.com', contrasena: 'admin123', rol: 'admin', activo: true, compras: [], metodoPago: null });
+    if (!usuarios.find(u => u.correo === 'admin@cinenautica.com')) {
+        usuarios.push({ nombre: 'Administrador Náutica', correo: 'admin@cinenautica.com', contrasena: 'admin123', rol: 'admin', activo: true, compras: [], metodoPago: null });
         localStorage.setItem(LS_USUARIOS, JSON.stringify(usuarios));
     }
 }
@@ -65,7 +65,7 @@ window.cambiarTabAdmin = async (tab) => {
             textoCancelar: 'Quedarme aquí'
         });
         if (!descartar) return; // Se queda en la pestaña de Salas
-        
+
         // Descartamos los cambios
         borradorSalaActual = null;
         borradorSalaNumero = null;
@@ -322,8 +322,8 @@ function pintarCheckboxesFormatosAdmin(contenedorId, formatosMarcados = []) {
     if (!contenedor) return;
     const catalogo = obtenerCatalogoFormatos();
     contenedor.innerHTML = catalogo.map(f => `
-        <label class="flex items-center gap-1.5 bg-dark-800 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-gray-300 cursor-pointer hover:border-brand-red/50 transition-colors">
-            <input type="checkbox" value="${f.id}" class="accent-brand-red" ${formatosMarcados.includes(f.id) ? 'checked' : ''}> ${f.nombre}
+        <label class="flex items-center gap-1.5 bg-dark-800 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 cursor-pointer hover:border-brand-blue/50 transition-colors">
+            <input type="checkbox" value="${f.id}" class="accent-brand-blue" ${formatosMarcados.includes(f.id) ? 'checked' : ''}> ${f.nombre}
         </label>
     `).join('');
 }
@@ -533,7 +533,7 @@ function renderizarGridHorarios() {
 
     // --- Header: esquina + 8 salas ---
     let html = '<div class="grid-horarios-header">';
-    html += '<div class="grid-horarios-header-cell"><i class="fa-regular fa-clock text-gray-600"></i></div>';
+    html += '<div class="grid-horarios-header-cell"><i class="fa-regular fa-clock text-slate-600"></i></div>';
     for (let s = 1; s <= NUMERO_TOTAL_SALAS; s++) {
         const salaConfig = obtenerDatosSalas().salas.find(sc => Number(sc.id_sala.replace('sala_', '')) === s);
         const formatos = (salaConfig && salaConfig.formatosSoportados) ? salaConfig.formatosSoportados : [];
@@ -600,10 +600,10 @@ function renderizarTarjetasEnGrid(slots) {
             // Clase de tipo
             let clasesTipo = 'tipo-regular';
             let tagTipo = '';
-            
+
             if (f.estado === 'cancelada') {
-                clasesTipo = 'tipo-regular !bg-brand-red/30 !border-brand-red !opacity-70 grayscale';
-                tagTipo = '<span class="grid-funcion-card-tag bg-brand-red">CANCELADA</span>';
+                clasesTipo = 'tipo-regular !bg-brand-blue/30 !border-brand-blue !opacity-70 grayscale';
+                tagTipo = '<span class="grid-funcion-card-tag bg-brand-blue">CANCELADA</span>';
             } else if (tipoLanzamiento === 'Estreno') {
                 clasesTipo = 'tipo-estreno';
                 tagTipo = '<span class="grid-funcion-card-tag tag-estreno">ESTRENO</span>';
@@ -782,7 +782,7 @@ window.alCambiarPeliculaFuncion = (formatoIdPreseleccionado = null) => {
 
 function renderizarChipsIdiomaFuncion() {
     document.getElementById('funcion-idioma-chips').innerHTML = ['Doblada', 'Subtitulada'].map(idioma => `
-        <button type="button" onclick="seleccionarIdiomaFuncion('${idioma}')" class="flex-1 py-2 rounded-lg text-sm font-semibold border transition-colors ${idiomaFuncionSeleccionado === idioma ? 'bg-brand-yellow text-black border-brand-yellow' : 'bg-dark-900 text-gray-300 border-white/10 hover:border-white/30'}">${idioma}</button>
+        <button type="button" onclick="seleccionarIdiomaFuncion('${idioma}')" class="flex-1 py-2 rounded-lg text-sm font-semibold border transition-colors ${idiomaFuncionSeleccionado === idioma ? 'bg-brand-yellow text-black border-brand-yellow' : 'bg-dark-900 text-slate-300 border-white/10 hover:border-white/30'}">${idioma}</button>
     `).join('');
 }
 
@@ -851,7 +851,7 @@ window.guardarFuncionAdmin = async (e) => {
     if (funcionAdminEnEdicion && (funcionAdminEnEdicion.hora !== hora || funcionAdminEnEdicion.sala !== sala || funcionAdminEnEdicion.fechaISO !== fechaISO || funcionAdminEnEdicion.formatoId !== formatoId || funcionAdminEnEdicion.idioma !== idiomaFuncionSeleccionado)) {
         const ventasGlobal = JSON.parse(localStorage.getItem(LS_VENTAS_GENERAL)) || [];
         const ventasAsociadas = ventasGlobal.filter(v => Number(v.sala) === Number(funcionAdminEnEdicion.sala) && v.fechaFuncion === funcionAdminEnEdicion.etiquetaFecha && v.horaFuncion === funcionAdminEnEdicion.hora && (v.estado === 'activa' || v.estado === 'pagada'));
-        
+
         if (ventasAsociadas.length > 0) {
             const proced = await confirmarAccion({
                 titulo: '¡Cuidado! Hay ventas activas',
@@ -861,7 +861,7 @@ window.guardarFuncionAdmin = async (e) => {
                 textoCancelar: 'Cancelar edición'
             });
             if (!proced) return;
-            
+
             ventasAsociadas.forEach(va => {
                 const v = ventasGlobal.find(vg => vg.codigo === va.codigo);
                 if (v) v.estado = 'funcion_cancelada';
@@ -903,11 +903,11 @@ window.guardarFuncionAdmin = async (e) => {
 window.eliminarFuncionAdminActual = async () => {
     if (!funcionAdminEnEdicion) return;
     const f = funcionAdminEnEdicion;
-    
+
     // FASE DE CONTINGENCIA
     const ventasGlobal = JSON.parse(localStorage.getItem(LS_VENTAS_GENERAL)) || [];
     const ventasAsociadas = ventasGlobal.filter(v => Number(v.sala) === Number(f.sala) && v.fechaFuncion === f.etiquetaFecha && v.horaFuncion === f.hora && (v.estado === 'activa' || v.estado === 'pagada'));
-    
+
     if (ventasAsociadas.length > 0) {
         const proced = await confirmarAccion({
             titulo: '¡Cuidado! Hay ventas activas',
@@ -917,7 +917,7 @@ window.eliminarFuncionAdminActual = async () => {
             textoCancelar: 'Abortar'
         });
         if (!proced) return;
-        
+
         ventasAsociadas.forEach(va => {
             const v = ventasGlobal.find(vg => vg.codigo === va.codigo);
             if (v) v.estado = 'funcion_cancelada';
@@ -943,11 +943,11 @@ window.eliminarFuncionAdminActual = async () => {
 window.eliminarFuncionAdmin = async (indice) => {
     const f = funcionesDelDiaActual[indice];
     if (!f) return;
-    
+
     // FASE DE CONTINGENCIA
     const ventasGlobal = JSON.parse(localStorage.getItem(LS_VENTAS_GENERAL)) || [];
     const ventasAsociadas = ventasGlobal.filter(v => Number(v.sala) === Number(f.sala) && v.fechaFuncion === f.etiquetaFecha && v.horaFuncion === f.hora && (v.estado === 'activa' || v.estado === 'pagada'));
-    
+
     if (ventasAsociadas.length > 0) {
         const proced = await confirmarAccion({
             titulo: '¡Cuidado! Hay ventas activas',
@@ -957,7 +957,7 @@ window.eliminarFuncionAdmin = async (indice) => {
             textoCancelar: 'Abortar'
         });
         if (!proced) return;
-        
+
         ventasAsociadas.forEach(va => {
             const v = ventasGlobal.find(vg => vg.codigo === va.codigo);
             if (v) v.estado = 'funcion_cancelada';
@@ -1037,14 +1037,14 @@ function renderizarAdminCartelera() {
                 <img src="${p.poster}" class="w-10 h-14 object-cover rounded flex-shrink-0">
                 <div class="min-w-0">
                     <p class="text-white font-bold text-sm truncate">${p.titulo}</p>
-                    <p class="text-gray-500 text-xs truncate">${p.genero} &bull; ${p.duracion}</p>
-                    <span class="inline-block bg-brand-red/10 text-brand-red text-[10px] font-bold px-1.5 py-0.5 rounded mt-1">CARTELERA</span>
+                    <p class="text-slate-500 text-xs truncate">${p.genero} &bull; ${p.duracion}</p>
+                    <span class="inline-block bg-brand-blue/10 text-brand-blue text-[10px] font-bold px-1.5 py-0.5 rounded mt-1">CARTELERA</span>
                 </div>
             </div>
             <div class="flex items-center gap-3 flex-shrink-0">
-                <button onclick="irAHorariosDeEstaPelicula('${p.id}')" class="text-gray-500 hover:text-brand-yellow transition-colors" title="Ver funciones en Horarios"><i class="fa-solid fa-calendar-days"></i></button>
-                <button onclick="abrirModalEditarPelicula('${p.id}', 'cartelera')" class="text-gray-500 hover:text-brand-yellow transition-colors" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                <button onclick="eliminarPeliculaAdmin('${p.id}', 'cartelera')" class="text-gray-500 hover:text-brand-red transition-colors" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                <button onclick="irAHorariosDeEstaPelicula('${p.id}')" class="text-slate-500 hover:text-brand-yellow transition-colors" title="Ver funciones en Horarios"><i class="fa-solid fa-calendar-days"></i></button>
+                <button onclick="abrirModalEditarPelicula('${p.id}', 'cartelera')" class="text-slate-500 hover:text-brand-yellow transition-colors" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                <button onclick="eliminarPeliculaAdmin('${p.id}', 'cartelera')" class="text-slate-500 hover:text-brand-blue transition-colors" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
             </div>
         </div>
     `).join('');
@@ -1055,18 +1055,18 @@ function renderizarAdminCartelera() {
                 <img src="${p.poster}" class="w-10 h-14 object-cover rounded flex-shrink-0">
                 <div class="min-w-0">
                     <p class="text-white font-bold text-sm truncate">${p.titulo}</p>
-                    <p class="text-gray-500 text-xs truncate">${p.genero}</p>
+                    <p class="text-slate-500 text-xs truncate">${p.genero}</p>
                     <span class="inline-block bg-brand-yellow/10 text-brand-yellow text-[10px] font-bold px-1.5 py-0.5 rounded mt-1">ESTRENO</span>
                 </div>
             </div>
             <div class="flex items-center gap-3 flex-shrink-0">
-                <button onclick="abrirModalEditarPelicula('${p.id}', 'estreno')" class="text-gray-500 hover:text-brand-yellow transition-colors" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                <button onclick="eliminarPeliculaAdmin('${p.id}', 'estreno')" class="text-gray-500 hover:text-brand-red transition-colors" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                <button onclick="abrirModalEditarPelicula('${p.id}', 'estreno')" class="text-slate-500 hover:text-brand-yellow transition-colors" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                <button onclick="eliminarPeliculaAdmin('${p.id}', 'estreno')" class="text-slate-500 hover:text-brand-blue transition-colors" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
             </div>
         </div>
     `).join('');
 
-    lista.innerHTML = (filasCartelera + filasEstrenos) || `<p class="text-gray-500 text-sm italic">${termino ? 'Sin resultados para tu búsqueda.' : 'Aún no hay películas registradas.'}</p>`;
+    lista.innerHTML = (filasCartelera + filasEstrenos) || `<p class="text-slate-500 text-sm italic">${termino ? 'Sin resultados para tu búsqueda.' : 'Aún no hay películas registradas.'}</p>`;
 
     // FASE 8: contador total (sobre el catálogo completo, no solo lo filtrado)
     const contador = document.getElementById('admin-contador-peliculas');
@@ -1094,7 +1094,7 @@ function renderizarAdminBanner() {
     ];
 
     if (todas.length === 0) {
-        contenedor.innerHTML = '<p class="text-gray-500 text-sm italic">Aún no hay películas en Cartelera ni Estrenos para destacar.</p>';
+        contenedor.innerHTML = '<p class="text-slate-500 text-sm italic">Aún no hay películas en Cartelera ni Estrenos para destacar.</p>';
         return;
     }
 
@@ -1109,17 +1109,17 @@ function renderizarAdminBanner() {
         return `
             <div class="flex items-center justify-between bg-dark-900 border border-white/5 rounded-xl p-3 gap-3">
                 <label class="flex items-center gap-3 min-w-0 cursor-pointer flex-grow">
-                    <input type="checkbox" ${activo ? 'checked' : ''} onchange="toggleBannerPelicula('${p.id}')" class="accent-brand-red w-4 h-4 flex-shrink-0">
+                    <input type="checkbox" ${activo ? 'checked' : ''} onchange="toggleBannerPelicula('${p.id}')" class="accent-brand-blue w-4 h-4 flex-shrink-0">
                     <img src="${p.poster}" class="w-8 h-11 object-cover rounded flex-shrink-0">
                     <div class="min-w-0">
                         <p class="text-white font-bold text-sm truncate">${p.titulo}</p>
-                        <span class="inline-block ${p.origen === 'estreno' ? 'bg-brand-yellow/10 text-brand-yellow' : 'bg-brand-red/10 text-brand-red'} text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5">${p.origen === 'estreno' ? 'ESTRENO' : 'CARTELERA'}</span>
+                        <span class="inline-block ${p.origen === 'estreno' ? 'bg-brand-yellow/10 text-brand-yellow' : 'bg-brand-blue/10 text-brand-blue'} text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5">${p.origen === 'estreno' ? 'ESTRENO' : 'CARTELERA'}</span>
                     </div>
                 </label>
                 ${activo ? `
                 <div class="flex items-center gap-1 flex-shrink-0">
-                    <button type="button" onclick="moverBannerPelicula('${p.id}', -1)" ${posicion === 0 ? 'disabled' : ''} class="w-8 h-8 rounded-lg bg-dark-800 border border-white/10 text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed hover:text-brand-yellow flex items-center justify-center transition-colors" title="Subir"><i class="fa-solid fa-chevron-up text-xs"></i></button>
-                    <button type="button" onclick="moverBannerPelicula('${p.id}', 1)" ${posicion === bannerPeliculasIds.length - 1 ? 'disabled' : ''} class="w-8 h-8 rounded-lg bg-dark-800 border border-white/10 text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed hover:text-brand-yellow flex items-center justify-center transition-colors" title="Bajar"><i class="fa-solid fa-chevron-down text-xs"></i></button>
+                    <button type="button" onclick="moverBannerPelicula('${p.id}', -1)" ${posicion === 0 ? 'disabled' : ''} class="w-8 h-8 rounded-lg bg-dark-800 border border-white/10 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:text-brand-yellow flex items-center justify-center transition-colors" title="Subir"><i class="fa-solid fa-chevron-up text-xs"></i></button>
+                    <button type="button" onclick="moverBannerPelicula('${p.id}', 1)" ${posicion === bannerPeliculasIds.length - 1 ? 'disabled' : ''} class="w-8 h-8 rounded-lg bg-dark-800 border border-white/10 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:text-brand-yellow flex items-center justify-center transition-colors" title="Bajar"><i class="fa-solid fa-chevron-down text-xs"></i></button>
                 </div>` : ''}
             </div>`;
     }).join('');
@@ -1408,19 +1408,19 @@ function renderizarAdminDulceria(filtro = filtroAdminDulceriaActual) {
                 </div>
                 <div class="min-w-0">
                     <p class="text-white font-bold text-sm truncate">${p.nombre}</p>
-                    <p class="text-gray-500 text-xs">${formatearMoneda(p.precio)} &bull; ${obtenerNombreCategoriaDulceria(p.categoria)}</p>
+                    <p class="text-slate-500 text-xs">${formatearMoneda(p.precio)} &bull; ${obtenerNombreCategoriaDulceria(p.categoria)}</p>
                 </div>
             </div>
             <div class="flex items-center gap-3 flex-shrink-0">
-                <label class="flex items-center gap-1.5 text-[10px] text-gray-400 cursor-pointer">
+                <label class="flex items-center gap-1.5 text-[10px] text-slate-400 cursor-pointer">
                     ${p.stock ? 'Stock' : 'Agotado'}
                     <input type="checkbox" class="toggle-stock" ${p.stock ? 'checked' : ''} onchange="toggleStockDulce('${id}', this.checked)">
                 </label>
-                <button onclick="editarProductoDulceriaAdmin('${id}')" class="text-gray-500 hover:text-brand-yellow transition-colors" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                <button onclick="eliminarProductoDulceriaAdmin('${id}')" class="text-gray-500 hover:text-brand-red transition-colors" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                <button onclick="editarProductoDulceriaAdmin('${id}')" class="text-slate-500 hover:text-brand-yellow transition-colors" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                <button onclick="eliminarProductoDulceriaAdmin('${id}')" class="text-slate-500 hover:text-brand-blue transition-colors" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
             </div>
         </div>
-    `).join('') || `<p class="text-gray-500 text-sm italic">${termino ? 'Sin resultados para tu búsqueda.' : 'No hay productos en esta categoría.'}</p>`;
+    `).join('') || `<p class="text-slate-500 text-sm italic">${termino ? 'Sin resultados para tu búsqueda.' : 'No hay productos en esta categoría.'}</p>`;
 
     // FASE 8: contador total del catálogo completo (no solo lo filtrado/buscado)
     const contador = document.getElementById('admin-contador-dulces');
@@ -1448,7 +1448,7 @@ function renderizarFiltrosAdminDulceria(filtroActivo) {
     const categorias = [{ id: 'all', nombre: 'Todos' }, ...obtenerCategoriasDulceriaConSinAsignar()];
     contenedor.innerHTML = categorias.map(cat => {
         const activo = cat.id === filtroActivo;
-        return `<button onclick="filtrarAdminDulceria('${cat.id}')" data-categoria="${cat.id}" class="admin-cat-btn px-3 py-1.5 font-semibold whitespace-nowrap border-b-2 text-sm transition-colors ${activo ? 'text-brand-yellow border-brand-yellow' : 'text-gray-400 hover:text-white border-transparent'}">${cat.nombre}</button>`;
+        return `<button onclick="filtrarAdminDulceria('${cat.id}')" data-categoria="${cat.id}" class="admin-cat-btn px-3 py-1.5 font-semibold whitespace-nowrap border-b-2 text-sm transition-colors ${activo ? 'text-brand-yellow border-brand-yellow' : 'text-slate-400 hover:text-white border-transparent'}">${cat.nombre}</button>`;
     }).join('');
 }
 
@@ -1478,7 +1478,7 @@ function renderizarListaCategoriasDulceria() {
     const contenedor = document.getElementById('admin-lista-categorias-dulceria');
     if (!contenedor) return;
     if (categoriasDulceria.length === 0) {
-        contenedor.innerHTML = '<p class="text-gray-500 text-sm italic flex-shrink-0">Aún no hay categorías. Crea la primera arriba.</p>';
+        contenedor.innerHTML = '<p class="text-slate-500 text-sm italic flex-shrink-0">Aún no hay categorías. Crea la primera arriba.</p>';
         return;
     }
     contenedor.innerHTML = categoriasDulceria.map(cat => {
@@ -1487,9 +1487,9 @@ function renderizarListaCategoriasDulceria() {
             <div class="flex items-center justify-between bg-dark-900 border border-white/5 rounded-xl p-3 gap-2 min-w-0">
                 <div class="min-w-0">
                     <p class="text-white font-bold text-sm truncate">${cat.nombre}</p>
-                    <p class="text-gray-500 text-xs">${cantidad} producto${cantidad === 1 ? '' : 's'}</p>
+                    <p class="text-slate-500 text-xs">${cantidad} producto${cantidad === 1 ? '' : 's'}</p>
                 </div>
-                <button type="button" onclick="eliminarCategoriaDulceriaAdmin('${cat.id}')" class="text-gray-500 hover:text-brand-red transition-colors flex-shrink-0" title="Eliminar categoría"><i class="fa-solid fa-trash"></i></button>
+                <button type="button" onclick="eliminarCategoriaDulceriaAdmin('${cat.id}')" class="text-slate-500 hover:text-brand-blue transition-colors flex-shrink-0" title="Eliminar categoría"><i class="fa-solid fa-trash"></i></button>
             </div>`;
     }).join('');
 }
@@ -1765,7 +1765,7 @@ function actualizarContadorSala(sala) {
         if (texto) texto.innerHTML = `Pasadizos: <span id="admin-contador-bloqueadas" class="contador-bloqueadas text-white font-bold">${totales.pasadizo || 0} / ${sala.asientos.length}</span>`;
         if (icono) icono.className = 'fa-solid fa-road text-brand-yellow text-xs';
     } else {
-        if (texto) texto.innerHTML = `Disponibles: <b class="text-green-400">${totales.disponible || 0}</b> · Mantenimiento: <b class="text-brand-red">${totales.mantenimiento || 0}</b> · Accesibles: <b class="text-blue-400">${totales.accesible || 0}</b>`;
+        if (texto) texto.innerHTML = `Disponibles: <b class="text-green-400">${totales.disponible || 0}</b> · Mantenimiento: <b class="text-brand-blue">${totales.mantenimiento || 0}</b> · Accesibles: <b class="text-blue-400">${totales.accesible || 0}</b>`;
         if (icono) icono.className = 'fa-solid fa-chair text-brand-yellow text-xs';
     }
 }
@@ -1774,8 +1774,8 @@ window.cambiarPestanaSala = (pestana) => {
     pestanaSalaActiva = pestana;
     document.getElementById('admin-panel-estructura-sala').classList.toggle('hidden', pestana !== 'estructura');
     document.getElementById('admin-panel-estados-sala').classList.toggle('hidden', pestana !== 'estados');
-    document.getElementById('admin-pestana-estructura').className = `admin-pestana-sala flex-1 px-4 py-3 text-sm font-bold border-b-2 ${pestana === 'estructura' ? 'text-brand-yellow border-brand-yellow' : 'text-gray-500 border-transparent'}`;
-    document.getElementById('admin-pestana-estados').className = `admin-pestana-sala flex-1 px-4 py-3 text-sm font-bold border-b-2 ${pestana === 'estados' ? 'text-brand-yellow border-brand-yellow' : 'text-gray-500 border-transparent'}`;
+    document.getElementById('admin-pestana-estructura').className = `admin-pestana-sala flex-1 px-4 py-3 text-sm font-bold border-b-2 ${pestana === 'estructura' ? 'text-brand-yellow border-brand-yellow' : 'text-slate-500 border-transparent'}`;
+    document.getElementById('admin-pestana-estados').className = `admin-pestana-sala flex-1 px-4 py-3 text-sm font-bold border-b-2 ${pestana === 'estados' ? 'text-brand-yellow border-brand-yellow' : 'text-slate-500 border-transparent'}`;
     renderizarAdminSalas();
 };
 window.cambiarModoEdicionSala = window.cambiarPestanaSala;
@@ -1789,14 +1789,14 @@ function renderizarAdminSalas() {
     document.getElementById('admin-sala-columnas').value = sala.columnas;
     const grid = document.getElementById('admin-grid-salas');
     grid.style.setProperty('--columnas-sala', sala.columnas);
-    
+
     const switchActiva = document.getElementById('admin-sala-estado-switch');
     const textoEstado = document.getElementById('admin-sala-estado-texto');
     if (switchActiva) {
         const esActiva = sala.estado === 'activa';
         switchActiva.checked = esActiva;
         textoEstado.textContent = esActiva ? 'Activa' : 'Mantenimiento';
-        textoEstado.className = `text-sm font-bold ${esActiva ? 'text-green-500' : 'text-brand-red'}`;
+        textoEstado.className = `text-sm font-bold ${esActiva ? 'text-green-500' : 'text-brand-blue'}`;
     }
 
     // MÓDULO 9: qué butacas están comprometidas con una venta futura. Ya no se muestra ningún
@@ -1825,7 +1825,7 @@ function renderizarFormatosSalaAdmin(sala) {
     if (!contenedor) return;
     const soportados = sala.formatosSoportados || [];
     contenedor.innerHTML = obtenerCatalogoFormatos().map(f => `
-        <label class="flex items-center gap-1.5 bg-dark-900 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-gray-300 cursor-pointer hover:border-brand-yellow/50 transition-colors">
+        <label class="flex items-center gap-1.5 bg-dark-900 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 cursor-pointer hover:border-brand-yellow/50 transition-colors">
             <input type="checkbox" value="${f.id}" onchange="toggleFormatoSalaAdmin('${f.id}', this.checked)" class="accent-brand-yellow" ${soportados.includes(f.id) ? 'checked' : ''}> ${f.nombre}
         </label>
     `).join('');
@@ -1850,7 +1850,7 @@ function obtenerFuncionesFuturasPorSala(id_sala) {
                     const horaRaw = typeof h === 'object' ? h.hora : h;
                     const hSala = typeof h === 'object' && h.sala ? h.sala : 1;
                     const hEstado = typeof h === 'object' && h.estado ? h.estado : 'programada';
-                    
+
                     if (Number(hSala) === salaNum && hEstado !== 'cancelada') {
                         futuras.push({ pelicula: pelicula.id, fecha, hora: horaRaw });
                     }
@@ -1871,7 +1871,7 @@ function cancelarFuncionesFuturasPorSala(id_sala) {
                     const horaRaw = typeof h === 'object' ? h.hora : h;
                     const hSala = typeof h === 'object' && h.sala ? h.sala : 1;
                     const hEstado = typeof h === 'object' && h.estado ? h.estado : 'programada';
-                    
+
                     if (Number(hSala) === salaNum && hEstado !== 'cancelada') {
                         return { hora: horaRaw, sala: hSala, estado: 'cancelada' };
                     }
@@ -1886,14 +1886,14 @@ function cancelarFuncionesFuturasPorSala(id_sala) {
 window.toggleEstadoSalaAdmin = async (marcado) => {
     const sala = obtenerBorradorSalaActual();
     const nuevoEstado = marcado ? 'activa' : 'mantenimiento';
-    
+
     if (nuevoEstado === 'mantenimiento') {
         const funciones = obtenerFuncionesFuturasPorSala(sala.id_sala);
         if (funciones.length > 0) {
             const msj = `Hay ${funciones.length} función/es programada(s) desde hoy en adelante para esta sala. Pasarla a mantenimiento cancelará todas estas funciones automáticamente. ¿Estás seguro?`;
             const confirmado = await confirmarAccion({ titulo: '¿Pasar a mantenimiento?', mensaje: msj, tipo: 'peligro', textoConfirmar: 'Sí, cancelar funciones y pasar a mantenimiento', textoCancelar: 'Cancelar' });
             if (!confirmado) {
-                renderizarAdminSalas(); 
+                renderizarAdminSalas();
                 return;
             }
             sala.cancelarFuncionesPendientes = true;
@@ -1901,7 +1901,7 @@ window.toggleEstadoSalaAdmin = async (marcado) => {
     } else {
         sala.cancelarFuncionesPendientes = false;
     }
-    
+
     sala.estado = nuevoEstado;
     marcarSalaComoModificada();
     renderizarAdminSalas();
@@ -2095,7 +2095,7 @@ const SLOTS_TARIFA = [
         slot: 'alta',
         label: 'Tarifa Alta',
         badge: 'Jue · Vie · Sáb · Dom · Pre-Estrenos',
-        badgeClass: 'bg-brand-red/20 text-red-300',
+        badgeClass: 'bg-brand-blue/20 text-red-300',
         descripcion: 'Jue, Vie, Sáb, Dom y Pre-Estrenos',
         icono: 'fa-fire'
     }
@@ -2112,10 +2112,10 @@ function renderizarTarifasDiaAdmin() {
             </div>
             <div class="flex-1 min-w-0">
                 <p class="text-white text-sm font-bold leading-tight">${s.label}</p>
-                <p class="text-gray-500 text-xs mt-0.5">${s.descripcion}</p>
+                <p class="text-slate-500 text-xs mt-0.5">${s.descripcion}</p>
             </div>
             <div class="flex items-center gap-2 flex-shrink-0">
-                <span class="text-gray-400 text-sm">S/</span>
+                <span class="text-slate-400 text-sm">S/</span>
                 <input
                     type="number" min="0" step="0.5"
                     value="${tarifas[s.slot]}"
@@ -2145,11 +2145,11 @@ function renderizarFormatosAdmin() {
     contenedor.innerHTML = catalogo.map((f, i) => `
         <div class="flex items-center gap-2 bg-dark-900 rounded-lg px-3 py-2">
             <input type="text" value="${f.nombre}" onchange="editarFormatoAdmin(${i}, 'nombre', this.value)" class="flex-1 min-w-0 bg-transparent text-white text-sm focus:outline-none border-b border-transparent focus:border-brand-yellow">
-            <div class="flex items-center gap-1 text-gray-400 text-sm flex-shrink-0">
+            <div class="flex items-center gap-1 text-slate-400 text-sm flex-shrink-0">
                 <span>S/</span>
                 <input type="number" min="0" step="0.5" value="${f.recargo}" onchange="editarFormatoAdmin(${i}, 'recargo', this.value)" class="w-16 bg-transparent text-white text-sm focus:outline-none border-b border-transparent focus:border-brand-yellow">
             </div>
-            <button type="button" onclick="eliminarFormatoAdmin('${f.id}')" ${f.protegido ? `disabled title="Es el formato de entrada, no se puede eliminar"` : 'title="Eliminar"'} class="w-7 h-7 rounded flex items-center justify-center flex-shrink-0 ${f.protegido ? 'opacity-30 cursor-not-allowed text-gray-500' : 'text-brand-red hover:bg-brand-red/10'}"><i class="fa-solid fa-trash text-xs"></i></button>
+            <button type="button" onclick="eliminarFormatoAdmin('${f.id}')" ${f.protegido ? `disabled title="Es el formato de entrada, no se puede eliminar"` : 'title="Eliminar"'} class="w-7 h-7 rounded flex items-center justify-center flex-shrink-0 ${f.protegido ? 'opacity-30 cursor-not-allowed text-slate-500' : 'text-brand-blue hover:bg-brand-blue/10'}"><i class="fa-solid fa-trash text-xs"></i></button>
         </div>
     `).join('');
 }
@@ -2217,11 +2217,11 @@ function renderizarTiposEntradaAdmin() {
     contenedor.innerHTML = catalogo.map((t, i) => `
         <div class="flex items-center gap-2 bg-dark-900 rounded-lg px-3 py-2">
             <input type="text" value="${t.nombre}" onchange="editarTipoEntradaAdmin(${i}, 'nombre', this.value)" class="flex-1 min-w-0 bg-transparent text-white text-sm focus:outline-none border-b border-transparent focus:border-brand-yellow">
-            <div class="flex items-center gap-1 text-gray-400 text-sm flex-shrink-0">
+            <div class="flex items-center gap-1 text-slate-400 text-sm flex-shrink-0">
                 <input type="number" min="0" max="100" value="${t.descuentoPct}" onchange="editarTipoEntradaAdmin(${i}, 'descuentoPct', this.value)" class="w-14 bg-transparent text-white text-sm focus:outline-none border-b border-transparent focus:border-brand-yellow">
                 <span>% dscto.</span>
             </div>
-            <button type="button" onclick="eliminarTipoEntradaAdmin('${t.id}')" ${t.protegido ? `disabled title="Es el tipo por defecto, no se puede eliminar"` : 'title="Eliminar"'} class="w-7 h-7 rounded flex items-center justify-center flex-shrink-0 ${t.protegido ? 'opacity-30 cursor-not-allowed text-gray-500' : 'text-brand-red hover:bg-brand-red/10'}"><i class="fa-solid fa-trash text-xs"></i></button>
+            <button type="button" onclick="eliminarTipoEntradaAdmin('${t.id}')" ${t.protegido ? `disabled title="Es el tipo por defecto, no se puede eliminar"` : 'title="Eliminar"'} class="w-7 h-7 rounded flex items-center justify-center flex-shrink-0 ${t.protegido ? 'opacity-30 cursor-not-allowed text-slate-500' : 'text-brand-blue hover:bg-brand-blue/10'}"><i class="fa-solid fa-trash text-xs"></i></button>
         </div>
     `).join('');
 }
@@ -2287,7 +2287,7 @@ function renderizarAdminDescuentos() {
         <div class="flex items-center justify-between bg-dark-900 border border-white/5 rounded-xl p-3">
             <div>
                 <p class="text-brand-yellow font-mono font-bold text-sm">${codigo}</p>
-                <p class="text-gray-500 text-xs">${c.descripcion || 'Cupón promocional'}</p>
+                <p class="text-slate-500 text-xs">${c.descripcion || 'Cupón promocional'}</p>
             </div>
             <span class="text-white font-bold">-${c.porcentaje}%</span>
         </div>
@@ -2308,7 +2308,7 @@ window.crearCuponAdmin = async (e) => {
 
     const codigo = inputCodigo.value.trim().toUpperCase();
     const cuponesGuardados = JSON.parse(localStorage.getItem(LS_CUPONES)) || {};
-    
+
     if (cuponesGuardados[codigo]) {
         marcarCampoInvalido(inputCodigo, 'Este código ya está en uso.');
         mostrarToast('El código ya existe.', 'error');
@@ -2332,549 +2332,687 @@ window.crearCuponAdmin = async (e) => {
 };
 
 // --- 15.5 Dashboard: métricas simples ---
-function renderizarAdminDashboard() {
-    // FIX: antes solo sumaba usuarios[].compras, así que las compras de invitados (sin sesión)
-    // no se contaban en el dashboard. obtenerVentasGenerales() incluye ambas, y migra sola los
-    // datos antiguos la primera vez que se llama (ver utilidades.js) para no "perder" ventas.
-    const ventas = obtenerVentasGenerales();
-    let totalTickets = 0;
-    let totalDulces = 0;
-    let totalVentas = 0;
-    let totalCompras = 0;
+    function renderizarAdminDashboard() {
+        const ventas = obtenerVentasGenerales();
+        const socios = typeof obtenerUsuarios === 'function' ? obtenerUsuarios() : [];
+        const peliculas = typeof baseDatosPeliculas !== 'undefined' ? Object.values(baseDatosPeliculas) : [];
 
-    ventas.forEach(compra => {
-        totalCompras++;
-        totalTickets += (compra.asientos || []).length;
-        totalDulces += (compra.dulces || []).length;
-        totalVentas += compra.total || 0;
-    });
+        let ingresosNetos = 0;
+        let ingresosTaquilla = 0;
+        let ingresosDulceria = 0;
+        let totalTickets = 0;
+        let totalDulces = 0;
+        let totalReembolsos = 0;
 
-    document.getElementById('admin-dash-ventas').textContent = formatearMoneda(totalVentas);
-    document.getElementById('admin-dash-compras').textContent = totalCompras;
-    document.getElementById('admin-dash-tickets').textContent = totalTickets;
-    document.getElementById('admin-dash-dulces').textContent = totalDulces;
-}
+        // Diccionario para contar tickets por película
+        const conteoPeliculas = {};
 
-/* ============================================================================
-   MÓDULO 7/8 — PESTAÑA "SOCIOS": VISOR de socios (solo lectura + cumpleaños)
-   ------------------------------------------------------------------------
-   MÓDULO 8: esta pestaña ya NO canjea ni suma puntos a mano. Un canje o un
-   puntaje sin una compra real detrás no es auditable y duplicaba el motor de
-   puntos del checkout; ahora todo movimiento de puntos nace de una venta real
-   (web, o "Nueva Venta" en counter). Aquí solo se busca al socio y se ve su
-   carnet, nivel e historial. La única acción que se conserva es marcar la
-   entrada de cumpleaños como usada: es un beneficio de una sola vez al año,
-   sin monto asociado, no una transacción.
-   Las validaciones son las mismas (ValidadoresSocio) que ve el cliente en su
-   vista de beneficios y el counter en la venta.
-   ============================================================================ */
+        ventas.forEach(compra => {
+            if (compra.estado === 'reembolsada' || compra.estado === 'cancelada') {
+                totalReembolsos++;
+            } else if (compra.estado === 'pagada' || compra.estado === 'activa') {
+                let subtTaquilla = (compra.asientos || []).reduce((sum, a) => sum + (a.precio || 18), 0);
+                
+                // La venta en LS solo guarda un array de strings para los dulces ("2x Popcorn") y un "total" final.
+                let subtDulces = Math.max(0, (compra.total || 0) - subtTaquilla);
 
-let correoSocioAdminActivo = null; // recuerda qué socio se está consultando (para la acción de cumpleaños)
-let filtroNivelSociosActivo = 'todos'; // 'todos' | 'bronce' | 'plata' | 'oro'
+                if (compra.subtotal_entradas !== undefined) subtTaquilla = compra.subtotal_entradas;
+                if (compra.subtotal_dulceria !== undefined) subtDulces = compra.subtotal_dulceria;
 
-/** Limpia la pestaña Socios al entrar (sin resultado de búsqueda pendiente de una visita anterior). */
-function reiniciarPanelSociosAdmin() {
-    correoSocioAdminActivo = null;
-    filtroNivelSociosActivo = 'todos';
-    document.getElementById('admin-socio-resultado').classList.add('hidden');
-    const inputBusqueda = document.getElementById('admin-socio-busqueda');
-    if (inputBusqueda) inputBusqueda.value = '';
-    renderizarListaSociosAdmin();
-}
+                const totalPagado = compra.total || (subtTaquilla + subtDulces);
 
-/* ============================================================================
-   MÓDULO 9 — Socios: listado completo con filtro por nivel y buscador libre
-   ============================================================================ */
-window.filtrarNivelSocioAdmin = (nivel) => {
-    filtroNivelSociosActivo = nivel;
-    renderizarListaSociosAdmin();
-};
+                ingresosNetos += totalPagado;
+                ingresosTaquilla += subtTaquilla;
+                ingresosDulceria += subtDulces;
 
-window.filtrarListaSociosAdmin = () => renderizarListaSociosAdmin();
+                totalTickets += (compra.asientos || []).length;
+                
+                let numItemsDulces = 0;
+                (compra.dulces || []).forEach(str => {
+                    const match = String(str).match(/^(\d+)x/);
+                    numItemsDulces += match ? parseInt(match[1], 10) : 1;
+                });
+                totalDulces += numItemsDulces;
+                compra._numItemsDulces = numItemsDulces;
 
-function renderizarListaSociosAdmin() {
-    const todosLosSocios = obtenerUsuarios().filter(usuarioEsSocio);
-    const termino = (document.getElementById('admin-socio-busqueda')?.value || '').trim().toLowerCase();
+                if (compra.idPelicula) {
+                    conteoPeliculas[compra.idPelicula] = (conteoPeliculas[compra.idPelicula] || 0) + (compra.asientos || []).length;
+                } else if (compra.id_funcion) {
+                    const funcion = window.obtenerFuncionPorId(compra.id_funcion);
+                    if (funcion && funcion.id_pelicula) {
+                        conteoPeliculas[funcion.id_pelicula] = (conteoPeliculas[funcion.id_pelicula] || 0) + (compra.asientos || []).length;
+                    }
+                }
+            }
+        });
 
-    const conteoPorNivel = { bronce: 0, plata: 0, oro: 0 };
-    todosLosSocios.forEach(s => { const key = obtenerNivelSocio(s.puntos || 0).nombre.toLowerCase(); if (conteoPorNivel[key] !== undefined) conteoPorNivel[key]++; });
+        // Ajustar subtotales para igualar el total neto (por descuentos globales en compra.total)
+        const sumaSubtotales = ingresosTaquilla + ingresosDulceria;
+        if (sumaSubtotales > 0) {
+            const pctT = ingresosTaquilla / sumaSubtotales;
+            const pctD = ingresosDulceria / sumaSubtotales;
+            ingresosTaquilla = ingresosNetos * pctT;
+            ingresosDulceria = ingresosNetos * pctD;
+        }
 
-    const etiquetasFiltro = { todos: `Todos (${todosLosSocios.length})`, bronce: `Bronce (${conteoPorNivel.bronce})`, plata: `Plata (${conteoPorNivel.plata})`, oro: `Oro (${conteoPorNivel.oro})` };
-    document.getElementById('admin-socios-filtros-nivel').innerHTML = Object.entries(etiquetasFiltro).map(([id, texto]) => `
-        <button type="button" onclick="filtrarNivelSocioAdmin('${id}')" class="px-4 py-1.5 rounded-full text-xs font-bold border transition-colors ${filtroNivelSociosActivo === id ? 'bg-brand-yellow text-black border-brand-yellow' : 'bg-dark-900 text-gray-300 border-white/10 hover:border-white/30'}">${texto}</button>
+        // Actualizar KPIs
+        document.getElementById('dash-kpi-ingresos').textContent = formatearMoneda(ingresosNetos);
+        document.getElementById('dash-kpi-entradas').textContent = totalTickets;
+        document.getElementById('dash-kpi-dulces').textContent = totalDulces + ' ítems';
+        document.getElementById('dash-kpi-socios').textContent = socios.length;
+        document.getElementById('dash-kpi-reembolsos').textContent = totalReembolsos;
+
+        // Actualizar Barras de división
+        const pctTaquillaStr = ingresosNetos > 0 ? Math.round((ingresosTaquilla / ingresosNetos) * 100) : 0;
+        const pctDulceriaStr = ingresosNetos > 0 ? Math.round((ingresosDulceria / ingresosNetos) * 100) : 0;
+
+        document.getElementById('dash-pct-taquilla').textContent = pctTaquillaStr + '%';
+        document.getElementById('dash-monto-taquilla').textContent = formatearMoneda(ingresosTaquilla);
+        setTimeout(() => { document.getElementById('dash-bar-taquilla').style.width = pctTaquillaStr + '%'; }, 100);
+
+        document.getElementById('dash-pct-dulceria').textContent = pctDulceriaStr + '%';
+        document.getElementById('dash-monto-dulceria').textContent = formatearMoneda(ingresosDulceria);
+        setTimeout(() => { document.getElementById('dash-bar-dulceria').style.width = pctDulceriaStr + '%'; }, 100);
+
+        // Top 3 Películas
+        const topPelisArr = Object.keys(conteoPeliculas)
+            .map(id => ({ id, tickets: conteoPeliculas[id] }))
+            .sort((a, b) => b.tickets - a.tickets)
+            .slice(0, 3);
+
+        const topContainer = document.getElementById('dash-top-peliculas');
+        if (topPelisArr.length === 0) {
+            topContainer.innerHTML = '<p class="text-slate-500 text-sm text-center py-4">No hay ventas de entradas registradas aún</p>';
+        } else {
+            topContainer.innerHTML = topPelisArr.map((item, index) => {
+                const peli = peliculas.find(p => String(p.id) === String(item.id));
+                const titulo = peli ? peli.titulo : 'Película Eliminada';
+                const num = index + 1;
+                const color = num === 1 ? 'text-brand-yellow' : (num === 2 ? 'text-slate-300' : 'text-brand-yellow');
+                return `
+                <div class="flex items-center justify-between p-3 bg-dark-900 rounded-xl border border-white/5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-dark-800 flex items-center justify-center font-bold ${color}">${num}</div>
+                        <p class="text-sm font-bold text-white truncate max-w-[200px]" title="${titulo}">${titulo}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-slate-400">Tickets</p>
+                        <p class="text-sm font-bold text-green-400">${item.tickets}</p>
+                    </div>
+                </div>
+            `;
+            }).join('');
+        }
+
+        // Últimas 5 Transacciones
+        const ultimas = [...ventas].reverse().slice(0, 5);
+        const transContainer = document.getElementById('dash-ultimas-transacciones');
+        if (ultimas.length === 0) {
+            transContainer.innerHTML = '<p class="text-slate-500 text-sm text-center py-4">No hay transacciones recientes</p>';
+        } else {
+            transContainer.innerHTML = ultimas.map(c => {
+                const esReembolso = c.estado === 'reembolsada';
+                const colorEstado = esReembolso ? 'text-brand-red bg-red-500/10' : (c.estado === 'cancelada' ? 'text-slate-400 bg-slate-500/10' : 'text-green-400 bg-green-500/10');
+                const iconEstado = esReembolso ? 'fa-rotate-left' : (c.estado === 'cancelada' ? 'fa-xmark' : 'fa-check');
+                const strEstado = esReembolso ? 'Reembolsada' : (c.estado === 'cancelada' ? 'Cancelada' : 'Pagada');
+                
+                // Recalcular ítems de dulces si viene del modo counter antiguo
+                let c_numItemsDulces = c._numItemsDulces;
+                if (c_numItemsDulces === undefined) {
+                    c_numItemsDulces = 0;
+                    (c.dulces || []).forEach(str => {
+                        const match = String(str).match(/^(\d+)x/);
+                        c_numItemsDulces += match ? parseInt(match[1], 10) : 1;
+                    });
+                }
+                
+                return `
+                <div class="flex flex-col gap-2 p-3 bg-dark-900 rounded-xl border border-white/5">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-bold text-white">${c.codigo || c.id || 'Mostrador'}</p>
+                            <p class="text-[10px] text-slate-400">${c.fecha ? new Date(c.fecha).toLocaleString() : 'Reciente'}</p>
+                        </div>
+                        <p class="text-sm font-bold text-white">${formatearMoneda(c.total || 0)}</p>
+                    </div>
+                    <div class="flex justify-between items-center mt-1">
+                        <div class="flex gap-2">
+                            ${(c.asientos || []).length > 0 ? `<span class="text-[10px] bg-dark-800 text-slate-300 px-2 py-0.5 rounded border border-white/5"><i class="fa-solid fa-ticket mr-1"></i>${(c.asientos||[]).length}</span>` : ''}
+                            ${c_numItemsDulces > 0 ? `<span class="text-[10px] bg-dark-800 text-slate-300 px-2 py-0.5 rounded border border-white/5"><i class="fa-solid fa-popcorn mr-1"></i>${c_numItemsDulces}</span>` : ''}
+                        </div>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${colorEstado}"><i class="fa-solid ${iconEstado} mr-1"></i>${strEstado}</span>
+                    </div>
+                </div>
+            `;
+            }).join('');
+        }
+    }
+    window.renderDashboardData = renderizarAdminDashboard;
+
+    /* ============================================================================
+       MÓDULO 7/8 — PESTAÑA "SOCIOS": VISOR de socios (solo lectura + cumpleaños)
+       ------------------------------------------------------------------------
+       MÓDULO 8: esta pestaña ya NO canjea ni suma puntos a mano. Un canje o un
+       puntaje sin una compra real detrás no es auditable y duplicaba el motor de
+       puntos del checkout; ahora todo movimiento de puntos nace de una venta real
+       (web, o "Nueva Venta" en counter). Aquí solo se busca al socio y se ve su
+       carnet, nivel e historial. La única acción que se conserva es marcar la
+       entrada de cumpleaños como usada: es un beneficio de una sola vez al año,
+       sin monto asociado, no una transacción.
+       Las validaciones son las mismas (ValidadoresSocio) que ve el cliente en su
+       vista de beneficios y el counter en la venta.
+       ============================================================================ */
+
+    let correoSocioAdminActivo = null; // recuerda qué socio se está consultando (para la acción de cumpleaños)
+    let filtroNivelSociosActivo = 'todos'; // 'todos' | 'bronce' | 'plata' | 'oro'
+
+    /** Limpia la pestaña Socios al entrar (sin resultado de búsqueda pendiente de una visita anterior). */
+    function reiniciarPanelSociosAdmin() {
+        correoSocioAdminActivo = null;
+        filtroNivelSociosActivo = 'todos';
+        document.getElementById('admin-socio-resultado').classList.add('hidden');
+        const inputBusqueda = document.getElementById('admin-socio-busqueda');
+        if (inputBusqueda) inputBusqueda.value = '';
+        renderizarListaSociosAdmin();
+    }
+
+    /* ============================================================================
+       MÓDULO 9 — Socios: listado completo con filtro por nivel y buscador libre
+       ============================================================================ */
+    window.filtrarNivelSocioAdmin = (nivel) => {
+        filtroNivelSociosActivo = nivel;
+        renderizarListaSociosAdmin();
+    };
+
+    window.filtrarListaSociosAdmin = () => renderizarListaSociosAdmin();
+
+    function renderizarListaSociosAdmin() {
+        const todosLosSocios = obtenerUsuarios().filter(usuarioEsSocio);
+        const termino = (document.getElementById('admin-socio-busqueda')?.value || '').trim().toLowerCase();
+
+        const conteoPorNivel = { bronce: 0, plata: 0, oro: 0 };
+        todosLosSocios.forEach(s => { const key = obtenerNivelSocio(s.puntos || 0).nombre.toLowerCase(); if (conteoPorNivel[key] !== undefined) conteoPorNivel[key]++; });
+
+        const etiquetasFiltro = { todos: `Todos (${todosLosSocios.length})`, bronce: `Bronce (${conteoPorNivel.bronce})`, plata: `Plata (${conteoPorNivel.plata})`, oro: `Oro (${conteoPorNivel.oro})` };
+        document.getElementById('admin-socios-filtros-nivel').innerHTML = Object.entries(etiquetasFiltro).map(([id, texto]) => `
+        <button type="button" onclick="filtrarNivelSocioAdmin('${id}')" class="px-4 py-1.5 rounded-full text-xs font-bold border transition-colors ${filtroNivelSociosActivo === id ? 'bg-brand-yellow text-black border-brand-yellow' : 'bg-dark-900 text-slate-300 border-white/10 hover:border-white/30'}">${texto}</button>
     `).join('');
 
-    const visibles = todosLosSocios.filter(s => {
-        if (filtroNivelSociosActivo !== 'todos' && obtenerNivelSocio(s.puntos || 0).nombre.toLowerCase() !== filtroNivelSociosActivo) return false;
-        if (!termino) return true;
-        return [s.nombre, s.correo, s.codigoSocio, s.dniSimulado].filter(Boolean).some(campo => campo.toLowerCase().includes(termino));
-    });
+        const visibles = todosLosSocios.filter(s => {
+            if (filtroNivelSociosActivo !== 'todos' && obtenerNivelSocio(s.puntos || 0).nombre.toLowerCase() !== filtroNivelSociosActivo) return false;
+            if (!termino) return true;
+            return [s.nombre, s.correo, s.codigoSocio, s.dniSimulado].filter(Boolean).some(campo => campo.toLowerCase().includes(termino));
+        });
 
-    document.getElementById('admin-socios-contador').textContent = `${visibles.length} de ${todosLosSocios.length} socio(s)`;
+        document.getElementById('admin-socios-contador').textContent = `${visibles.length} de ${todosLosSocios.length} socio(s)`;
 
-    const contenedor = document.getElementById('admin-socios-lista');
-    if (visibles.length === 0) {
-        contenedor.innerHTML = htmlEstadoVacio({ icono: 'fa-id-card', titulo: 'Sin resultados', subtitulo: 'Prueba con otro nombre, correo, código o filtro de nivel.' });
-        return;
-    }
-    contenedor.innerHTML = visibles.map(s => {
-        const nivel = obtenerNivelSocio(s.puntos || 0);
-        const activo = s.correo === correoSocioAdminActivo;
-        return `
+        const contenedor = document.getElementById('admin-socios-lista');
+        if (visibles.length === 0) {
+            contenedor.innerHTML = htmlEstadoVacio({ icono: 'fa-id-card', titulo: 'Sin resultados', subtitulo: 'Prueba con otro nombre, correo, código o filtro de nivel.' });
+            return;
+        }
+        contenedor.innerHTML = visibles.map(s => {
+            const nivel = obtenerNivelSocio(s.puntos || 0);
+            const activo = s.correo === correoSocioAdminActivo;
+            return `
         <button type="button" onclick="verSocioAdmin('${s.correo}')" class="w-full text-left bg-dark-900 hover:bg-dark-700 border ${activo ? 'border-brand-yellow' : 'border-white/5'} rounded-xl p-3 flex items-center gap-3 transition-colors">
             <div class="w-9 h-9 rounded-full bg-dark-800 border flex items-center justify-center flex-shrink-0 text-xs font-bold" style="border-color:${nivel.colorHex}; color:${nivel.colorHex}"><i class="fa-solid fa-user"></i></div>
             <div class="flex-grow min-w-0">
                 <p class="text-white font-semibold text-sm truncate">${s.nombre}</p>
-                <p class="text-gray-500 text-xs truncate">${s.correo} · <span class="font-mono">${s.codigoSocio || '—'}</span></p>
+                <p class="text-slate-500 text-xs truncate">${s.correo} · <span class="font-mono">${s.codigoSocio || '—'}</span></p>
             </div>
             <div class="text-right flex-shrink-0">
                 <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase" style="background:${nivel.colorHex}22; color:${nivel.colorHex}; border:1px solid ${nivel.colorHex}55">${nivel.nombre}</span>
                 <p class="text-brand-yellow font-bold text-sm mt-0.5">${s.puntos || 0} pts</p>
             </div>
         </button>`;
-    }).join('');
-}
+        }).join('');
+    }
 
-/** Abre el detalle completo de un socio (clic en su tarjeta de la lista). */
-window.verSocioAdmin = (correo) => {
-    const socio = buscarSocio(correo);
-    if (!socio) { mostrarToast('El socio ya no existe.', 'error'); return; }
-    correoSocioAdminActivo = socio.correo;
-    renderizarResultadoSocioAdmin(socio);
-    renderizarListaSociosAdmin(); // refresca el resaltado de "seleccionado" en la lista
-    document.getElementById('admin-socio-resultado').scrollIntoView({ behavior: 'smooth', block: 'start' });
-};
+    /** Abre el detalle completo de un socio (clic en su tarjeta de la lista). */
+    window.verSocioAdmin = (correo) => {
+        const socio = buscarSocio(correo);
+        if (!socio) { mostrarToast('El socio ya no existe.', 'error'); return; }
+        correoSocioAdminActivo = socio.correo;
+        renderizarResultadoSocioAdmin(socio);
+        renderizarListaSociosAdmin(); // refresca el resaltado de "seleccionado" en la lista
+        document.getElementById('admin-socio-resultado').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
 
-/** Pinta la tarjeta de resultado con los datos y validadores del socio encontrado. */
-function renderizarResultadoSocioAdmin(socio) {
-    document.getElementById('admin-socio-resultado').classList.remove('hidden');
-    document.getElementById('admin-socio-nombre').textContent = socio.nombre;
-    document.getElementById('admin-socio-correo').textContent = socio.correo;
-    document.getElementById('admin-socio-codigo').textContent = socio.codigoSocio;
-    document.getElementById('admin-socio-puntos').textContent = `${socio.puntos} pts`;
+    /** Pinta la tarjeta de resultado con los datos y validadores del socio encontrado. */
+    function renderizarResultadoSocioAdmin(socio) {
+        document.getElementById('admin-socio-resultado').classList.remove('hidden');
+        document.getElementById('admin-socio-nombre').textContent = socio.nombre;
+        document.getElementById('admin-socio-correo').textContent = socio.correo;
+        document.getElementById('admin-socio-codigo').textContent = socio.codigoSocio;
+        document.getElementById('admin-socio-puntos').textContent = `${socio.puntos} pts`;
 
-    const nivel = obtenerNivelSocio(socio.puntos);
-    const badge = document.getElementById('admin-socio-nivel-badge');
-    badge.textContent = `Nivel ${nivel.nombre}`;
-    badge.style.backgroundColor = `${nivel.colorHex}22`;
-    badge.style.color = nivel.colorHex;
-    badge.style.border = `1px solid ${nivel.colorHex}55`;
+        const nivel = obtenerNivelSocio(socio.puntos);
+        const badge = document.getElementById('admin-socio-nivel-badge');
+        badge.textContent = `Nivel ${nivel.nombre}`;
+        badge.style.backgroundColor = `${nivel.colorHex}22`;
+        badge.style.color = nivel.colorHex;
+        badge.style.border = `1px solid ${nivel.colorHex}55`;
 
-    // Validador de cumpleaños: mismo texto y misma condición que ve el cliente en su vista de beneficios.
-    const cumple = ValidadoresSocio.tieneBeneficioCumpleanosDisponible(socio);
-    document.getElementById('admin-socio-cumple-texto').textContent = cumple.ok ? '¡Le corresponde su entrada de cumpleaños!' : cumple.motivo;
-    document.getElementById('admin-socio-btn-cumple').classList.toggle('hidden', !cumple.ok);
+        // Validador de cumpleaños: mismo texto y misma condición que ve el cliente en su vista de beneficios.
+        const cumple = ValidadoresSocio.tieneBeneficioCumpleanosDisponible(socio);
+        document.getElementById('admin-socio-cumple-texto').textContent = cumple.ok ? '¡Le corresponde su entrada de cumpleaños!' : cumple.motivo;
+        document.getElementById('admin-socio-btn-cumple').classList.toggle('hidden', !cumple.ok);
 
-    // Validador de fila preferencial (según nivel).
-    const fila = ValidadoresSocio.tieneFilaPreferencial(socio);
-    document.getElementById('admin-socio-fila-texto').textContent = fila.ok ? 'Tiene fila preferencial' : fila.motivo;
+        // Validador de fila preferencial (según nivel).
+        const fila = ValidadoresSocio.tieneFilaPreferencial(socio);
+        document.getElementById('admin-socio-fila-texto').textContent = fila.ok ? 'Tiene fila preferencial' : fila.motivo;
 
-    const historial = (socio.historialPuntos || []).slice(0, 10);
-    const contenedorHistorial = document.getElementById('admin-socio-historial');
-    if (historial.length === 0) {
-        contenedorHistorial.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">Este socio todavía no tiene movimientos de puntos.</p>';
-    } else {
-        contenedorHistorial.innerHTML = historial.map(mov => `
+        const historial = (socio.historialPuntos || []).slice(0, 10);
+        const contenedorHistorial = document.getElementById('admin-socio-historial');
+        if (historial.length === 0) {
+            contenedorHistorial.innerHTML = '<p class="text-slate-500 text-sm text-center py-4">Este socio todavía no tiene movimientos de puntos.</p>';
+        } else {
+            contenedorHistorial.innerHTML = historial.map(mov => `
             <div class="flex justify-between items-center bg-dark-900 rounded-lg px-3 py-2 text-sm">
                 <div>
-                    <p class="text-gray-300">${mov.motivo}</p>
-                    <p class="text-gray-500 text-xs">${new Date(mov.fecha).toLocaleString('es-PE')}</p>
+                    <p class="text-slate-300">${mov.motivo}</p>
+                    <p class="text-slate-500 text-xs">${new Date(mov.fecha).toLocaleString('es-PE')}</p>
                 </div>
-                <span class="font-bold ${mov.cantidad >= 0 ? 'text-green-400' : 'text-brand-red'}">${mov.cantidad >= 0 ? '+' : ''}${mov.cantidad} pts</span>
+                <span class="font-bold ${mov.cantidad >= 0 ? 'text-green-400' : 'text-brand-blue'}">${mov.cantidad >= 0 ? '+' : ''}${mov.cantidad} pts</span>
             </div>
         `).join('');
+        }
     }
-}
 
-/** Vuelve a cargar y pintar al socio activo desde localStorage (tras validar el cumpleaños). */
-function refrescarSocioAdminActivo() {
-    if (!correoSocioAdminActivo) return;
-    const socio = buscarSocio(correoSocioAdminActivo);
-    if (socio) renderizarResultadoSocioAdmin(socio);
-}
-
-window.validarCumpleanosAdmin = async () => {
-    if (!correoSocioAdminActivo) return;
-    const socio = buscarSocio(correoSocioAdminActivo);
-    const validacion = ValidadoresSocio.tieneBeneficioCumpleanosDisponible(socio);
-    if (!validacion.ok) { mostrarToast(validacion.motivo, 'error'); return; }
-
-    const confirmado = await confirmarAccion({
-        titulo: '¿Entregar entrada de cumpleaños?',
-        mensaje: `Se marcará como usado el beneficio de cumpleaños de ${socio.nombre} para este año. Esta acción no se puede deshacer.`,
-        tipo: 'advertencia',
-        textoConfirmar: 'Sí, entregar',
-        textoCancelar: 'Cancelar'
-    });
-    if (!confirmado) return;
-
-    marcarBeneficioCumpleanosUsado(correoSocioAdminActivo);
-    mostrarToast('Entrada de cumpleaños entregada. ¡Que disfrute la función!', 'exito');
-    refrescarSocioAdminActivo();
-};
-
-/* ============================================================================
-   MÓDULO 8 — PESTAÑA "PERSONAL": CRUD de cuentas counter y admin
-   ------------------------------------------------------------------------
-   Solo gestiona cuentas de trabajo (rol 'counter' y 'admin'). Los clientes
-   nacen del registro público y no se editan desde aquí. Toda la lógica de
-   datos y las reglas (no eliminar/desactivar/degradar al último admin activo,
-   nadie se modifica a sí mismo) viven en socios.js sección 8; este bloque
-   solo pinta y comunica el resultado con toasts/confirmaciones.
-   ============================================================================ */
-
-let filtroPersonalActivo = 'todos'; // 'todos' | 'counter' | 'admin'
-let correoPersonalEnEdicion = null;  // null = el modal está creando una cuenta nueva
-
-/** Red de seguridad: cualquier acción de Personal exige una sesión de admin (no solo haber entrado al panel). */
-function exigirAdminParaPersonal() {
-    if (!usuarioActual || usuarioActual.rol !== 'admin') {
-        mostrarToast('Acceso restringido: solo para administradores.', 'error');
-        return false;
+    /** Vuelve a cargar y pintar al socio activo desde localStorage (tras validar el cumpleaños). */
+    function refrescarSocioAdminActivo() {
+        if (!correoSocioAdminActivo) return;
+        const socio = buscarSocio(correoSocioAdminActivo);
+        if (socio) renderizarResultadoSocioAdmin(socio);
     }
-    return true;
-}
 
-function escaparHtmlPersonal(texto) {
-    return String(texto).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
+    window.validarCumpleanosAdmin = async () => {
+        if (!correoSocioAdminActivo) return;
+        const socio = buscarSocio(correoSocioAdminActivo);
+        const validacion = ValidadoresSocio.tieneBeneficioCumpleanosDisponible(socio);
+        if (!validacion.ok) { mostrarToast(validacion.motivo, 'error'); return; }
 
-window.filtrarPersonalAdmin = (filtro) => {
-    filtroPersonalActivo = filtro;
-    renderizarAdminPersonal();
-};
+        const confirmado = await confirmarAccion({
+            titulo: '¿Entregar entrada de cumpleaños?',
+            mensaje: `Se marcará como usado el beneficio de cumpleaños de ${socio.nombre} para este año. Esta acción no se puede deshacer.`,
+            tipo: 'advertencia',
+            textoConfirmar: 'Sí, entregar',
+            textoCancelar: 'Cancelar'
+        });
+        if (!confirmado) return;
 
-/** Pinta la lista de cuentas de personal con sus acciones (deshabilitando las que las reglas prohíben). */
-function renderizarAdminPersonal() {
-    const contenedor = document.getElementById('admin-personal-lista');
-    if (!contenedor || !usuarioActual) return;
+        marcarBeneficioCumpleanosUsado(correoSocioAdminActivo);
+        mostrarToast('Entrada de cumpleaños entregada. ¡Que disfrute la función!', 'exito');
+        refrescarSocioAdminActivo();
+    };
 
-    const todos = listarPersonal();
-    const cuentaCounter = todos.filter(u => u.rol === 'counter').length;
-    const cuentaAdmin = todos.filter(u => u.rol === 'admin').length;
+    /* ============================================================================
+       MÓDULO 8 — PESTAÑA "PERSONAL": CRUD de cuentas counter y admin
+       ------------------------------------------------------------------------
+       Solo gestiona cuentas de trabajo (rol 'counter' y 'admin'). Los clientes
+       nacen del registro público y no se editan desde aquí. Toda la lógica de
+       datos y las reglas (no eliminar/desactivar/degradar al último admin activo,
+       nadie se modifica a sí mismo) viven en socios.js sección 8; este bloque
+       solo pinta y comunica el resultado con toasts/confirmaciones.
+       ============================================================================ */
 
-    const etiquetasFiltro = { todos: `Todos (${todos.length})`, counter: `Counter (${cuentaCounter})`, admin: `Administradores (${cuentaAdmin})` };
-    document.getElementById('admin-personal-filtros').innerHTML = Object.entries(etiquetasFiltro).map(([id, texto]) => `
-        <button type="button" onclick="filtrarPersonalAdmin('${id}')" class="px-4 py-1.5 rounded-full text-xs font-bold border transition-colors ${filtroPersonalActivo === id ? 'bg-brand-yellow text-black border-brand-yellow' : 'bg-dark-900 text-gray-300 border-white/10 hover:border-white/30'}">${texto}</button>
+    let filtroPersonalActivo = 'todos'; // 'todos' | 'counter' | 'admin'
+    let correoPersonalEnEdicion = null;  // null = el modal está creando una cuenta nueva
+
+    /** Red de seguridad: cualquier acción de Personal exige una sesión de admin (no solo haber entrado al panel). */
+    function exigirAdminParaPersonal() {
+        if (!usuarioActual || usuarioActual.rol !== 'admin') {
+            mostrarToast('Acceso restringido: solo para administradores.', 'error');
+            return false;
+        }
+        return true;
+    }
+
+    function escaparHtmlPersonal(texto) {
+        return String(texto).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    window.filtrarPersonalAdmin = (filtro) => {
+        filtroPersonalActivo = filtro;
+        renderizarAdminPersonal();
+    };
+
+    /** Pinta la lista de cuentas de personal con sus acciones (deshabilitando las que las reglas prohíben). */
+    function renderizarAdminPersonal() {
+        const contenedor = document.getElementById('admin-personal-lista');
+        if (!contenedor || !usuarioActual) return;
+
+        const todos = listarPersonal();
+        const cuentaCounter = todos.filter(u => u.rol === 'counter').length;
+        const cuentaAdmin = todos.filter(u => u.rol === 'admin').length;
+
+        const etiquetasFiltro = { todos: `Todos (${todos.length})`, counter: `Counter (${cuentaCounter})`, admin: `Administradores (${cuentaAdmin})` };
+        document.getElementById('admin-personal-filtros').innerHTML = Object.entries(etiquetasFiltro).map(([id, texto]) => `
+        <button type="button" onclick="filtrarPersonalAdmin('${id}')" class="px-4 py-1.5 rounded-full text-xs font-bold border transition-colors ${filtroPersonalActivo === id ? 'bg-brand-yellow text-black border-brand-yellow' : 'bg-dark-900 text-slate-300 border-white/10 hover:border-white/30'}">${texto}</button>
     `).join('');
 
-    const termino = (document.getElementById('admin-personal-busqueda')?.value || '').trim().toLowerCase();
-    const visibles = todos.filter(u => {
-        if (filtroPersonalActivo !== 'todos' && u.rol !== filtroPersonalActivo) return false;
-        if (!termino) return true;
-        return [u.nombre, u.correo, u.dni].filter(Boolean).some(campo => campo.toLowerCase().includes(termino));
-    });
-    if (visibles.length === 0) {
-        contenedor.innerHTML = htmlEstadoVacio({
-            icono: 'fa-users-gear',
-            titulo: 'Sin resultados',
-            subtitulo: 'Prueba con otro nombre, correo, DNI o filtro de rol.',
-            textoBoton: 'Nueva cuenta',
-            accionBoton: 'abrirModalPersonal()'
+        const termino = (document.getElementById('admin-personal-busqueda')?.value || '').trim().toLowerCase();
+        const visibles = todos.filter(u => {
+            if (filtroPersonalActivo !== 'todos' && u.rol !== filtroPersonalActivo) return false;
+            if (!termino) return true;
+            return [u.nombre, u.correo, u.dni].filter(Boolean).some(campo => campo.toLowerCase().includes(termino));
         });
-        return;
-    }
+        if (visibles.length === 0) {
+            contenedor.innerHTML = htmlEstadoVacio({
+                icono: 'fa-users-gear',
+                titulo: 'Sin resultados',
+                subtitulo: 'Prueba con otro nombre, correo, DNI o filtro de rol.',
+                textoBoton: 'Nueva cuenta',
+                accionBoton: 'abrirModalPersonal()'
+            });
+            return;
+        }
 
-    contenedor.innerHTML = visibles.map(u => {
-        const activa = cuentaEstaActiva(u);
-        const esYo = u.correo === usuarioActual.correo;
-        const esUltimoAdmin = u.rol === 'admin' && contarAdminsActivos(todos, u.correo) === 0;
-        const bloqueadaParaBaja = esYo || esUltimoAdmin;
-        const motivoBloqueo = esYo ? 'No puedes hacerlo con tu propia cuenta' : 'Es el único administrador activo';
-        const rolInfo = ROLES_PERSONAL[u.rol];
-        const correoSeguro = escaparHtmlPersonal(u.correo);
-        const claseBloqueado = 'opacity-40 cursor-not-allowed';
+        contenedor.innerHTML = visibles.map(u => {
+            const activa = cuentaEstaActiva(u);
+            const esYo = u.correo === usuarioActual.correo;
+            const esUltimoAdmin = u.rol === 'admin' && contarAdminsActivos(todos, u.correo) === 0;
+            const bloqueadaParaBaja = esYo || esUltimoAdmin;
+            const motivoBloqueo = esYo ? 'No puedes hacerlo con tu propia cuenta' : 'Es el único administrador activo';
+            const rolInfo = ROLES_PERSONAL[u.rol];
+            const correoSeguro = escaparHtmlPersonal(u.correo);
+            const claseBloqueado = 'opacity-40 cursor-not-allowed';
 
-        return `
+            return `
         <div class="bg-dark-800 border border-white/5 rounded-2xl p-4 flex flex-col md:flex-row md:items-center gap-4 shadow-xl ${activa ? '' : 'opacity-60'}">
             <div class="w-11 h-11 rounded-full bg-dark-900 border border-white/10 flex items-center justify-center flex-shrink-0">
-                <i class="fa-solid ${u.rol === 'admin' ? 'fa-user-shield text-brand-yellow' : 'fa-cash-register text-brand-red'}"></i>
+                <i class="fa-solid ${u.rol === 'admin' ? 'fa-user-shield text-brand-yellow' : 'fa-cash-register text-brand-blue'}"></i>
             </div>
             <div class="flex-grow min-w-0">
                 <p class="text-white font-bold truncate">${escaparHtmlPersonal(u.nombre)}${esYo ? ' <span class="text-xs text-brand-yellow font-semibold">(tú)</span>' : ''}</p>
-                <p class="text-gray-400 text-sm truncate">${correoSeguro}</p>
+                <p class="text-slate-400 text-sm truncate">${correoSeguro}</p>
             </div>
             <div class="flex flex-wrap gap-2">
-                <span class="px-3 py-1 rounded-full text-xs font-bold border ${u.rol === 'admin' ? 'bg-brand-yellow/10 text-brand-yellow border-brand-yellow/30' : 'bg-brand-red/10 text-brand-red border-brand-red/30'}">${rolInfo.nombre}</span>
-                <span class="px-3 py-1 rounded-full text-xs font-bold border ${activa ? 'bg-green-500/10 text-green-400 border-green-500/30' : 'bg-gray-500/10 text-gray-400 border-gray-500/30'}">${activa ? 'Activa' : 'Desactivada'}</span>
+                <span class="px-3 py-1 rounded-full text-xs font-bold border ${u.rol === 'admin' ? 'bg-brand-yellow/10 text-brand-yellow border-brand-yellow/30' : 'bg-brand-blue/10 text-brand-blue border-brand-blue/30'}">${rolInfo.nombre}</span>
+                <span class="px-3 py-1 rounded-full text-xs font-bold border ${activa ? 'bg-green-500/10 text-green-400 border-green-500/30' : 'bg-slate-500/10 text-slate-400 border-slate-500/30'}">${activa ? 'Activa' : 'Desactivada'}</span>
             </div>
             <div class="flex gap-2">
                 <button type="button" data-correo="${correoSeguro}" onclick="abrirFichaPersonal(this.dataset.correo)" title="Ver ficha" class="w-9 h-9 rounded-lg bg-dark-900 hover:bg-dark-700 border border-white/10 text-white flex items-center justify-center transition-colors"><i class="fa-solid fa-eye"></i></button>
                 <button type="button" data-correo="${correoSeguro}" onclick="abrirModalPersonal(this.dataset.correo)" title="Editar" class="w-9 h-9 rounded-lg bg-dark-900 hover:bg-dark-700 border border-white/10 text-white flex items-center justify-center transition-colors"><i class="fa-solid fa-pen"></i></button>
                 <button type="button" data-correo="${correoSeguro}" onclick="alternarEstadoPersonalAdmin(this.dataset.correo)" ${(activa && bloqueadaParaBaja) ? `disabled title="${motivoBloqueo}"` : `title="${activa ? 'Desactivar' : 'Activar'}"`} class="w-9 h-9 rounded-lg bg-dark-900 border border-white/10 text-white flex items-center justify-center transition-colors ${(activa && bloqueadaParaBaja) ? claseBloqueado : 'hover:bg-dark-700'}"><i class="fa-solid ${activa ? 'fa-user-slash' : 'fa-user-check'}"></i></button>
-                <button type="button" data-correo="${correoSeguro}" onclick="eliminarPersonalAdmin(this.dataset.correo)" ${bloqueadaParaBaja ? `disabled title="${motivoBloqueo}"` : 'title="Eliminar"'} class="w-9 h-9 rounded-lg bg-dark-900 border border-white/10 text-brand-red flex items-center justify-center transition-colors ${bloqueadaParaBaja ? claseBloqueado : 'hover:bg-brand-red/10'}"><i class="fa-solid fa-trash"></i></button>
+                <button type="button" data-correo="${correoSeguro}" onclick="eliminarPersonalAdmin(this.dataset.correo)" ${bloqueadaParaBaja ? `disabled title="${motivoBloqueo}"` : 'title="Eliminar"'} class="w-9 h-9 rounded-lg bg-dark-900 border border-white/10 text-brand-blue flex items-center justify-center transition-colors ${bloqueadaParaBaja ? claseBloqueado : 'hover:bg-brand-blue/10'}"><i class="fa-solid fa-trash"></i></button>
             </div>
         </div>`;
-    }).join('');
-}
-
-/** Abre el modal en modo "crear" (sin argumento) o "editar" (con el correo de la cuenta). */
-window.abrirModalPersonal = (correo = null) => {
-    if (!exigirAdminParaPersonal()) return;
-
-    const inputNombre = document.getElementById('personal-nombre');
-    const inputCorreo = document.getElementById('personal-correo');
-    const selectRol = document.getElementById('personal-rol');
-    const inputContrasena = document.getElementById('personal-contrasena');
-    const inputDni = document.getElementById('personal-dni');
-    const inputTelefono = document.getElementById('personal-telefono');
-    const inputNota = document.getElementById('personal-nota');
-    [inputNombre, inputCorreo, inputContrasena, inputDni, inputTelefono].forEach(limpiarCampoInvalido);
-
-    correoPersonalEnEdicion = correo;
-    if (correo) {
-        const cuenta = listarPersonal().find(u => u.correo === correo);
-        if (!cuenta) { mostrarToast('La cuenta ya no existe.', 'error'); renderizarAdminPersonal(); return; }
-        document.getElementById('personal-modal-titulo').textContent = 'Editar cuenta';
-        inputNombre.value = cuenta.nombre;
-        inputCorreo.value = cuenta.correo;
-        inputCorreo.readOnly = true;
-        inputCorreo.classList.add('opacity-60', 'cursor-not-allowed');
-        inputDni.value = cuenta.dni || '';
-        inputTelefono.value = cuenta.telefono || '';
-        inputNota.value = cuenta.nota || '';
-        selectRol.value = cuenta.rol;
-        selectRol.disabled = cuenta.correo === usuarioActual.correo; // nadie cambia su propio rol
-        inputContrasena.value = '';
-        inputContrasena.placeholder = 'Dejar vacío para no cambiarla';
-        document.getElementById('personal-ayuda-contrasena').textContent = 'Solo escribe algo si quieres restablecer la contraseña. El correo no se puede cambiar.';
-    } else {
-        document.getElementById('personal-modal-titulo').textContent = 'Nueva cuenta';
-        inputNombre.value = '';
-        inputCorreo.value = '';
-        inputCorreo.readOnly = false;
-        inputCorreo.classList.remove('opacity-60', 'cursor-not-allowed');
-        inputDni.value = '';
-        inputTelefono.value = '';
-        inputNota.value = '';
-        selectRol.value = 'counter';
-        selectRol.disabled = false;
-        inputContrasena.value = generarContrasenaTemporal();
-        inputContrasena.placeholder = 'Mínimo 6 caracteres';
-        document.getElementById('personal-ayuda-contrasena').textContent = 'Se generó una contraseña temporal; puedes cambiarla o generar otra. Anótala para entregársela: al guardar se muestra una sola vez.';
+        }).join('');
     }
 
-    const modal = document.getElementById('modal-personal');
-    modal.classList.remove('hidden');
-    setTimeout(() => { modal.classList.remove('opacity-0'); document.getElementById('personal-contenido').classList.remove('scale-95'); }, 10);
-};
+    /** Abre el modal en modo "crear" (sin argumento) o "editar" (con el correo de la cuenta). */
+    window.abrirModalPersonal = (correo = null) => {
+        if (!exigirAdminParaPersonal()) return;
 
-window.cerrarModalPersonal = () => {
-    const modal = document.getElementById('modal-personal');
-    modal.classList.add('opacity-0');
-    document.getElementById('personal-contenido').classList.add('scale-95');
-    setTimeout(() => modal.classList.add('hidden'), 200);
-    correoPersonalEnEdicion = null;
-};
+        const inputNombre = document.getElementById('personal-nombre');
+        const inputCorreo = document.getElementById('personal-correo');
+        const selectRol = document.getElementById('personal-rol');
+        const inputContrasena = document.getElementById('personal-contrasena');
+        const inputDni = document.getElementById('personal-dni');
+        const inputTelefono = document.getElementById('personal-telefono');
+        const inputNota = document.getElementById('personal-nota');
+        [inputNombre, inputCorreo, inputContrasena, inputDni, inputTelefono].forEach(limpiarCampoInvalido);
 
-window.generarContrasenaPersonalAdmin = () => {
-    const input = document.getElementById('personal-contrasena');
-    input.value = generarContrasenaTemporal();
-    limpiarCampoInvalido(input);
-};
+        correoPersonalEnEdicion = correo;
+        if (correo) {
+            const cuenta = listarPersonal().find(u => u.correo === correo);
+            if (!cuenta) { mostrarToast('La cuenta ya no existe.', 'error'); renderizarAdminPersonal(); return; }
+            document.getElementById('personal-modal-titulo').textContent = 'Editar cuenta';
+            inputNombre.value = cuenta.nombre;
+            inputCorreo.value = cuenta.correo;
+            inputCorreo.readOnly = true;
+            inputCorreo.classList.add('opacity-60', 'cursor-not-allowed');
+            inputDni.value = cuenta.dni || '';
+            inputTelefono.value = cuenta.telefono || '';
+            inputNota.value = cuenta.nota || '';
+            selectRol.value = cuenta.rol;
+            selectRol.disabled = cuenta.correo === usuarioActual.correo; // nadie cambia su propio rol
+            inputContrasena.value = '';
+            inputContrasena.placeholder = 'Dejar vacío para no cambiarla';
+            document.getElementById('personal-ayuda-contrasena').textContent = 'Solo escribe algo si quieres restablecer la contraseña. El correo no se puede cambiar.';
+        } else {
+            document.getElementById('personal-modal-titulo').textContent = 'Nueva cuenta';
+            inputNombre.value = '';
+            inputCorreo.value = '';
+            inputCorreo.readOnly = false;
+            inputCorreo.classList.remove('opacity-60', 'cursor-not-allowed');
+            inputDni.value = '';
+            inputTelefono.value = '';
+            inputNota.value = '';
+            selectRol.value = 'counter';
+            selectRol.disabled = false;
+            inputContrasena.value = generarContrasenaTemporal();
+            inputContrasena.placeholder = 'Mínimo 6 caracteres';
+            document.getElementById('personal-ayuda-contrasena').textContent = 'Se generó una contraseña temporal; puedes cambiarla o generar otra. Anótala para entregársela: al guardar se muestra una sola vez.';
+        }
 
-window.guardarPersonalAdmin = async (e) => {
-    e.preventDefault();
-    if (!exigirAdminParaPersonal()) return;
+        const modal = document.getElementById('modal-personal');
+        modal.classList.remove('hidden');
+        setTimeout(() => { modal.classList.remove('opacity-0'); document.getElementById('personal-contenido').classList.remove('scale-95'); }, 10);
+    };
 
-    const inputNombre = document.getElementById('personal-nombre');
-    const inputCorreo = document.getElementById('personal-correo');
-    const inputDni = document.getElementById('personal-dni');
-    const inputTelefono = document.getElementById('personal-telefono');
-    const inputNota = document.getElementById('personal-nota');
-    const selectRol = document.getElementById('personal-rol');
-    const inputContrasena = document.getElementById('personal-contrasena');
-    const editando = correoPersonalEnEdicion !== null;
+    window.cerrarModalPersonal = () => {
+        const modal = document.getElementById('modal-personal');
+        modal.classList.add('opacity-0');
+        document.getElementById('personal-contenido').classList.add('scale-95');
+        setTimeout(() => modal.classList.add('hidden'), 200);
+        correoPersonalEnEdicion = null;
+    };
 
-    // 1) Validación "frontend" (campo por campo, con mensaje bajo cada input). MÓDULO 9: DNI y
-    // celular son obligatorios siempre (crear y editar), para tener trazabilidad real del personal.
-    const reglas = [
-        { input: inputNombre, prueba: () => Validadores.soloTexto(inputNombre.value), mensaje: 'Ingresa un nombre válido (solo letras).' },
-        { input: inputDni, prueba: () => Validadores.dni(inputDni.value), mensaje: 'Ingresa un DNI válido (8 dígitos).' },
-        { input: inputTelefono, prueba: () => Validadores.telefono(inputTelefono.value), mensaje: 'Ingresa un celular válido (9 dígitos, empieza con 9).' }
-    ];
-    if (!editando) {
-        reglas.push({ input: inputCorreo, prueba: () => Validadores.correo(inputCorreo.value), mensaje: 'Ingresa un correo electrónico válido.' });
-        reglas.push({ input: inputContrasena, prueba: () => Validadores.contrasena(inputContrasena.value), mensaje: 'La contraseña debe tener al menos 6 caracteres.' });
-    } else if (inputContrasena.value) {
-        reglas.push({ input: inputContrasena, prueba: () => Validadores.contrasena(inputContrasena.value), mensaje: 'La contraseña debe tener al menos 6 caracteres.' });
-    }
-    if (!validarFormulario(reglas)) return;
+    window.generarContrasenaPersonalAdmin = () => {
+        const input = document.getElementById('personal-contrasena');
+        input.value = generarContrasenaTemporal();
+        limpiarCampoInvalido(input);
+    };
+
+    window.guardarPersonalAdmin = async (e) => {
+        e.preventDefault();
+        if (!exigirAdminParaPersonal()) return;
+
+        const inputNombre = document.getElementById('personal-nombre');
+        const inputCorreo = document.getElementById('personal-correo');
+        const inputDni = document.getElementById('personal-dni');
+        const inputTelefono = document.getElementById('personal-telefono');
+        const inputNota = document.getElementById('personal-nota');
+        const selectRol = document.getElementById('personal-rol');
+        const inputContrasena = document.getElementById('personal-contrasena');
+        const editando = correoPersonalEnEdicion !== null;
+
+        // 1) Validación "frontend" (campo por campo, con mensaje bajo cada input). MÓDULO 9: DNI y
+        // celular son obligatorios siempre (crear y editar), para tener trazabilidad real del personal.
+        const reglas = [
+            { input: inputNombre, prueba: () => Validadores.soloTexto(inputNombre.value), mensaje: 'Ingresa un nombre válido (solo letras).' },
+            { input: inputDni, prueba: () => Validadores.dni(inputDni.value), mensaje: 'Ingresa un DNI válido (8 dígitos).' },
+            { input: inputTelefono, prueba: () => Validadores.telefono(inputTelefono.value), mensaje: 'Ingresa un celular válido (9 dígitos, empieza con 9).' }
+        ];
+        if (!editando) {
+            reglas.push({ input: inputCorreo, prueba: () => Validadores.correo(inputCorreo.value), mensaje: 'Ingresa un correo electrónico válido.' });
+            reglas.push({ input: inputContrasena, prueba: () => Validadores.contrasena(inputContrasena.value), mensaje: 'La contraseña debe tener al menos 6 caracteres.' });
+        } else if (inputContrasena.value) {
+            reglas.push({ input: inputContrasena, prueba: () => Validadores.contrasena(inputContrasena.value), mensaje: 'La contraseña debe tener al menos 6 caracteres.' });
+        }
+        if (!validarFormulario(reglas)) return;
 
 
-    const confirmado = await confirmarAccion({
-        titulo: editando ? '¿Guardar cambios?' : '¿Registrar personal?',
-        mensaje: editando ? `Se actualizarán los datos de ${inputNombre.value.trim()}.` : `Se registrará a ${inputNombre.value.trim()} como nuevo miembro del personal.`,
-        tipo: 'info',
-        textoConfirmar: editando ? 'Sí, guardar' : 'Sí, registrar'
-    });
-    if (!confirmado) return;
+        const confirmado = await confirmarAccion({
+            titulo: editando ? '¿Guardar cambios?' : '¿Registrar personal?',
+            mensaje: editando ? `Se actualizarán los datos de ${inputNombre.value.trim()}.` : `Se registrará a ${inputNombre.value.trim()} como nuevo miembro del personal.`,
+            tipo: 'info',
+            textoConfirmar: editando ? 'Sí, guardar' : 'Sí, registrar'
+        });
+        if (!confirmado) return;
 
-    const contrasenaEscrita = inputContrasena.value;
-    const datosComunes = { nombre: inputNombre.value, dni: inputDni.value, telefono: inputTelefono.value, nota: inputNota.value };
+        const contrasenaEscrita = inputContrasena.value;
+        const datosComunes = { nombre: inputNombre.value, dni: inputDni.value, telefono: inputTelefono.value, nota: inputNota.value };
 
-    // 2) Las reglas de negocio (correo duplicado, DNI duplicado, último admin, etc.) se repiten dentro de socios.js
-    if (editando) {
-        const rolElegido = selectRol.disabled ? undefined : selectRol.value;
-        const resultado = actualizarCuentaPersonal(correoPersonalEnEdicion, { ...datosComunes, rol: rolElegido, contrasena: contrasenaEscrita || undefined }, usuarioActual.correo);
-        if (!resultado.ok) { mostrarToast(resultado.motivo, 'error'); return; }
+        // 2) Las reglas de negocio (correo duplicado, DNI duplicado, último admin, etc.) se repiten dentro de socios.js
+        if (editando) {
+            const rolElegido = selectRol.disabled ? undefined : selectRol.value;
+            const resultado = actualizarCuentaPersonal(correoPersonalEnEdicion, { ...datosComunes, rol: rolElegido, contrasena: contrasenaEscrita || undefined }, usuarioActual.correo);
+            if (!resultado.ok) { mostrarToast(resultado.motivo, 'error'); return; }
 
-        const correoEditado = correoPersonalEnEdicion;
-        cerrarModalPersonal();
-        renderizarAdminPersonal();
-        mostrarToast('Cuenta actualizada.', 'exito');
-        if (contrasenaEscrita) {
-            await alertaBonita({ titulo: 'Contraseña restablecida', mensaje: `Cuenta: ${correoEditado}
+            const correoEditado = correoPersonalEnEdicion;
+            cerrarModalPersonal();
+            renderizarAdminPersonal();
+            mostrarToast('Cuenta actualizada.', 'exito');
+            if (contrasenaEscrita) {
+                await alertaBonita({
+                    titulo: 'Contraseña restablecida', mensaje: `Cuenta: ${correoEditado}
 Nueva contraseña: ${contrasenaEscrita}
 
-Entrégasela a la persona: no volverá a mostrarse.`, tipo: 'info' });
+Entrégasela a la persona: no volverá a mostrarse.`, tipo: 'info'
+                });
+            }
+            return;
         }
-        return;
-    }
 
-    const resultado = crearCuentaPersonal({ ...datosComunes, correo: inputCorreo.value, contrasena: contrasenaEscrita, rol: selectRol.value }, usuarioActual.correo);
-    if (!resultado.ok) {
-        if (resultado.motivo.includes('correo ya')) marcarCampoInvalido(inputCorreo, resultado.motivo);
-        if (resultado.motivo.includes('DNI')) marcarCampoInvalido(inputDni, resultado.motivo);
-        mostrarToast(resultado.motivo, 'error');
-        return;
-    }
+        const resultado = crearCuentaPersonal({ ...datosComunes, correo: inputCorreo.value, contrasena: contrasenaEscrita, rol: selectRol.value }, usuarioActual.correo);
+        if (!resultado.ok) {
+            if (resultado.motivo.includes('correo ya')) marcarCampoInvalido(inputCorreo, resultado.motivo);
+            if (resultado.motivo.includes('DNI')) marcarCampoInvalido(inputDni, resultado.motivo);
+            mostrarToast(resultado.motivo, 'error');
+            return;
+        }
 
-    cerrarModalPersonal();
-    renderizarAdminPersonal();
-    mostrarToast(`Cuenta ${ROLES_PERSONAL[resultado.usuario.rol].nombre} creada.`, 'exito');
-    await alertaBonita({ titulo: 'Cuenta creada', mensaje: `Correo: ${resultado.usuario.correo}
+        cerrarModalPersonal();
+        renderizarAdminPersonal();
+        mostrarToast(`Cuenta ${ROLES_PERSONAL[resultado.usuario.rol].nombre} creada.`, 'exito');
+        await alertaBonita({
+            titulo: 'Cuenta creada', mensaje: `Correo: ${resultado.usuario.correo}
 Contraseña: ${contrasenaEscrita}
 
-Entrega estas credenciales a la persona: la contraseña no volverá a mostrarse.`, tipo: 'info' });
-};
+Entrega estas credenciales a la persona: la contraseña no volverá a mostrarse.`, tipo: 'info'
+        });
+    };
 
-window.alternarEstadoPersonalAdmin = async (correo) => {
-    if (!exigirAdminParaPersonal()) return;
-    const cuenta = listarPersonal().find(u => u.correo === correo);
-    if (!cuenta) { renderizarAdminPersonal(); return; }
-    const activar = !cuentaEstaActiva(cuenta);
+    window.alternarEstadoPersonalAdmin = async (correo) => {
+        if (!exigirAdminParaPersonal()) return;
+        const cuenta = listarPersonal().find(u => u.correo === correo);
+        if (!cuenta) { renderizarAdminPersonal(); return; }
+        const activar = !cuentaEstaActiva(cuenta);
 
-    if (!activar) {
+        if (!activar) {
+            const confirmado = await confirmarAccion({
+                titulo: '¿Desactivar cuenta?',
+                mensaje: `${cuenta.nombre} no podrá iniciar sesión hasta que la vuelvas a activar. Su historial de ventas se conserva.`,
+                tipo: 'advertencia',
+                textoConfirmar: 'Sí, desactivar',
+                textoCancelar: 'Cancelar'
+            });
+            if (!confirmado) return;
+        }
+
+        const resultado = cambiarEstadoCuentaPersonal(correo, activar, usuarioActual.correo);
+        if (!resultado.ok) { mostrarToast(resultado.motivo, 'error'); return; }
+        mostrarToast(activar ? 'Cuenta activada.' : 'Cuenta desactivada.', 'exito');
+        renderizarAdminPersonal();
+    };
+
+    /* ============================================================================
+       MÓDULO 9 — Ficha de detalle de una cuenta de Personal (solo lectura)
+       ============================================================================ */
+    window.abrirFichaPersonal = (correo) => {
+        const cuenta = listarPersonal().find(u => u.correo === correo);
+        if (!cuenta) { mostrarToast('La cuenta ya no existe.', 'error'); renderizarAdminPersonal(); return; }
+
+        const rolInfo = ROLES_PERSONAL[cuenta.rol];
+        document.getElementById('ficha-personal-icono').className = `fa-solid ${cuenta.rol === 'admin' ? 'fa-user-shield text-brand-yellow' : 'fa-cash-register text-brand-blue'}`;
+        document.getElementById('ficha-personal-nombre').textContent = cuenta.nombre;
+        const badge = document.getElementById('ficha-personal-rol-badge');
+        badge.textContent = rolInfo.nombre;
+        badge.className = `px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase ${cuenta.rol === 'admin' ? 'bg-brand-yellow/10 text-brand-yellow border border-brand-yellow/30' : 'bg-brand-blue/10 text-brand-blue border border-brand-blue/30'}`;
+
+        document.getElementById('ficha-personal-correo').textContent = cuenta.correo;
+        document.getElementById('ficha-personal-dni').textContent = cuenta.dni || '—';
+        document.getElementById('ficha-personal-telefono').textContent = cuenta.telefono || '—';
+        document.getElementById('ficha-personal-contrasena').textContent = '••••••••';
+        document.getElementById('ficha-personal-contrasena').dataset.real = cuenta.contrasena || '';
+        document.getElementById('ficha-personal-icono-ojo').className = 'fa-solid fa-eye';
+
+        const activa = cuentaEstaActiva(cuenta);
+        const estadoEl = document.getElementById('ficha-personal-estado');
+        estadoEl.innerHTML = `<span class="px-2 py-0.5 rounded-full text-[11px] font-bold ${activa ? 'bg-green-500/10 text-green-400 border border-green-500/30' : 'bg-slate-500/10 text-slate-400 border border-slate-500/30'}">${activa ? 'Activa' : 'Desactivada'}</span>`;
+
+        document.getElementById('ficha-personal-fecha-ingreso').textContent = cuenta.creadoEn ? new Date(cuenta.creadoEn).toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
+        document.getElementById('ficha-personal-creado-por').textContent = cuenta.creadoPor || 'Cuenta original del sistema';
+        document.getElementById('ficha-personal-nota').textContent = cuenta.nota || 'Sin notas.';
+        document.getElementById('ficha-personal-btn-editar').dataset.correo = cuenta.correo;
+
+        const modal = document.getElementById('modal-ficha-personal');
+        modal.classList.remove('hidden');
+        setTimeout(() => { modal.classList.remove('opacity-0'); document.getElementById('ficha-personal-contenido').classList.remove('scale-95'); }, 10);
+    };
+
+    window.cerrarFichaPersonal = () => {
+        const modal = document.getElementById('modal-ficha-personal');
+        modal.classList.add('opacity-0');
+        document.getElementById('ficha-personal-contenido').classList.add('scale-95');
+        setTimeout(() => modal.classList.add('hidden'), 200);
+    };
+
+    window.alternarVerContrasenaFicha = () => {
+        const span = document.getElementById('ficha-personal-contrasena');
+        const icono = document.getElementById('ficha-personal-icono-ojo');
+        const oculta = span.textContent === '••••••••';
+        span.textContent = oculta ? (span.dataset.real || '—') : '••••••••';
+        icono.className = oculta ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+    };
+
+    window.eliminarPersonalAdmin = async (correo) => {
+        if (!exigirAdminParaPersonal()) return;
+        const cuenta = listarPersonal().find(u => u.correo === correo);
+        if (!cuenta) { renderizarAdminPersonal(); return; }
+
         const confirmado = await confirmarAccion({
-            titulo: '¿Desactivar cuenta?',
-            mensaje: `${cuenta.nombre} no podrá iniciar sesión hasta que la vuelvas a activar. Su historial de ventas se conserva.`,
-            tipo: 'advertencia',
-            textoConfirmar: 'Sí, desactivar',
+            titulo: '¿Eliminar cuenta?',
+            mensaje: `Se eliminará definitivamente la cuenta de ${cuenta.nombre} (${cuenta.correo}). Si solo quieres que no pueda entrar, usa "Desactivar".`,
+            tipo: 'peligro',
+            textoConfirmar: 'Sí, eliminar',
             textoCancelar: 'Cancelar'
         });
         if (!confirmado) return;
+
+        const resultado = eliminarCuentaPersonal(correo, usuarioActual.correo);
+        if (!resultado.ok) { mostrarToast(resultado.motivo, 'error'); return; }
+        mostrarToast('Cuenta eliminada.', 'exito');
+        renderizarAdminPersonal();
+    };
+
+    /* ============================================================================
+       FORMATO AUTOMÁTICO DE DURACIÓN (Agregado)
+       ============================================================================ */
+    function configurarFormatoDuracion() {
+        const inputs = ['admin-pelicula-duracion', 'edit-pelicula-duracion'];
+        inputs.forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                input.addEventListener('input', function () {
+                    let val = this.value.replace(/\D/g, '');
+                    let formatted = '';
+                    if (val.length > 0) {
+                        formatted += val.substring(0, 2) + 'h';
+                    }
+                    if (val.length > 2) {
+                        formatted += ' ' + val.substring(2, 4) + 'm';
+                    }
+                    this.value = formatted;
+                });
+            }
+        });
+    }
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        configurarFormatoDuracion();
+    } else {
+        document.addEventListener('DOMContentLoaded', configurarFormatoDuracion);
     }
 
-    const resultado = cambiarEstadoCuentaPersonal(correo, activar, usuarioActual.correo);
-    if (!resultado.ok) { mostrarToast(resultado.motivo, 'error'); return; }
-    mostrarToast(activar ? 'Cuenta activada.' : 'Cuenta desactivada.', 'exito');
-    renderizarAdminPersonal();
-};
-
-/* ============================================================================
-   MÓDULO 9 — Ficha de detalle de una cuenta de Personal (solo lectura)
-   ============================================================================ */
-window.abrirFichaPersonal = (correo) => {
-    const cuenta = listarPersonal().find(u => u.correo === correo);
-    if (!cuenta) { mostrarToast('La cuenta ya no existe.', 'error'); renderizarAdminPersonal(); return; }
-
-    const rolInfo = ROLES_PERSONAL[cuenta.rol];
-    document.getElementById('ficha-personal-icono').className = `fa-solid ${cuenta.rol === 'admin' ? 'fa-user-shield text-brand-yellow' : 'fa-cash-register text-brand-red'}`;
-    document.getElementById('ficha-personal-nombre').textContent = cuenta.nombre;
-    const badge = document.getElementById('ficha-personal-rol-badge');
-    badge.textContent = rolInfo.nombre;
-    badge.className = `px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase ${cuenta.rol === 'admin' ? 'bg-brand-yellow/10 text-brand-yellow border border-brand-yellow/30' : 'bg-brand-red/10 text-brand-red border border-brand-red/30'}`;
-
-    document.getElementById('ficha-personal-correo').textContent = cuenta.correo;
-    document.getElementById('ficha-personal-dni').textContent = cuenta.dni || '—';
-    document.getElementById('ficha-personal-telefono').textContent = cuenta.telefono || '—';
-    document.getElementById('ficha-personal-contrasena').textContent = '••••••••';
-    document.getElementById('ficha-personal-contrasena').dataset.real = cuenta.contrasena || '';
-    document.getElementById('ficha-personal-icono-ojo').className = 'fa-solid fa-eye';
-
-    const activa = cuentaEstaActiva(cuenta);
-    const estadoEl = document.getElementById('ficha-personal-estado');
-    estadoEl.innerHTML = `<span class="px-2 py-0.5 rounded-full text-[11px] font-bold ${activa ? 'bg-green-500/10 text-green-400 border border-green-500/30' : 'bg-gray-500/10 text-gray-400 border border-gray-500/30'}">${activa ? 'Activa' : 'Desactivada'}</span>`;
-
-    document.getElementById('ficha-personal-fecha-ingreso').textContent = cuenta.creadoEn ? new Date(cuenta.creadoEn).toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
-    document.getElementById('ficha-personal-creado-por').textContent = cuenta.creadoPor || 'Cuenta original del sistema';
-    document.getElementById('ficha-personal-nota').textContent = cuenta.nota || 'Sin notas.';
-    document.getElementById('ficha-personal-btn-editar').dataset.correo = cuenta.correo;
-
-    const modal = document.getElementById('modal-ficha-personal');
-    modal.classList.remove('hidden');
-    setTimeout(() => { modal.classList.remove('opacity-0'); document.getElementById('ficha-personal-contenido').classList.remove('scale-95'); }, 10);
-};
-
-window.cerrarFichaPersonal = () => {
-    const modal = document.getElementById('modal-ficha-personal');
-    modal.classList.add('opacity-0');
-    document.getElementById('ficha-personal-contenido').classList.add('scale-95');
-    setTimeout(() => modal.classList.add('hidden'), 200);
-};
-
-window.alternarVerContrasenaFicha = () => {
-    const span = document.getElementById('ficha-personal-contrasena');
-    const icono = document.getElementById('ficha-personal-icono-ojo');
-    const oculta = span.textContent === '••••••••';
-    span.textContent = oculta ? (span.dataset.real || '—') : '••••••••';
-    icono.className = oculta ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
-};
-
-window.eliminarPersonalAdmin = async (correo) => {
-    if (!exigirAdminParaPersonal()) return;
-    const cuenta = listarPersonal().find(u => u.correo === correo);
-    if (!cuenta) { renderizarAdminPersonal(); return; }
-
-    const confirmado = await confirmarAccion({
-        titulo: '¿Eliminar cuenta?',
-        mensaje: `Se eliminará definitivamente la cuenta de ${cuenta.nombre} (${cuenta.correo}). Si solo quieres que no pueda entrar, usa "Desactivar".`,
-        tipo: 'peligro',
-        textoConfirmar: 'Sí, eliminar',
-        textoCancelar: 'Cancelar'
-    });
-    if (!confirmado) return;
-
-    const resultado = eliminarCuentaPersonal(correo, usuarioActual.correo);
-    if (!resultado.ok) { mostrarToast(resultado.motivo, 'error'); return; }
-    mostrarToast('Cuenta eliminada.', 'exito');
-    renderizarAdminPersonal();
-};
-
-/* ============================================================================
-   FORMATO AUTOMÁTICO DE DURACIÓN (Agregado)
-   ============================================================================ */
-function configurarFormatoDuracion() {
-    const inputs = ['admin-pelicula-duracion', 'edit-pelicula-duracion'];
-    inputs.forEach(id => {
-        const input = document.getElementById(id);
-        if (input) {
-            input.addEventListener('input', function() {
-                let val = this.value.replace(/\D/g, '');
-                let formatted = '';
-                if (val.length > 0) {
-                    formatted += val.substring(0, 2) + 'h';
-                }
-                if (val.length > 2) {
-                    formatted += ' ' + val.substring(2, 4) + 'm';
-                }
-                this.value = formatted;
-            });
+    // Mantenimiento: Aviso de cambios sin guardar al cerrar la pestaña o recargar la página (por ejemplo al darle a "Volver al Sitio" o cerrar el navegador)
+    window.addEventListener('beforeunload', function (e) {
+        if (typeof haySalaCambiosSinGuardar !== 'undefined' && haySalaCambiosSinGuardar) {
+            // Los navegadores modernos muestran un mensaje genérico, pero requieren que e.returnValue tenga un valor
+            e.preventDefault();
+            e.returnValue = '';
         }
     });
-}
-if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    configurarFormatoDuracion();
-} else {
-    document.addEventListener('DOMContentLoaded', configurarFormatoDuracion);
-}
-
-// Mantenimiento: Aviso de cambios sin guardar al cerrar la pestaña o recargar la página (por ejemplo al darle a "Volver al Sitio" o cerrar el navegador)
-window.addEventListener('beforeunload', function (e) {
-    if (typeof haySalaCambiosSinGuardar !== 'undefined' && haySalaCambiosSinGuardar) {
-        // Los navegadores modernos muestran un mensaje genérico, pero requieren que e.returnValue tenga un valor
-        e.preventDefault();
-        e.returnValue = '';
-    }
-});

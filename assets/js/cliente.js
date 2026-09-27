@@ -1,4 +1,4 @@
-/* ============================================================================
+﻿/* ============================================================================
    CINE NÁUTICA — CLIENTE.JS — Todo el flujo de cara al usuario
    ------------------------------------------------------------------------
    Parte de la arquitectura modular de la app (Fase 14).
@@ -169,12 +169,12 @@ function renderizarStepperCompra(idVista) {
     pasosEl.innerHTML = pasos.map((paso, i) => {
         const completado = i < indiceActual;
         const actual = i === indiceActual;
-        const claseTexto = completado ? 'text-brand-yellow' : actual ? 'text-white' : 'text-gray-600';
+        const claseTexto = completado ? 'text-brand-yellow' : actual ? 'text-white' : 'text-slate-600';
         const claseCirculo = completado
             ? 'bg-brand-yellow text-black'
             : actual
-                ? 'bg-brand-red text-white shadow-[0_0_10px_rgba(220,32,38,0.6)]'
-                : 'bg-dark-700 text-gray-500 border border-white/10';
+                ? 'bg-brand-blue text-white shadow-[0_0_10px_rgba(220,32,38,0.6)]'
+                : 'bg-dark-700 text-slate-500 border border-white/10';
         // FASE 17: ícono propio de cada sección (check si ya se completó, ícono referente si no)
         const contenidoCirculo = completado
             ? '<i class="fa-solid fa-check text-[11px] md:text-xs"></i>'
@@ -242,12 +242,12 @@ function renderizarBannerPrincipal() {
     contenedor.innerHTML = peliculas.map((p, i) => {
         const esPreEstreno = p.tipoLanzamiento === 'Pre-Estreno';
         const etiqueta = esPreEstreno ? 'Preventa Exclusiva' : (baseDatosEstrenos[p.id] ? 'Próximo Estreno' : 'Estreno');
-        const claseEtiqueta = esPreEstreno ? 'bg-brand-yellow text-black' : 'bg-brand-red text-white';
+        const claseEtiqueta = esPreEstreno ? 'bg-brand-yellow text-black' : 'bg-brand-blue text-white';
         const esCartelera = Boolean(baseDatosPeliculas[p.id]);
         const textoBotonCompra = esPreEstreno ? 'Comprar Preventa' : 'Comprar Entradas';
         const claseBotonCompra = esPreEstreno
             ? 'bg-brand-yellow hover:bg-yellow-400 text-black shadow-yellow-500/40'
-            : 'bg-brand-red hover:bg-brand-dark-red text-white shadow-red-500/40';
+            : 'bg-brand-blue hover:bg-brand-dark-blue text-white shadow-blue-500/40';
         // Estrenos aún sin funciones: el botón de compra no aplica, solo tráiler.
         const botonCompraHTML = esCartelera
             ? `<button onclick="abrirHorarios('${p.id}')" class="${claseBotonCompra} px-8 py-3 rounded-full font-bold text-lg shadow-lg transition-all flex items-center gap-2">
@@ -266,7 +266,7 @@ function renderizarBannerPrincipal() {
                         <span class="bg-white/10 backdrop-blur-sm border border-white/20 px-2 py-1 rounded text-xs font-bold text-white">${p.clasificacion}</span>
                     </div>
                     <h1 class="text-5xl md:text-7xl font-bold text-white mb-4 leading-tight">${p.titulo}</h1>
-                    <p class="text-gray-300 text-lg md:text-xl mb-6 max-w-2xl line-clamp-3">${p.sinopsis || ''}</p>
+                    <p class="text-slate-300 text-lg md:text-xl mb-6 max-w-2xl line-clamp-3">${p.sinopsis || ''}</p>
                     <div class="flex flex-wrap gap-4 items-center">
                         ${botonCompraHTML}
                         <button onclick="abrirDetallePelicula('${p.id}', '${esCartelera ? 'cartelera' : 'estreno'}')" class="bg-white/10 hover:bg-white/20 text-white backdrop-blur-md px-8 py-3 rounded-full font-bold text-lg border border-white/20 transition-all flex items-center gap-2">
@@ -304,7 +304,7 @@ const renderizarGridsInicio = () => {
                 <div class="relative rounded-xl overflow-hidden aspect-[2/3] mb-4 bg-dark-800 shadow-xl shadow-black/50">
                     <img src="${pelicula.poster}" class="w-full h-full object-cover">
                     <div class="movie-overlay absolute inset-0 flex flex-col justify-end p-4 gap-2">
-                        <button onclick="event.stopPropagation(); abrirHorarios('${pelicula.id}')" class="w-full bg-brand-red hover:bg-brand-dark-red text-white py-2.5 rounded-lg font-bold transition-colors shadow-lg flex items-center justify-center gap-2">
+                        <button onclick="event.stopPropagation(); abrirHorarios('${pelicula.id}')" class="w-full bg-brand-blue hover:bg-brand-dark-blue text-white py-2.5 rounded-lg font-bold transition-colors shadow-lg flex items-center justify-center gap-2">
                             <i class="fa-solid fa-ticket"></i> Horarios
                         </button>
                         <button onclick="event.stopPropagation(); abrirDetallePelicula('${pelicula.id}', 'cartelera')" class="w-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-2.5 rounded-lg font-bold border border-white/30 transition-colors shadow-lg flex items-center justify-center gap-2">
@@ -313,8 +313,8 @@ const renderizarGridsInicio = () => {
                     </div>
                 </div>
                 <div class="flex-grow flex flex-col">
-                    <h3 class="font-bold text-lg md:text-xl text-white mb-1 leading-tight group-hover:text-brand-red transition-colors">${pelicula.titulo}</h3>
-                    <p class="text-gray-400 text-sm mb-2">${pelicula.genero} &bull; ${pelicula.duracion}</p>
+                    <h3 class="font-bold text-lg md:text-xl text-white mb-1 leading-tight group-hover:text-brand-blue transition-colors">${pelicula.titulo}</h3>
+                    <p class="text-slate-400 text-sm mb-2">${pelicula.genero} &bull; ${pelicula.duracion}</p>
                 </div>
             </article>
         `;
@@ -336,7 +336,7 @@ const renderizarGridsInicio = () => {
                 </div>
                 <div class="flex-grow flex flex-col">
                     <h3 class="font-bold text-lg md:text-xl text-white mb-1 leading-tight group-hover:text-brand-yellow transition-colors">${pelicula.titulo}</h3>
-                    <p class="text-gray-400 text-sm mb-2">${pelicula.genero}</p>
+                    <p class="text-slate-400 text-sm mb-2">${pelicula.genero}</p>
                 </div>
             </article>
         `;
@@ -362,8 +362,8 @@ window.abrirDetallePelicula = (peliculaId, tipo = 'cartelera') => {
     }
 
     const botonCompraHTML = tipo === 'cartelera'
-        ? `<button onclick="abrirHorarios('${pelicula.id}')" class="bg-brand-red hover:bg-brand-dark-red text-white px-8 py-3 rounded-full font-bold text-lg shadow-lg shadow-red-500/40 transition-all flex items-center gap-2 mt-6"><i class="fa-solid fa-ticket"></i> Ver Horarios</button>`
-        : `<button disabled class="bg-gray-600 text-gray-400 px-8 py-3 rounded-full font-bold text-lg cursor-not-allowed mt-6"><i class="fa-solid fa-clock"></i> Próximamente</button>`;
+        ? `<button onclick="abrirHorarios('${pelicula.id}')" class="bg-brand-blue hover:bg-brand-dark-blue text-white px-8 py-3 rounded-full font-bold text-lg shadow-lg shadow-blue-500/40 transition-all flex items-center gap-2 mt-6"><i class="fa-solid fa-ticket"></i> Ver Horarios</button>`
+        : `<button disabled class="bg-slate-600 text-slate-400 px-8 py-3 rounded-full font-bold text-lg cursor-not-allowed mt-6"><i class="fa-solid fa-clock"></i> Próximamente</button>`;
 
     const html = `
         <div class="relative w-full h-[50vh] min-h-[400px]">
@@ -380,15 +380,15 @@ window.abrirDetallePelicula = (peliculaId, tipo = 'cartelera') => {
             <div class="flex-grow pt-4">
                 <div class="flex items-center gap-3 mb-2">
                     <span class="bg-white/10 backdrop-blur-sm border border-white/20 px-2 py-1 rounded text-xs font-bold text-white">${pelicula.clasificacion}</span>
-                    <span class="text-gray-300 font-semibold text-sm">${pelicula.genero}</span>
-                    <span class="text-gray-300 font-semibold text-sm">&bull;</span>
-                    <span class="text-gray-300 font-semibold text-sm">${pelicula.duracion}</span>
+                    <span class="text-slate-300 font-semibold text-sm">${pelicula.genero}</span>
+                    <span class="text-slate-300 font-semibold text-sm">&bull;</span>
+                    <span class="text-slate-300 font-semibold text-sm">${pelicula.duracion}</span>
                 </div>
                 <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">${pelicula.titulo}</h1>
-                <p class="text-gray-300 text-lg leading-relaxed mb-8 max-w-3xl">${pelicula.sinopsis}</p>
+                <p class="text-slate-300 text-lg leading-relaxed mb-8 max-w-3xl">${pelicula.sinopsis}</p>
 
                 <div class="mb-8">
-                    <h3 class="text-xl font-bold text-white mb-4 border-l-4 border-brand-red pl-3">Tráiler Oficial</h3>
+                    <h3 class="text-xl font-bold text-white mb-4 border-l-4 border-brand-blue pl-3">Tráiler Oficial</h3>
                     <div class="video-container max-w-3xl bg-black rounded-2xl border border-white/10">
                         <iframe id="detalle-iframe" class="w-full h-full absolute top-0 left-0" src="${urlCorregida}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                     </div>
@@ -436,7 +436,7 @@ const renderizarContenidoHorarios = (pelicula, fechasDisponibles) => {
     let tabsFechaHTML = '<div class="flex gap-2 overflow-x-auto hide-scrollbar mb-8 border-b border-white/10 pb-2">';
     fechasDisponibles.forEach(fecha => {
         const activa = fecha === estadoPedido.fecha;
-        const clasesActivas = activa ? 'text-brand-red border-b-2 border-brand-red' : 'text-gray-400 hover:text-white border-b-2 border-transparent';
+        const clasesActivas = activa ? 'text-brand-blue border-b-2 border-brand-blue' : 'text-slate-400 hover:text-white border-b-2 border-transparent';
         tabsFechaHTML += `<button onclick="cambiarFechaHorario('${fecha}')" class="px-5 py-2 font-bold whitespace-nowrap transition-colors ${clasesActivas}">${fecha}</button>`;
     });
     tabsFechaHTML += '</div>';
@@ -454,7 +454,7 @@ const renderizarContenidoHorarios = (pelicula, fechasDisponibles) => {
     funcionesDelDia.forEach(funcion => {
         horariosHTML += `
             <div class="bg-dark-800 rounded-xl p-5 border border-white/5 mb-6">
-                <h4 class="text-lg font-bold text-white mb-4 border-l-4 border-brand-red pl-3">${funcion.formato}</h4>
+                <h4 class="text-lg font-bold text-white mb-4 border-l-4 border-brand-blue pl-3">${funcion.formato}</h4>
                 <div class="flex flex-wrap gap-3">`;
         // MÓDULO 9: el id del formato viaja junto al texto (grupos viejos sin formatoId se resuelven por nombre).
         const formatoIdDeEsteGrupo = funcion.formatoId || resolverFormatoIdDesdeTextoCliente(funcion.formato);
@@ -466,17 +466,17 @@ const renderizarContenidoHorarios = (pelicula, fechasDisponibles) => {
             const esFormatoIncompatible = estadoPedido.modoReubicar && formatoViejo && funcion.formato !== formatoViejo;
 
             if (esCancelada) {
-                horariosHTML += `<button disabled class="time-btn bg-brand-red/20 border border-brand-red/50 text-white/50 font-bold py-2.5 px-6 rounded-lg focus:outline-none flex flex-col items-center leading-tight opacity-60 cursor-not-allowed">
+                horariosHTML += `<button disabled class="time-btn bg-brand-blue/20 border border-brand-blue/50 text-white/50 font-bold py-2.5 px-6 rounded-lg focus:outline-none flex flex-col items-center leading-tight opacity-60 cursor-not-allowed">
                     <span class="line-through">${hora}</span>
-                    <span class="text-[9px] text-brand-red mt-1 font-black bg-brand-red/20 px-1.5 rounded">CANCELADA</span>
+                    <span class="text-[9px] text-brand-blue mt-1 font-black bg-brand-blue/20 px-1.5 rounded">CANCELADA</span>
                 </button>`;
             } else if (esFormatoIncompatible) {
-                horariosHTML += `<button disabled onclick="mostrarToast('Solo puedes reubicar en el formato original (${formatoViejo})', 'error')" class="time-btn bg-dark-900 border border-gray-600 text-white/50 font-bold py-2.5 px-6 rounded-lg focus:outline-none flex flex-col items-center leading-tight opacity-60 cursor-not-allowed">
-                    <span>${hora}</span><span class="text-[10px] text-gray-500 font-normal">Sala ${sala}</span>
+                horariosHTML += `<button disabled onclick="mostrarToast('Solo puedes reubicar en el formato original (${formatoViejo})', 'error')" class="time-btn bg-dark-900 border border-slate-600 text-white/50 font-bold py-2.5 px-6 rounded-lg focus:outline-none flex flex-col items-center leading-tight opacity-60 cursor-not-allowed">
+                    <span>${hora}</span><span class="text-[10px] text-slate-500 font-normal">Sala ${sala}</span>
                 </button>`;
             } else {
-                horariosHTML += `<button onclick="seleccionarHorario(this, '${funcion.formato}', '${formatoIdDeEsteGrupo}', '${hora}', ${sala})" class="time-btn bg-dark-900 border border-gray-600 hover:border-brand-red hover:bg-brand-red/10 text-white font-bold py-2.5 px-6 rounded-lg transition-colors focus:outline-none flex flex-col items-center leading-tight">
-                    <span>${hora}</span><span class="text-[10px] text-gray-500 font-normal">Sala ${sala}</span>
+                horariosHTML += `<button onclick="seleccionarHorario(this, '${funcion.formato}', '${formatoIdDeEsteGrupo}', '${hora}', ${sala})" class="time-btn bg-dark-900 border border-slate-600 hover:border-brand-blue hover:bg-brand-blue/10 text-white font-bold py-2.5 px-6 rounded-lg transition-colors focus:outline-none flex flex-col items-center leading-tight">
+                    <span>${hora}</span><span class="text-[10px] text-slate-500 font-normal">Sala ${sala}</span>
                 </button>`;
             }
         });
@@ -491,18 +491,18 @@ const renderizarContenidoHorarios = (pelicula, fechasDisponibles) => {
             <div class="bg-dark-800 rounded-2xl p-6 border border-white/5 shadow-xl sticky top-28">
                 <img src="${pelicula.poster}" class="w-full rounded-xl mb-4 shadow-lg">
                 <h2 class="text-2xl font-bold text-white mb-1">${pelicula.titulo}</h2>
-                <p class="text-gray-400 text-sm mb-1">${pelicula.genero} &bull; ${pelicula.duracion}</p>
+                <p class="text-slate-400 text-sm mb-1">${pelicula.genero} &bull; ${pelicula.duracion}</p>
                 <span class="inline-block bg-white/10 border border-white/20 px-2 py-1 rounded text-xs font-bold text-white mt-2 mb-4">${pelicula.clasificacion}</span>
                 <!-- FASE 9: sinopsis completa (sin resumir) + acceso al tráiler -->
-                <p class="text-gray-300 text-sm leading-relaxed border-t border-white/10 pt-4">${pelicula.sinopsis}</p>
+                <p class="text-slate-300 text-sm leading-relaxed border-t border-white/10 pt-4">${pelicula.sinopsis}</p>
                 <button onclick="abrirModalTrailer('${pelicula.id}', 'cartelera')" class="w-full mt-5 bg-dark-900 hover:bg-dark-700 border border-white/10 text-white py-2.5 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2">
-                    <i class="fa-brands fa-youtube text-brand-red"></i> Ver Tráiler
+                    <i class="fa-brands fa-youtube text-brand-blue"></i> Ver Tráiler
                 </button>
             </div>
         </div>
         <div class="w-full lg:w-2/3">
             <h2 class="text-2xl md:text-3xl font-bold text-white mb-2">Elige fecha y horario</h2>
-            <div class="h-1 w-20 bg-brand-red rounded-full mb-6"></div>
+            <div class="h-1 w-20 bg-brand-blue rounded-full mb-6"></div>
             ${tabsFechaHTML}
             ${horariosHTML}
         </div>
@@ -518,11 +518,11 @@ window.cambiarFechaHorario = (fecha) => {
 
 window.seleccionarHorario = (btnEl, formato, formatoId, hora, sala = 1) => {
     document.querySelectorAll('.time-btn').forEach(btn => {
-        btn.classList.remove('bg-brand-red', 'border-brand-red');
-        btn.classList.add('bg-dark-900', 'border-gray-600');
+        btn.classList.remove('bg-brand-blue', 'border-brand-blue');
+        btn.classList.add('bg-dark-900', 'border-slate-600');
     });
-    btnEl.classList.remove('bg-dark-900', 'border-gray-600');
-    btnEl.classList.add('bg-brand-red', 'border-brand-red');
+    btnEl.classList.remove('bg-dark-900', 'border-slate-600');
+    btnEl.classList.add('bg-brand-blue', 'border-brand-blue');
 
     estadoPedido.formato = formato;
     estadoPedido.formatoId = formatoId; // MÓDULO 9: determina el recargo de formato en el precio
@@ -559,22 +559,22 @@ window.irAAsientos = () => {
     document.getElementById('info-pelicula-asientos').innerHTML = `
         <img src="${estadoPedido.pelicula.poster}" class="w-full rounded-xl mb-4 shadow-lg shadow-black/50">
         <h2 class="text-xl font-bold text-white mb-1">${estadoPedido.pelicula.titulo}</h2>
-        <div class="flex flex-wrap gap-2 text-xs text-gray-400 mb-2">
+        <div class="flex flex-wrap gap-2 text-xs text-slate-400 mb-2">
             <span class="bg-white/10 px-2 py-0.5 rounded border border-white/20 text-white font-bold">${estadoPedido.pelicula.clasificacion}</span>
             <span>${estadoPedido.formato}</span>
         </div>
-        <p class="text-gray-300 text-sm mb-2 font-semibold">${estadoPedido.pelicula.genero} &bull; ${estadoPedido.pelicula.duracion}</p>
-        <p class="text-gray-400 text-xs leading-relaxed mb-6 border-b border-white/10 pb-6 text-justify">${estadoPedido.pelicula.sinopsis}</p>
+        <p class="text-slate-300 text-sm mb-2 font-semibold">${estadoPedido.pelicula.genero} &bull; ${estadoPedido.pelicula.duracion}</p>
+        <p class="text-slate-400 text-xs leading-relaxed mb-6 border-b border-white/10 pb-6 text-justify">${estadoPedido.pelicula.sinopsis}</p>
 
         <div class="space-y-3 mb-6 bg-dark-900 p-3 rounded-lg border border-white/5">
-            <div class="flex items-center gap-3 text-sm text-gray-300">
-                <i class="fa-regular fa-calendar text-brand-red w-4"></i> <span class="font-bold text-white">${estadoPedido.fecha}</span>
+            <div class="flex items-center gap-3 text-sm text-slate-300">
+                <i class="fa-regular fa-calendar text-brand-blue w-4"></i> <span class="font-bold text-white">${estadoPedido.fecha}</span>
             </div>
-            <div class="flex items-center gap-3 text-sm text-gray-300">
-                <i class="fa-regular fa-clock text-brand-red w-4"></i> <span class="font-bold text-white">${estadoPedido.hora}</span>
+            <div class="flex items-center gap-3 text-sm text-slate-300">
+                <i class="fa-regular fa-clock text-brand-blue w-4"></i> <span class="font-bold text-white">${estadoPedido.hora}</span>
             </div>
-            <div class="flex items-center gap-3 text-sm text-gray-300">
-                <i class="fa-solid fa-location-dot text-brand-red w-4"></i> <span class="font-bold text-white">${estadoPedido.cine} — Sala ${estadoPedido.sala || 1}</span>
+            <div class="flex items-center gap-3 text-sm text-slate-300">
+                <i class="fa-solid fa-location-dot text-brand-blue w-4"></i> <span class="font-bold text-white">${estadoPedido.cine} — Sala ${estadoPedido.sala || 1}</span>
             </div>
         </div>
     `;
@@ -729,7 +729,7 @@ window.clickAsiento = async (asientoId) => {
 
     if (indiceExistente > -1) {
         estadoPedido.asientos.splice(indiceExistente, 1);
-        btn.classList.remove('selected', 'bg-brand-red');
+        btn.classList.remove('selected', 'bg-brand-blue');
         if (btn.dataset.accesible === 'true') btn.classList.add('asiento-cliente-accesible');
         else btn.classList.add('bg-green-600');
         liberarAsientoBloqueado(estadoPedido.sala || 1, estadoPedido.fecha, estadoPedido.hora, asientoId); // FIX bloqueo temporal
@@ -786,7 +786,7 @@ window.clickAsiento = async (asientoId) => {
             let htmlTipos = catalogoTipos.map(t => {
                 let precio = calcularPrecioAsientoPorTipo(t.id);
                 let esConadis = t.nombre.toUpperCase().includes('CONADIS');
-                let extraClasses = (esAccesible && esConadis) ? 'border-brand-yellow shadow-[0_0_15px_rgba(250,204,21,0.5)] bg-brand-yellow/10' : 'border-white/10 hover:border-brand-red bg-dark-900';
+                let extraClasses = (esAccesible && esConadis) ? 'border-brand-yellow shadow-[0_0_15px_rgba(250,204,21,0.5)] bg-brand-yellow/10' : 'border-white/10 hover:border-brand-blue bg-dark-900';
                 
                 return `
                     <button type="button" class="w-full ${extraClasses} rounded-xl p-3 flex justify-between items-center transition-colors mb-2 text-left border" onclick="seleccionarTipoAsientoTemp('${t.id}')">
@@ -804,9 +804,9 @@ window.clickAsiento = async (asientoId) => {
             modalDiv.className = 'fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 opacity-100 transition-opacity duration-200';
             modalDiv.innerHTML = `
                 <div class="bg-dark-800 p-6 rounded-2xl border border-white/10 shadow-2xl max-w-sm w-full relative transform scale-100 transition-transform duration-200">
-                    <button onclick="document.getElementById('modal-seleccion-tipo-asiento').remove()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+                    <button onclick="document.getElementById('modal-seleccion-tipo-asiento').remove()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
                     <h3 class="text-xl font-bold text-white mb-1">Elegir tipo de entrada</h3>
-                    <p class="text-gray-400 text-sm mb-4">Para el asiento <span class="text-brand-yellow font-bold">${asientoId}</span></p>
+                    <p class="text-slate-400 text-sm mb-4">Para el asiento <span class="text-brand-yellow font-bold">${asientoId}</span></p>
                     <div class="max-h-[60vh] overflow-y-auto hide-scrollbar">
                         ${htmlTipos}
                     </div>
@@ -837,7 +837,7 @@ window.clickAsiento = async (asientoId) => {
                     precio: calcularPrecioAsientoPorTipo(tipo.id)
                 });
                 btn.classList.remove('bg-green-600', 'hover:bg-green-500', 'asiento-cliente-accesible');
-                btn.classList.add('selected', 'bg-brand-red');
+                btn.classList.add('selected', 'bg-brand-blue');
                 bloquearAsientoTemporalmente(estadoPedido.sala || 1, estadoPedido.fecha, estadoPedido.hora, asientoId);
                 actualizarResumenAsientos();
             };
@@ -864,7 +864,7 @@ const actualizarResumenAsientos = () => {
     const btnSiguiente = document.getElementById('btn-ir-dulceria');
 
     if (estadoPedido.asientos.length === 0) {
-        contenedor.innerHTML = '<p class="text-gray-500 text-sm text-center italic mt-4" id="mensaje-sin-asientos">Aún no has seleccionado asientos.</p>';
+        contenedor.innerHTML = '<p class="text-slate-500 text-sm text-center italic mt-4" id="mensaje-sin-asientos">Aún no has seleccionado asientos.</p>';
         totalEl.textContent = 'S/ 0.00';
         btnSiguiente.disabled = true;
         return;
@@ -881,10 +881,10 @@ const actualizarResumenAsientos = () => {
         html += `
             <li class="flex justify-between items-center gap-2 text-sm bg-dark-900 p-2 rounded-lg border border-white/5">
                 <span class="bg-brand-yellow text-black font-bold px-2 py-0.5 rounded text-xs flex-shrink-0">${asiento.id}</span>
-                <span class="flex-1 min-w-0 text-gray-300 text-xs truncate px-2">${textoTipo}</span>
+                <span class="flex-1 min-w-0 text-slate-300 text-xs truncate px-2">${textoTipo}</span>
                 <div class="flex items-center gap-2 flex-shrink-0">
                     <span class="text-white font-bold whitespace-nowrap">${formatearMoneda(asiento.precio)}</span>
-                    <button onclick="clickAsiento('${asiento.id}')" class="text-gray-500 hover:text-brand-red transition-colors"><i class="fa-solid fa-trash"></i></button>
+                    <button onclick="clickAsiento('${asiento.id}')" class="text-slate-500 hover:text-brand-blue transition-colors"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </li>
         `;
@@ -1131,7 +1131,7 @@ window.irADulceria = async () => {
 
         // --- Mostrar el ticket actualizado en pantalla ---
         document.querySelector('#vista-ticket h2').textContent = '¡Reubicación Exitosa!';
-        document.querySelector('#vista-ticket p.text-gray-400.text-lg').textContent = 'Tu nuevo horario está confirmado. Descarga tu ticket actualizado.';
+        document.querySelector('#vista-ticket p.text-slate-400.text-lg').textContent = 'Tu nuevo horario está confirmado. Descarga tu ticket actualizado.';
         const bloquePuntosTicket = document.getElementById('ticket-puntos-ganados');
         if (bloquePuntosTicket) bloquePuntosTicket.classList.add('hidden');
         
@@ -1143,7 +1143,7 @@ window.irADulceria = async () => {
         document.getElementById('pdf-asientos').textContent = estadoPedido.asientos.map(s => s.id).join(', ') || '—';
         document.getElementById('pdf-codigo').textContent = ordenOriginal.codigo.replace('CR-', '');
         
-        document.getElementById('pdf-dulces').innerHTML = '<li class="text-gray-500 font-normal">Revisar boleta original.</li>';
+        document.getElementById('pdf-dulces').innerHTML = '<li class="text-slate-500 font-normal">Revisar boleta original.</li>';
         
         // Ocultar la parte de la boleta (ya que es solo reubicación)
         const comprobanteContenedor = document.getElementById('comprobante-imprimible');
@@ -1218,7 +1218,7 @@ function filtrarProductosDulceria({ categoria = 'all', termino = '', soloConStoc
 function renderizarIconoOImagenProducto(prod) {
     if (prod.imagen) return `<img src="${prod.imagen}" class="w-full h-full object-cover">`;
     if (prod.icono) return `<i class="fa-solid ${prod.icono}"></i>`;
-    return `<i class="fa-solid fa-image text-gray-600"></i>`; // Módulo 4: respaldo genérico si no hay ninguno de los dos
+    return `<i class="fa-solid fa-image text-slate-600"></i>`; // Módulo 4: respaldo genérico si no hay ninguno de los dos
 }
 
 /** Módulo 6: pinta los botones de filtro de categoría según categoriasDulceria (dinámico, ya no hardcodeado en el HTML). */
@@ -1227,7 +1227,7 @@ function renderizarFiltrosCategoriasDulceria() {
     if (!contenedor) return;
     const categorias = [{ id: 'all', nombre: 'Todos' }, ...categoriasDulceria];
     contenedor.innerHTML = categorias.map(cat => `
-        <button onclick="renderizarGridDulceria('${cat.id}')" data-categoria="${cat.id}" class="cat-btn px-4 py-2 text-gray-400 font-semibold hover:text-white whitespace-nowrap border-b-2 border-transparent">${cat.nombre}</button>
+        <button onclick="renderizarGridDulceria('${cat.id}')" data-categoria="${cat.id}" class="cat-btn px-4 py-2 text-slate-400 font-semibold hover:text-white whitespace-nowrap border-b-2 border-transparent">${cat.nombre}</button>
     `).join('');
 }
 
@@ -1235,7 +1235,7 @@ window.renderizarGridDulceria = (filtroCategoria) => {
     renderizarFiltrosCategoriasDulceria(); // Módulo 6: reconstruye los botones por si las categorías cambiaron en el admin
     document.querySelectorAll('#categorias-dulceria .cat-btn').forEach(btn => {
         btn.classList.remove('text-brand-yellow', 'border-brand-yellow');
-        btn.classList.add('text-gray-400', 'border-transparent');
+        btn.classList.add('text-slate-400', 'border-transparent');
     });
     // Módulo 1 — fix bug "Todos" no marcado: antes se dependía del objeto
     // global 'event' (event.currentTarget), que al llamar la función de forma
@@ -1244,7 +1244,7 @@ window.renderizarGridDulceria = (filtroCategoria) => {
     // directamente el botón que corresponde al filtro activo.
     const btnClickeado = document.querySelector(`#categorias-dulceria .cat-btn[data-categoria="${filtroCategoria}"]`);
     if (btnClickeado && btnClickeado.classList) {
-        btnClickeado.classList.remove('text-gray-400', 'border-transparent');
+        btnClickeado.classList.remove('text-slate-400', 'border-transparent');
         btnClickeado.classList.add('text-brand-yellow', 'border-brand-yellow');
     }
 
@@ -1273,12 +1273,12 @@ window.renderizarGridDulceria = (filtroCategoria) => {
                 <div class="flex-grow flex flex-col justify-between">
                     <div>
                         <h4 class="text-white font-bold leading-tight mb-1">${prod.nombre}</h4>
-                        <p class="text-gray-400 text-xs leading-snug line-clamp-2">${prod.desc}</p>
+                        <p class="text-slate-400 text-xs leading-snug line-clamp-2">${prod.desc}</p>
                     </div>
                     <div class="flex justify-between items-end mt-3">
                         <span class="font-bold text-white text-lg">${formatearMoneda(prod.precio)}</span>
                         <div class="flex items-center gap-3 bg-dark-900 rounded-full px-2 py-1 border border-white/10">
-                            <button onclick="actualizarCantidadSnack('${id}', -1)" class="w-6 h-6 rounded-full bg-dark-700 text-white flex items-center justify-center hover:bg-brand-red transition-colors"><i class="fa-solid fa-minus text-xs"></i></button>
+                            <button onclick="actualizarCantidadSnack('${id}', -1)" class="w-6 h-6 rounded-full bg-dark-700 text-white flex items-center justify-center hover:bg-brand-blue transition-colors"><i class="fa-solid fa-minus text-xs"></i></button>
                             <span id="cant-${id}" class="text-white font-bold text-sm w-4 text-center">${estadoPedido.carrito[id] || 0}</span>
                             <button onclick="actualizarCantidadSnack('${id}', 1)" class="w-6 h-6 rounded-full bg-dark-700 text-white flex items-center justify-center hover:bg-brand-yellow hover:text-black transition-colors"><i class="fa-solid fa-plus text-xs"></i></button>
                         </div>
@@ -1323,23 +1323,23 @@ const actualizarResumenFinal = () => {
     let htmlEntradas = '';
     estadoPedido.asientos.forEach(asiento => {
         totalEntradas += asiento.precio;
-        htmlEntradas += `<div class="flex justify-between text-sm"><span class="text-gray-300">Asiento ${asiento.id} (${asiento.tipoLabel})</span><span class="text-white">${formatearMoneda(asiento.precio)}</span></div>`;
+        htmlEntradas += `<div class="flex justify-between text-sm"><span class="text-slate-300">Asiento ${asiento.id} (${asiento.tipoLabel})</span><span class="text-white">${formatearMoneda(asiento.precio)}</span></div>`;
     });
-    contenedorEntradas.innerHTML = htmlEntradas || '<p class="text-gray-500 text-sm italic">Sin entradas en este pedido.</p>';
+    contenedorEntradas.innerHTML = htmlEntradas || '<p class="text-slate-500 text-sm italic">Sin entradas en este pedido.</p>';
     document.getElementById('total-entradas').textContent = formatearMoneda(totalEntradas);
 
     const contenedorSnacks = document.getElementById('lista-final-dulces');
     let totalSnacks = 0;
 
     if (Object.keys(estadoPedido.carrito).length === 0) {
-        contenedorSnacks.innerHTML = '<p class="text-gray-500 text-sm italic" id="mensaje-sin-dulces">No has agregado dulces.</p>';
+        contenedorSnacks.innerHTML = '<p class="text-slate-500 text-sm italic" id="mensaje-sin-dulces">No has agregado dulces.</p>';
     } else {
         let htmlSnacks = '';
         for (const [id, cant] of Object.entries(estadoPedido.carrito)) {
             const prod = PRECIOS.dulces[id];
             const totalLinea = prod.precio * cant;
             totalSnacks += totalLinea;
-            htmlSnacks += `<div class="flex justify-between text-sm"><span class="text-gray-300">${cant}x ${prod.nombre}</span><span class="text-white">${formatearMoneda(totalLinea)}</span></div>`;
+            htmlSnacks += `<div class="flex justify-between text-sm"><span class="text-slate-300">${cant}x ${prod.nombre}</span><span class="text-white">${formatearMoneda(totalLinea)}</span></div>`;
         }
         contenedorSnacks.innerHTML = htmlSnacks;
     }
@@ -1848,7 +1848,7 @@ function finalizarProcesamientoPago() {
 
     const pdfDulces = document.getElementById('pdf-dulces');
     if (Object.keys(estadoPedido.carrito).length === 0) {
-        pdfDulces.innerHTML = '<li class="text-gray-500 font-normal">Sin compras de dulcería.</li>';
+        pdfDulces.innerHTML = '<li class="text-slate-500 font-normal">Sin compras de dulcería.</li>';
     } else {
         pdfDulces.innerHTML = Object.entries(estadoPedido.carrito).map(([id, cant]) => `<li>${cant}x ${PRECIOS.dulces[id].nombre}</li>`).join('');
     }
@@ -1873,10 +1873,10 @@ function finalizarProcesamientoPago() {
         filasComprobante += `<tr><td class="py-1">${cant}x ${p.nombre}</td><td class="text-right py-1">${subT.toFixed(2)}</td></tr>`;
     });
     if (estadoPedido.cupon) {
-        filasComprobante += `<tr><td class="py-1 text-brand-red">Cupón ${estadoPedido.cupon.codigo} (-${estadoPedido.cupon.porcentaje}%)</td><td class="text-right py-1 text-brand-red">-${totales.descuento.toFixed(2)}</td></tr>`;
+        filasComprobante += `<tr><td class="py-1 text-brand-blue">Cupón ${estadoPedido.cupon.codigo} (-${estadoPedido.cupon.porcentaje}%)</td><td class="text-right py-1 text-brand-blue">-${totales.descuento.toFixed(2)}</td></tr>`;
     }
     if (estadoPedido.puntosCanjeados > 0) {
-        filasComprobante += `<tr><td class="py-1 text-brand-red">Canje de ${estadoPedido.puntosCanjeados} pts Socio Náutica</td><td class="text-right py-1 text-brand-red">-${totales.descuentoPuntos.toFixed(2)}</td></tr>`;
+        filasComprobante += `<tr><td class="py-1 text-brand-blue">Canje de ${estadoPedido.puntosCanjeados} pts Socio Náutica</td><td class="text-right py-1 text-brand-blue">-${totales.descuentoPuntos.toFixed(2)}</td></tr>`;
     }
     document.getElementById('pdf-items-comprobante').innerHTML = filasComprobante;
 
@@ -1943,7 +1943,7 @@ function finalizarProcesamientoPago() {
     const comprobanteContenedor = document.getElementById('comprobante-imprimible');
     if (comprobanteContenedor) comprobanteContenedor.parentElement.classList.remove('hidden');
     document.querySelector('#vista-ticket h2').textContent = '¡Compra Exitosa!';
-    document.querySelector('#vista-ticket p.text-gray-400.text-lg').textContent = 'Tu reserva está confirmada. Descarga tus comprobantes.';
+    document.querySelector('#vista-ticket p.text-slate-400.text-lg').textContent = 'Tu reserva está confirmada. Descarga tus comprobantes.';
 
     cambiarVista('vista-pago', 'vista-ticket');
     // FIX: se limpia el pedido un instante después de la transición de vista (no antes), para que
@@ -2341,17 +2341,17 @@ window.abrirMisCompras = () => {
         });
     } else {
         grid.innerHTML = compras.map(compra => `
-            <div class="bg-dark-800 rounded-2xl border border-white/5 p-5 shadow-xl hover:border-brand-red/50 transition-colors">
+            <div class="bg-dark-800 rounded-2xl border border-white/5 p-5 shadow-xl hover:border-brand-blue/50 transition-colors">
                 <div class="flex justify-between items-start mb-3">
-                    <span class="bg-brand-red/10 text-brand-red text-xs font-bold px-2 py-1 rounded border border-brand-red/30">${compra.codigo}</span>
-                    <span class="text-gray-500 text-xs">${new Date(compra.fecha).toLocaleDateString('es-PE')}</span>
+                    <span class="bg-brand-blue/10 text-brand-blue text-xs font-bold px-2 py-1 rounded border border-brand-blue/30">${compra.codigo}</span>
+                    <span class="text-slate-500 text-xs">${new Date(compra.fecha).toLocaleDateString('es-PE')}</span>
                 </div>
                 <h4 class="text-white font-bold text-lg mb-1">${compra.pelicula}</h4>
-                <p class="text-gray-400 text-sm mb-3">${compra.detalle}</p>
-                ${compra.asientos && compra.asientos.length ? `<p class="text-xs text-gray-400 mb-1"><i class="fa-solid fa-chair text-brand-yellow mr-1"></i> ${compra.asientos.map(a => typeof a === 'object' ? a.id : a).join(', ')}</p>` : ''}
-                ${compra.dulces && compra.dulces.length ? `<p class="text-xs text-gray-400 mb-3"><i class="fa-solid fa-popcorn text-brand-yellow mr-1"></i> ${compra.dulces.join(', ')}</p>` : ''}
+                <p class="text-slate-400 text-sm mb-3">${compra.detalle}</p>
+                ${compra.asientos && compra.asientos.length ? `<p class="text-xs text-slate-400 mb-1"><i class="fa-solid fa-chair text-brand-yellow mr-1"></i> ${compra.asientos.map(a => typeof a === 'object' ? a.id : a).join(', ')}</p>` : ''}
+                ${compra.dulces && compra.dulces.length ? `<p class="text-xs text-slate-400 mb-3"><i class="fa-solid fa-popcorn text-brand-yellow mr-1"></i> ${compra.dulces.join(', ')}</p>` : ''}
                 <div class="border-t border-white/10 pt-3 flex justify-between items-center">
-                    <span class="text-gray-400 text-sm">Total pagado</span>
+                    <span class="text-slate-400 text-sm">Total pagado</span>
                     <span class="text-brand-yellow font-bold text-lg">${formatearMoneda(compra.total)}</span>
                 </div>
             </div>
@@ -2435,20 +2435,20 @@ function renderizarVistaBeneficios() {
         const compras = usuarioActual.compras || [];
         
         if (compras.length === 0) {
-            contenedorHistorial.innerHTML = `<p class="text-gray-400 text-center py-4">Aún no tienes compras registradas.</p>`;
+            contenedorHistorial.innerHTML = `<p class="text-slate-400 text-center py-4">Aún no tienes compras registradas.</p>`;
         } else {
             contenedorHistorial.innerHTML = compras.map(compra => `
-                <div class="bg-dark-800 rounded-2xl border border-white/5 p-5 shadow-xl hover:border-brand-red/50 transition-colors">
+                <div class="bg-dark-800 rounded-2xl border border-white/5 p-5 shadow-xl hover:border-brand-blue/50 transition-colors">
                     <div class="flex justify-between items-start mb-3">
-                        <span class="bg-brand-red/10 text-brand-red text-xs font-bold px-2 py-1 rounded border border-brand-red/30">${compra.codigo}</span>
-                        <span class="text-gray-500 text-xs">${new Date(compra.fecha).toLocaleDateString('es-PE')}</span>
+                        <span class="bg-brand-blue/10 text-brand-blue text-xs font-bold px-2 py-1 rounded border border-brand-blue/30">${compra.codigo}</span>
+                        <span class="text-slate-500 text-xs">${new Date(compra.fecha).toLocaleDateString('es-PE')}</span>
                     </div>
                     <h4 class="text-white font-bold text-lg mb-1">${compra.pelicula}</h4>
-                    <p class="text-gray-400 text-sm mb-3">${compra.detalle}</p>
-                    ${compra.asientos && compra.asientos.length ? `<p class="text-xs text-gray-400 mb-1"><i class="fa-solid fa-chair text-brand-yellow mr-1"></i> ${compra.asientos.map(a => typeof a === 'object' ? a.id : a).join(', ')}</p>` : ''}
-                    ${compra.dulces && compra.dulces.length ? `<p class="text-xs text-gray-400 mb-3"><i class="fa-solid fa-popcorn text-brand-yellow mr-1"></i> ${compra.dulces.join(', ')}</p>` : ''}
+                    <p class="text-slate-400 text-sm mb-3">${compra.detalle}</p>
+                    ${compra.asientos && compra.asientos.length ? `<p class="text-xs text-slate-400 mb-1"><i class="fa-solid fa-chair text-brand-yellow mr-1"></i> ${compra.asientos.map(a => typeof a === 'object' ? a.id : a).join(', ')}</p>` : ''}
+                    ${compra.dulces && compra.dulces.length ? `<p class="text-xs text-slate-400 mb-3"><i class="fa-solid fa-popcorn text-brand-yellow mr-1"></i> ${compra.dulces.join(', ')}</p>` : ''}
                     <div class="border-t border-white/10 pt-3 flex justify-between items-center">
-                        <span class="text-gray-400 text-sm">Total pagado</span>
+                        <span class="text-slate-400 text-sm">Total pagado</span>
                         <span class="text-brand-yellow font-bold text-lg">${formatearMoneda(compra.total)}</span>
                     </div>
                 </div>
@@ -2679,7 +2679,7 @@ function renderizarPromociones() {
             <div class="p-6 flex flex-col flex-grow">
                 <span class="inline-block w-max px-3 py-1 bg-brand-yellow/10 text-brand-yellow border border-brand-yellow/30 text-xs font-bold rounded-full uppercase mb-3">Combo</span>
                 <h3 class="text-xl font-bold text-white mb-2">Combo Pareja</h3>
-                <p class="text-gray-400 text-sm flex-grow">2 entradas + 1 Cancha Gigante para compartir + 2 Bebidas Grandes, a precio especial. Pídelo en Dulcería.</p>
+                <p class="text-slate-400 text-sm flex-grow">2 entradas + 1 Cancha Gigante para compartir + 2 Bebidas Grandes, a precio especial. Pídelo en Dulcería.</p>
                 <button onclick="abrirDulceriaDirecta()" class="mt-4 w-full bg-brand-yellow hover:bg-yellow-400 text-black py-2.5 rounded-xl font-bold text-sm transition-colors">Ir a Dulcería</button>
             </div>
         </div>
@@ -2691,7 +2691,7 @@ function renderizarPromociones() {
             <div class="p-6 flex flex-col flex-grow">
                 <span class="inline-block w-max px-3 py-1 bg-green-500/10 text-green-400 border border-green-500/30 text-xs font-bold rounded-full uppercase mb-3">Exclusivo</span>
                 <h3 class="text-xl font-bold text-white mb-2">Beneficio Exclusivo Socio Náutica</h3>
-                <p class="text-gray-400 text-sm flex-grow">Los socios acumulan puntos en cada compra y acceden a preventas exclusivas y una entrada gratis por cumpleaños.</p>
+                <p class="text-slate-400 text-sm flex-grow">Los socios acumulan puntos en cada compra y acceden a preventas exclusivas y una entrada gratis por cumpleaños.</p>
                 <button onclick="cambiarVista(vistaActualVisible, 'vista-beneficios')" class="mt-4 w-full bg-transparent border border-green-500/40 text-green-400 hover:bg-green-500/10 py-2.5 rounded-xl font-bold text-sm transition-colors">Ver Beneficios</button>
             </div>
         </div>
@@ -2703,14 +2703,14 @@ function renderizarPromociones() {
     const todosCupones = { ...CUPONES_BASE, ...cuponesGuardados };
     Object.entries(todosCupones).forEach(([codigo, c]) => {
         html += `
-        <div class="bg-dark-800 border border-white/5 rounded-2xl overflow-hidden shadow-xl hover:border-brand-red/50 transition-colors flex flex-col">
+        <div class="bg-dark-800 border border-white/5 rounded-2xl overflow-hidden shadow-xl hover:border-brand-blue/50 transition-colors flex flex-col">
             <div class="h-40 bg-gradient-to-br from-dark-700 to-dark-900 flex items-center justify-center border-b border-white/5">
-                <i class="fa-solid fa-tag text-6xl text-brand-red/80"></i>
+                <i class="fa-solid fa-tag text-6xl text-brand-blue/80"></i>
             </div>
             <div class="p-6 flex flex-col flex-grow">
-                <span class="inline-block w-max px-3 py-1 bg-brand-red/10 text-brand-red border border-brand-red/30 text-xs font-bold rounded-full uppercase mb-3">Cupón</span>
+                <span class="inline-block w-max px-3 py-1 bg-brand-blue/10 text-brand-blue border border-brand-blue/30 text-xs font-bold rounded-full uppercase mb-3">Cupón</span>
                 <h3 class="text-xl font-bold text-white mb-1 font-mono">${codigo}</h3>
-                <p class="text-gray-400 text-sm flex-grow">${c.descripcion || 'Cupón promocional'} — <span class="text-brand-yellow font-bold">-${c.porcentaje}%</span> en tu compra.</p>
+                <p class="text-slate-400 text-sm flex-grow">${c.descripcion || 'Cupón promocional'} — <span class="text-brand-yellow font-bold">-${c.porcentaje}%</span> en tu compra.</p>
             </div>
         </div>`;
     });
@@ -2800,7 +2800,7 @@ window.abrirModalLegal = (clave) => {
     if (!info) return;
 
     document.getElementById('legal-titulo').textContent = info.titulo;
-    document.getElementById('legal-icono').innerHTML = `<i class="fa-solid ${info.icono} text-2xl text-brand-red"></i>`;
+    document.getElementById('legal-icono').innerHTML = `<i class="fa-solid ${info.icono} text-2xl text-brand-blue"></i>`;
     document.getElementById('legal-texto').innerHTML = info.texto.map(p => `<p>${p}</p>`).join('');
 
     const modal = document.getElementById('modal-legal');
@@ -2845,7 +2845,7 @@ window.buscarOrdenAtencionCliente = (e) => {
 
     const contenedor = document.getElementById('atencion-resultado');
     if (resultados.length === 0) {
-        contenedor.innerHTML = `<p class="text-brand-red text-center py-4">No se encontró ninguna orden con "${query}".</p>`;
+        contenedor.innerHTML = `<p class="text-brand-blue text-center py-4">No se encontró ninguna orden con "${query}".</p>`;
         contenedor.classList.remove('hidden');
         return;
     }
@@ -2873,7 +2873,7 @@ window.buscarOrdenAtencionCliente = (e) => {
             });
         }
 
-        const badgeColor = compra.estado === 'reembolsada' ? 'bg-gray-500' : (esCancelada ? 'bg-brand-red' : 'bg-green-500');
+        const badgeColor = compra.estado === 'reembolsada' ? 'bg-slate-500' : (esCancelada ? 'bg-brand-blue' : 'bg-green-500');
         const badgeText = compra.estado === 'reembolsada' ? 'REEMBOLSADA' : (esCancelada ? 'FUNCIÓN CANCELADA' : 'VÁLIDA');
 
         // Determinar título
@@ -2888,18 +2888,18 @@ window.buscarOrdenAtencionCliente = (e) => {
                         <span class="text-white font-bold text-lg">${compra.codigo}</span>
                         <span class="ml-2 ${badgeColor} text-white text-xs font-bold px-2 py-1 rounded">${badgeText}</span>
                     </div>
-                    <div class="text-right text-gray-400 text-sm">
+                    <div class="text-right text-slate-400 text-sm">
                         ${compra.fechaFuncion || ''} ${compra.horaFuncion ? '&bull; ' + compra.horaFuncion : ''} ${salaStr}
                     </div>
                 </div>
                 <p class="text-white text-sm mb-1">${titulo} ${formatoStr}</p>
-                <p class="text-gray-400 text-sm mb-3">${compra.asientos ? compra.asientos.length : 0} Asientos: ${compra.asientos ? compra.asientos.map(a => typeof a === 'object' ? (a.id || a.numero) : a).join(', ') : 'Ninguno'}</p>
+                <p class="text-slate-400 text-sm mb-3">${compra.asientos ? compra.asientos.length : 0} Asientos: ${compra.asientos ? compra.asientos.map(a => typeof a === 'object' ? (a.id || a.numero) : a).join(', ') : 'Ninguno'}</p>
         `;
 
         if (esCancelada && compra.estado !== 'reembolsada') {
             html += `
                 <div class="flex gap-2 mt-2 pt-3 border-t border-white/10">
-                    <button onclick="reembolsarOrden('${compra.codigo}')" class="flex-1 bg-dark-800 border border-gray-600 hover:border-white text-white py-2 rounded font-bold transition-colors text-sm">Reembolsar</button>
+                    <button onclick="reembolsarOrden('${compra.codigo}')" class="flex-1 bg-dark-800 border border-slate-600 hover:border-white text-white py-2 rounded font-bold transition-colors text-sm">Reembolsar</button>
                     <button onclick="iniciarReubicacion('${compra.codigo}')" class="flex-1 bg-brand-yellow hover:bg-brand-yellow/80 text-black py-2 rounded font-bold transition-colors text-sm">Reubicar</button>
                 </div>
             `;

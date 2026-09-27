@@ -1,4 +1,4 @@
-/* ============================================================================
+﻿/* ============================================================================
    CINE NÁUTICA — UTILIDADES.JS — Helpers compartidos por cliente.js y admin.js
    ------------------------------------------------------------------------
    Parte de la arquitectura modular de la app (Fase 14).
@@ -30,7 +30,7 @@ window.mostrarToast = (mensaje, tipo = 'info') => {
     }
 
     const iconos = { exito: 'fa-circle-check', error: 'fa-circle-exclamation', info: 'fa-circle-info' };
-    const colores = { exito: 'text-green-400', error: 'text-brand-red', info: 'text-brand-yellow' };
+    const colores = { exito: 'text-green-400', error: 'text-brand-blue', info: 'text-brand-yellow' };
 
     const toast = document.createElement('div');
     toast.className = `toast-cinerama toast-${tipo}`;
@@ -262,11 +262,15 @@ function registrarVentaAsientos(idVenta, sala, fechaFuncion, horaFuncion, idsAsi
  */
 function obtenerButacasVendidas(sala, fechaFuncion, horaFuncion) {
     const ventas = JSON.parse(localStorage.getItem(LS_VENTAS_ASIENTOS)) || [];
+    const ventasG = JSON.parse(localStorage.getItem(LS_VENTAS_GENERAL)) || [];
+    const ventasValidas = new Set(ventasG.filter(v => v.estado === 'activa' || v.estado === 'pagada').map(v => v.codigo));
+
     const vendidas = new Set();
     ventas
         .filter(v => Number(v.sala) === Number(sala))
         .filter(v => (v.fechaFuncion === undefined && v.horaFuncion === undefined)
             || (v.fechaFuncion === fechaFuncion && v.horaFuncion === horaFuncion))
+        .filter(v => !v.id || ventasValidas.has(v.id))
         .forEach(v => v.asientos.forEach(a => vendidas.add(typeof a === 'object' ? a.id : a)));
     return vendidas;
 }
@@ -275,8 +279,13 @@ function obtenerButacasVendidas(sala, fechaFuncion, horaFuncion) {
  *  informativo (nunca bloquea la venta real). */
 function obtenerButacasVendidasTotalPorSala(sala) {
     const ventas = JSON.parse(localStorage.getItem(LS_VENTAS_ASIENTOS)) || [];
+    const ventasG = JSON.parse(localStorage.getItem(LS_VENTAS_GENERAL)) || [];
+    const ventasValidas = new Set(ventasG.filter(v => v.estado === 'activa' || v.estado === 'pagada').map(v => v.codigo));
+
     const vendidas = new Set();
-    ventas.filter(v => Number(v.sala) === Number(sala)).forEach(v => v.asientos.forEach(a => vendidas.add(typeof a === 'object' ? a.id : a)));
+    ventas.filter(v => Number(v.sala) === Number(sala))
+          .filter(v => !v.id || ventasValidas.has(v.id))
+          .forEach(v => v.asientos.forEach(a => vendidas.add(typeof a === 'object' ? a.id : a)));
     return vendidas;
 }
 
@@ -289,9 +298,14 @@ function obtenerButacasVendidasTotalPorSala(sala) {
  */
 function obtenerButacasVendidasFuturasPorSala(sala) {
     const ventas = JSON.parse(localStorage.getItem(LS_VENTAS_ASIENTOS)) || [];
+    const ventasG = JSON.parse(localStorage.getItem(LS_VENTAS_GENERAL)) || [];
+    const ventasValidas = new Set(ventasG.filter(v => v.estado === 'activa' || v.estado === 'pagada').map(v => v.codigo));
+
     const ahora = new Date();
     const vendidas = new Set();
-    ventas.filter(v => Number(v.sala) === Number(sala)).forEach(v => {
+    ventas.filter(v => Number(v.sala) === Number(sala))
+          .filter(v => !v.id || ventasValidas.has(v.id))
+          .forEach(v => {
         let esFutura = true;
         if (v.fechaFuncion && v.horaFuncion && typeof resolverFechaISODeEtiqueta === 'function') {
             const iso = resolverFechaISODeEtiqueta(v.fechaFuncion);
@@ -545,10 +559,10 @@ function htmlEstadoVacio({ icono = 'fa-inbox', titulo = 'No hay nada por aquí',
     return `
         <div class="col-span-full flex flex-col items-center justify-center text-center py-16 px-6">
             <div class="w-16 h-16 rounded-full bg-dark-800 border border-white/10 flex items-center justify-center mb-4">
-                <i class="fa-solid ${icono} text-2xl text-gray-600"></i>
+                <i class="fa-solid ${icono} text-2xl text-slate-600"></i>
             </div>
             <h4 class="text-white font-bold text-lg mb-1">${titulo}</h4>
-            ${subtitulo ? `<p class="text-gray-500 text-sm max-w-xs mb-5">${subtitulo}</p>` : ''}
-            ${textoBoton ? `<button onclick="${accionBoton}" class="bg-brand-red hover:bg-brand-dark-red text-white px-6 py-2.5 rounded-full font-bold text-sm transition-colors">${textoBoton}</button>` : ''}
+            ${subtitulo ? `<p class="text-slate-500 text-sm max-w-xs mb-5">${subtitulo}</p>` : ''}
+            ${textoBoton ? `<button onclick="${accionBoton}" class="bg-brand-blue hover:bg-brand-dark-blue text-white px-6 py-2.5 rounded-full font-bold text-sm transition-colors">${textoBoton}</button>` : ''}
         </div>`;
 }

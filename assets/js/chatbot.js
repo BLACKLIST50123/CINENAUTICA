@@ -1,4 +1,4 @@
-/* ============================================================================
+﻿/* ============================================================================
    CINE NÁUTICA — CHATBOT.JS — CineBot (asistente simulado)
    ------------------------------------------------------------------------
    Parte de la arquitectura modular de la app (Fase 14).
@@ -36,11 +36,11 @@ function inicializarChatbot() {
     const agregarMensaje = (texto, esBot) => {
         const html = esBot
             ? `<div class="flex gap-2 chat-bubble-enter">
-                <div class="w-6 h-6 rounded-full bg-brand-red flex-shrink-0 flex items-center justify-center mt-1"><i class="fa-solid fa-robot text-[10px] text-white"></i></div>
+                <div class="w-6 h-6 rounded-full bg-brand-blue flex-shrink-0 flex items-center justify-center mt-1"><i class="fa-solid fa-robot text-[10px] text-white"></i></div>
                 <div class="bg-dark-700 text-white p-3 rounded-xl rounded-tl-none self-start max-w-[85%] border border-white/5 shadow-sm">${texto}</div>
             </div>`
             : `<div class="flex gap-2 chat-bubble-enter justify-end">
-                <div class="bg-brand-red text-white p-3 rounded-xl rounded-tr-none self-end max-w-[85%] shadow-sm">${texto}</div>
+                <div class="bg-brand-blue text-white p-3 rounded-xl rounded-tr-none self-end max-w-[85%] shadow-sm">${texto}</div>
             </div>`;
         contenedorMensajes.insertAdjacentHTML('beforeend', html);
         contenedorMensajes.scrollTop = contenedorMensajes.scrollHeight;
@@ -57,7 +57,7 @@ function inicializarChatbot() {
         const idTyping = 'typing-' + Date.now();
         contenedorMensajes.insertAdjacentHTML('beforeend', `
             <div id="${idTyping}" class="flex gap-2 chat-bubble-enter">
-                <div class="w-6 h-6 rounded-full bg-brand-red flex-shrink-0 flex items-center justify-center mt-1"><i class="fa-solid fa-robot text-[10px] text-white"></i></div>
+                <div class="w-6 h-6 rounded-full bg-brand-blue flex-shrink-0 flex items-center justify-center mt-1"><i class="fa-solid fa-robot text-[10px] text-white"></i></div>
                 <div class="bg-dark-700 p-3 rounded-xl rounded-tl-none self-start border border-white/5 shadow-sm flex items-center gap-1.5">
                     <span class="chat-typing-dot"></span><span class="chat-typing-dot"></span><span class="chat-typing-dot"></span>
                 </div>
