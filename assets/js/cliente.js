@@ -1,4 +1,4 @@
-﻿/* ============================================================================
+/* ============================================================================
    CINE NÁUTICA — CLIENTE.JS — Todo el flujo de cara al usuario
    ------------------------------------------------------------------------
    Parte de la arquitectura modular de la app (Fase 14).
@@ -1588,6 +1588,8 @@ function vincularSocioAVenta(socio) {
         if (dni) { campoDni.value = dni; limpiarCampoInvalido(campoDni); marcarCampoAutocompletado(campoDni, textoBadge); }
     }
 
+    verificarCumpleanosCheckout();
+    verificarCumpleanosCheckout();
     recalcularTotalesPago();
     refrescarBloqueCanjePuntos();
     renderizarSocioVinculadoCounter();
@@ -1597,12 +1599,14 @@ function vincularSocioAVenta(socio) {
 window.quitarSocioDeVenta = () => {
     estadoPedido.socioVinculadoCorreo = null;
     estadoPedido.puntosCanjeados = 0;
+    estadoPedido.usaCumpleanos = false;
     ['campo-nombre', 'campo-correo', 'campo-dni', 'input-puntos-canje'].forEach(id => {
         const el = document.getElementById(id);
         if (el) { el.value = ''; limpiarCampoInvalido(el); }
     });
     document.querySelectorAll('#vista-pago .badge-autocompletado').forEach(b => b.remove());
 
+    verificarCumpleanosCheckout();
     recalcularTotalesPago();
     refrescarBloqueCanjePuntos();
     renderizarSocioVinculadoCounter();
@@ -1647,7 +1651,21 @@ function recalcularTotalesPago() {
         descuentoPuntos = calcularDescuentoPorPuntos(estadoPedido.puntosCanjeados, subtotal);
     }
 
-    const totalFinal = Math.max(subtotal - descuento - descuentoPuntos, 0);
+    // Beneficio Cumpleaños
+    let descuentoCumpleanos = 0;
+    const filaDescuentoCumple = document.getElementById('fila-descuento-cumpleanos');
+    if (estadoPedido.usaCumpleanos) {
+        const preciosAsientos = estadoPedido.asientos.map(a => a.precio);
+        descuentoCumpleanos = preciosAsientos.length > 0 ? Math.min(...preciosAsientos) : 18;
+        if (filaDescuentoCumple) {
+            filaDescuentoCumple.classList.remove('hidden');
+            document.getElementById('pago-descuento-cumpleanos-monto').textContent = `- ${formatearMoneda(descuentoCumpleanos)}`;
+        }
+    } else if (filaDescuentoCumple) {
+        filaDescuentoCumple.classList.add('hidden');
+    }
+
+    const totalFinal = Math.max(subtotal - descuento - descuentoPuntos - descuentoCumpleanos, 0);
 
     document.getElementById('pago-total-entradas').textContent = formatearMoneda(totalEntradas);
     document.getElementById('pago-total-dulces').textContent = formatearMoneda(totalDulces);
@@ -1673,7 +1691,39 @@ function recalcularTotalesPago() {
     document.getElementById('pago-total-general').textContent = formatearMoneda(totalFinal);
     document.getElementById('monto-yape').textContent = formatearMoneda(totalFinal);
 
-    return { totalEntradas, totalDulces, subtotal, descuento, descuentoPuntos, totalFinal };
+    return { totalEntradas, totalDulces, subtotal, descuento, descuentoPuntos, descuentoCumpleanos, totalFinal };
+}
+
+window.aplicarCumpleanosSocio = () => {
+    estadoPedido.usaCumpleanos = true;
+    recalcularTotalesPago();
+    const btn = document.getElementById('btn-aplicar-cumpleanos');
+    if (btn) btn.classList.add('hidden');
+    mostrarToast('Beneficio de cumpleaños aplicado: ¡Entrada gratis!', 'exito');
+};
+
+function verificarCumpleanosCheckout() {
+    const bloqueCumple = document.getElementById('bloque-cumpleanos');
+    const btnReclamar = document.getElementById('btn-aplicar-cumpleanos');
+    if (!bloqueCumple) return;
+    
+    if (estadoPedido.usaCumpleanos) {
+        bloqueCumple.classList.remove('hidden');
+        if (btnReclamar) btnReclamar.classList.add('hidden');
+        return;
+    }
+    
+    const socio = obtenerSocioTitularDelPedido();
+    if (socio && typeof ValidadoresSocio !== 'undefined' && typeof ValidadoresSocio.tieneBeneficioCumpleanosDisponible === 'function') {
+        const val = ValidadoresSocio.tieneBeneficioCumpleanosDisponible(socio);
+        const esFormato2D = estadoPedido.formato && estadoPedido.formato.toUpperCase().includes('2D');
+        if (val.ok && estadoPedido.asientos && estadoPedido.asientos.length > 0 && esFormato2D) {
+            bloqueCumple.classList.remove('hidden');
+            if (btnReclamar) btnReclamar.classList.remove('hidden');
+            return;
+        }
+    }
+    bloqueCumple.classList.add('hidden');
 }
 
 /** FASE 5: Motor de descuentos — valida y aplica un cupón promocional. */

@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cine Náutica | Tu Mejor Experiencia de Cine</title>
+    <title>Cine Náutica</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Libreria para exportar a PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -694,6 +694,27 @@
                                     pts canjeados:</span>
                                 <span class="text-brand-yellow font-semibold" id="pago-descuento-puntos-monto"></span>
                             </div>
+
+                            <!-- BENEFICIO CUMPLEAÑOS -->
+                            <div id="bloque-cumpleanos" class="hidden mt-4 pt-4 border-t border-white/5">
+                                <div
+                                    class="bg-gradient-to-r from-brand-yellow/20 to-transparent p-4 rounded-xl border border-brand-yellow/30 flex justify-between items-center">
+                                    <div>
+                                        <h4 class="text-brand-yellow font-bold text-sm"><i
+                                                class="fa-solid fa-cake-candles mr-2"></i>¡Feliz mes de cumpleaños!</h4>
+                                        <p class="text-slate-300 text-xs mt-1">Tienes 1 entrada 2D gratis disponible.
+                                        </p>
+                                    </div>
+                                    <button id="btn-aplicar-cumpleanos" onclick="aplicarCumpleanosSocio()" type="button"
+                                        class="bg-brand-yellow hover:bg-yellow-400 text-black px-4 py-2 rounded-lg font-bold text-xs transition-colors shadow-[0_0_10px_rgba(220,158,63,0.3)]">Reclamar</button>
+                                </div>
+                            </div>
+                            <div id="fila-descuento-cumpleanos" class="hidden flex justify-between items-center mt-2">
+                                <span class="text-brand-yellow text-sm"><i class="fa-solid fa-cake-candles mr-1"></i>
+                                    Beneficio Cumpleaños:</span>
+                                <span class="text-brand-yellow font-semibold"
+                                    id="pago-descuento-cumpleanos-monto"></span>
+                            </div>
                             <div
                                 class="flex justify-between items-center mt-4 pt-4 border-t border-brand-blue bg-dark-900 p-3 rounded-xl border border-white/5">
                                 <span class="text-slate-300 font-bold">TOTAL:</span>
@@ -1093,7 +1114,7 @@
                                 class="fa-solid fa-popcorn w-5"></i> Dulcería</button>
                         <button id="tab-btn-salas" onclick="cambiarTabAdmin('salas')"
                             class="admin-tab-btn whitespace-nowrap text-left px-4 py-3 rounded-xl text-slate-300 font-semibold flex items-center gap-3 hover:bg-dark-700 transition-colors"><i
-                                class="fa-solid fa-chair w-5"></i> Salas (Mantenimiento)</button>
+                                class="fa-solid fa-chair w-5"></i> Salas</button>
                         <button id="tab-btn-tarifas" onclick="cambiarTabAdmin('tarifas')"
                             class="admin-tab-btn whitespace-nowrap text-left px-4 py-3 rounded-xl text-slate-300 font-semibold flex items-center gap-3 hover:bg-dark-700 transition-colors"><i
                                 class="fa-solid fa-sack-dollar w-5"></i> Tarifas</button>
@@ -1124,7 +1145,7 @@
 
                     <!-- 15.1 Cartelera -->
                     <div id="tab-panel-cartelera" class="admin-tab-panel hidden">
-                        <h2 class="text-2xl font-bold text-white mb-6">Gestión de Cartelera y Horarios</h2>
+                        <h2 class="text-2xl font-bold text-white mb-6">Gestión de Cartelera</h2>
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             <div class="bg-dark-800 border border-white/5 rounded-2xl p-6 shadow-xl">
                                 <h3 class="text-lg font-bold text-white mb-4">Agregar Película</h3>
@@ -1139,7 +1160,7 @@
                                             placeholder="Título de la película"
                                             class="w-full bg-dark-800 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-blue">
                                         <div>
-                                            <label class="text-[11px] text-slate-500 mb-1 block">Género (elige uno o
+                                            <label class="text-[13px] text-slate-500 mb-1 block">Género (elige uno o
                                                 más)</label>
                                             <div id="admin-pelicula-genero-chips"
                                                 class="flex flex-wrap gap-1.5 bg-dark-800 border border-white/10 rounded-lg p-2">
@@ -1147,7 +1168,7 @@
                                             <input type="hidden" id="admin-pelicula-genero">
                                         </div>
                                         <div>
-                                            <label class="text-[11px] text-slate-500 mb-1 block">Duración (ej: 2h
+                                            <label class="text-[13px] text-slate-500 mb-1 block">Duración (ej: 2h
                                                 15m)</label>
                                             <input type="text" id="admin-pelicula-duracion" placeholder="Ej: 2h 15m"
                                                 pattern="^\d+h\s*\d*m$|^\d+m$|^\d+$"
@@ -1155,7 +1176,7 @@
                                                 class="w-full bg-dark-800 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-blue">
                                         </div>
                                         <div>
-                                            <label class="text-[11px] text-slate-500 mb-1 block">Clasificación</label>
+                                            <label class="text-[13px] text-slate-500 mb-1 block">Clasificación</label>
                                             <select id="admin-pelicula-edad"
                                                 class="w-full bg-dark-800 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-blue">
                                                 <option value="APT">APT</option>
@@ -1185,12 +1206,12 @@
                                             </div>
                                         </div>
                                         <div>
-                                            <label class="text-[11px] text-slate-500 mb-1 block">Formatos de proyección
+                                            <label class="text-[13px] text-slate-500 mb-1 block">Formatos de proyección
                                                 disponibles</label>
                                             <div id="admin-pelicula-formatos" class="flex flex-wrap gap-1.5"></div>
                                         </div>
                                         <div id="admin-pelicula-lanzamiento-contenedor">
-                                            <label class="text-[11px] text-slate-500 mb-1 block">Tipo de
+                                            <label class="text-[13px] text-slate-500 mb-1 block">Tipo de
                                                 lanzamiento</label>
                                             <select id="admin-pelicula-lanzamiento"
                                                 class="w-full bg-dark-800 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-blue">
@@ -1201,8 +1222,7 @@
                                         </div>
                                         <textarea id="admin-pelicula-sinopsis" rows="3" placeholder="Sinopsis"
                                             class="w-full bg-dark-800 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-blue resize-none"></textarea>
-                                        <input type="text" id="admin-pelicula-trailer"
-                                            placeholder="URL del tráiler (YouTube embed)"
+                                        <input type="text" id="admin-pelicula-trailer" placeholder="URL del tráiler..."
                                             class="w-full bg-dark-800 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-blue">
                                     </div>
 
@@ -1210,7 +1230,7 @@
                                     <div class="bg-dark-900 border border-white/10 rounded-xl p-3">
                                         <p
                                             class="text-slate-400 text-xs font-bold uppercase mb-2 flex items-center gap-1.5">
-                                            <i class="fa-solid fa-image text-brand-blue"></i> Póster / Imagen
+                                            <i class="fa-solid fa-image text-brand-blue"></i> Póster
                                         </p>
                                         <div class="flex gap-4 mb-2 text-xs text-slate-300">
                                             <label class="flex items-center gap-1.5 cursor-pointer"><input type="radio"
@@ -1221,7 +1241,7 @@
                                                     name="admin-pelicula-origen-img" value="archivo"
                                                     class="accent-brand-blue"
                                                     onchange="alternarOrigenImagenAdmin('pelicula')"> Cargar
-                                                archivo</label>
+                                                Póster</label>
                                         </div>
                                         <div class="flex gap-3 items-start">
                                             <img id="admin-pelicula-preview" class="preview-imagen-admin hidden"
@@ -1236,8 +1256,6 @@
                                                     class="hidden w-full text-xs text-slate-300 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-brand-blue file:text-white file:font-bold file:text-xs">
                                             </div>
                                         </div>
-                                        <p class="text-slate-500 text-[10px] mt-1.5">Vertical: se usa en el afiche, en
-                                            las tarjetas de cartelera y como banner si no cargas uno propio abajo.</p>
                                     </div>
 
                                     <!-- NUEVO: Banner horizontal promocional, independiente del póster -->
@@ -1255,7 +1273,7 @@
                                                     name="admin-pelicula-banner-origen-img" value="archivo"
                                                     class="accent-brand-blue"
                                                     onchange="alternarOrigenImagenBannerAdmin('pelicula')"> Cargar
-                                                archivo</label>
+                                                Banner</label>
                                         </div>
                                         <div class="flex gap-3 items-start">
                                             <img id="admin-pelicula-banner-preview" class="preview-imagen-admin hidden"
@@ -1270,10 +1288,6 @@
                                                     class="hidden w-full text-xs text-slate-300 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-brand-blue file:text-white file:font-bold file:text-xs">
                                             </div>
                                         </div>
-                                        <p class="text-slate-500 text-[10px] mt-1.5">Horizontal: se usa en el carrusel
-                                            de
-                                            Inicio y en la cabecera del detalle. Si lo dejas vacío, se usa el póster.
-                                        </p>
                                     </div>
 
                                     <button type="submit"
@@ -1399,12 +1413,18 @@
                                 <h3 class="text-lg font-bold text-white mb-4">Agregar Producto</h3>
                                 <form id="form-admin-dulce" onsubmit="guardarProductoDulceriaAdmin(event)"
                                     class="space-y-3">
-                                    <div><input type="text" id="admin-dulce-nombre" placeholder="Nombre del producto"
+                                    <div>
+                                        <label class="text-[15px] text-slate-500 mb-1 block">Nombre del
+                                            producto:</label>
+                                        <input type="text" id="admin-dulce-nombre" placeholder="Nombre del producto"
                                             class="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-brand-yellow">
                                     </div>
-                                    <div><textarea id="admin-dulce-desc" rows="2" placeholder="Descripción"
+                                    <div>
+                                        <label class="text-[15px] text-slate-500 mb-1 block">Descripción:</label>
+                                        <textarea id="admin-dulce-desc" rows="2" placeholder="Descripción"
                                             class="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-brand-yellow resize-none"></textarea>
                                     </div>
+                                    <label class="text-[15px] text-slate-500 mb-1 block">Precio y Categoria:</label>
                                     <div class="grid grid-cols-2 gap-3">
                                         <input type="number" min="0" step="0.10" id="admin-dulce-precio"
                                             placeholder="Precio S/"
@@ -1415,7 +1435,7 @@
                                         </select>
                                     </div>
                                     <div class="bg-dark-900 border border-white/10 rounded-xl p-3">
-                                        <p class="text-slate-400 text-xs font-bold uppercase mb-2">Imagen del producto
+                                        <p class="text-slate-400 text-xs font-bold uppercase mb-2">Imagen del producto:
                                         </p>
                                         <div class="flex gap-4 mb-2 text-xs text-slate-300">
                                             <label class="flex items-center gap-1.5 cursor-pointer"><input type="radio"
@@ -1691,18 +1711,21 @@
 
                     <!-- 15.4 Descuentos -->
                     <div id="tab-panel-descuentos" class="admin-tab-panel hidden">
-                        <h2 class="text-2xl font-bold text-white mb-6">Cupones y Promociones</h2>
+                        <h2 class="text-2xl font-bold text-white mb-6">Cupones y Promociones:</h2>
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             <div class="bg-dark-800 border border-white/5 rounded-2xl p-6 shadow-xl">
                                 <h3 class="text-lg font-bold text-white mb-4">Crear Cupón</h3>
                                 <form onsubmit="crearCuponAdmin(event)" class="space-y-3">
+                                    <label class="text-[16px] text-slate-500 mb-1 block">Código:</label>
                                     <div><input type="text" id="admin-cupon-codigo" placeholder="Código (ej: VERANO20)"
                                             class="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-2.5 text-white uppercase focus:outline-none focus:border-brand-yellow">
                                     </div>
+                                    <label class="text-[16px] text-slate-500 mb-1 block">Porcentaje:</label>
                                     <div><input type="number" id="admin-cupon-porcentaje"
                                             placeholder="Porcentaje de descuento" min="1" max="100"
                                             class="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-brand-yellow">
                                     </div>
+                                    <label class="text-[16px] text-slate-500 mb-1 block">Descripción:</label>
                                     <div><input type="text" id="admin-cupon-desc" placeholder="Descripción (opcional)"
                                             class="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-brand-yellow">
                                     </div>
@@ -1946,13 +1969,13 @@
                             class="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-brand-blue">
                     </div>
                     <div>
-                        <label class="text-[11px] text-slate-500 mb-1 block">Género (elige uno o más)</label>
+                        <label class="text-[11px] text-slate-500 mb-1 block">Género (elige uno o más):</label>
                         <div id="edit-pelicula-genero-chips"
                             class="flex flex-wrap gap-1.5 bg-dark-900 border border-white/10 rounded-xl p-2"></div>
                         <input type="hidden" id="edit-pelicula-genero">
                     </div>
                     <div class="mb-3">
-                        <label class="text-[11px] text-slate-500 mb-1 block">Duración (ej: 2h 15m)</label>
+                        <label class="text-[11px] text-slate-500 mb-1 block">Duración (ej: 2h 15m):</label>
                         <input type="text" id="edit-pelicula-duracion" placeholder="Ej: 2h 15m"
                             pattern="^\d+h\s*\d*m$|^\d+m$|^\d+$"
                             title="Ingresa la duración en formato 2h 15m, 135m o 135"
@@ -1966,11 +1989,11 @@
                         <option value="+18">+18</option>
                     </select>
                     <div>
-                        <label class="text-[11px] text-slate-500 mb-1 block">Formatos de proyección disponibles</label>
+                        <label class="text-[11px] text-slate-500 mb-1 block">Formatos de proyección disponibles:</label>
                         <div id="edit-pelicula-formatos" class="flex flex-wrap gap-1.5"></div>
                     </div>
                     <div id="edit-pelicula-lanzamiento-contenedor">
-                        <label class="text-[11px] text-slate-500 mb-1 block">Tipo de lanzamiento</label>
+                        <label class="text-[11px] text-slate-500 mb-1 block">Tipo de lanzamiento:</label>
                         <select id="edit-pelicula-lanzamiento"
                             class="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-brand-blue">
                             <option value="Regular">Regular</option>
@@ -1984,7 +2007,7 @@
                         class="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-brand-blue">
 
                     <div class="bg-dark-900 border border-white/10 rounded-xl p-3">
-                        <p class="text-slate-400 text-xs font-bold uppercase mb-2">Póster / Imagen</p>
+                        <p class="text-slate-400 text-xs font-bold uppercase mb-2">Póster:</p>
                         <div class="flex gap-4 mb-2 text-xs text-slate-300">
                             <label class="flex items-center gap-1.5 cursor-pointer"><input type="radio"
                                     name="edit-pelicula-origen-img" value="url" checked class="accent-brand-blue"
