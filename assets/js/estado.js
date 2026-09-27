@@ -150,8 +150,8 @@ const CUPONES_BASE = {
 // Valores por defecto de fábrica (solo se usan la primera vez que no hay localStorage).
 const TARIFAS_DIA_INICIALES = {
     economica: 12.0,  // Martes
-    media:     13.0,  // Lunes / Miércoles
-    alta:      18.0   // Jue / Vie / Sáb / Dom / Pre-Estrenos
+    media: 13.0,  // Lunes / Miércoles
+    alta: 18.0   // Jue / Vie / Sáb / Dom / Pre-Estrenos
 };
 
 function obtenerTarifasDia() {

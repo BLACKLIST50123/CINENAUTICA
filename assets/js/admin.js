@@ -2720,26 +2720,156 @@ window.crearCuponAdmin = async (e) => {
             const claseBloqueado = 'opacity-40 cursor-not-allowed';
 
             return `
-        <div class="bg-dark-800 border border-white/5 rounded-2xl p-4 flex flex-col md:flex-row md:items-center gap-4 shadow-xl ${activa ? '' : 'opacity-60'}">
-            <div class="w-11 h-11 rounded-full bg-dark-900 border border-white/10 flex items-center justify-center flex-shrink-0">
-                <i class="fa-solid ${u.rol === 'admin' ? 'fa-user-shield text-brand-yellow' : 'fa-cash-register text-brand-blue'}"></i>
+        <div class="flex flex-col gap-2 mb-2">
+            <div class="bg-dark-800 border border-white/5 rounded-2xl p-4 flex flex-col md:flex-row md:items-center gap-4 shadow-xl ${activa ? '' : 'opacity-60'} cursor-pointer hover:border-brand-yellow/30 transition-colors" onclick="toggleDetallePersonal('${correoSeguro}')">
+                <div class="w-11 h-11 rounded-full bg-dark-900 border border-white/10 flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid ${u.rol === 'admin' ? 'fa-user-shield text-brand-yellow' : 'fa-cash-register text-brand-blue'}"></i>
+                </div>
+                <div class="flex-grow min-w-0">
+                    <p class="text-white font-bold truncate">${escaparHtmlPersonal(u.nombre)}${esYo ? ' <span class="text-xs text-brand-yellow font-semibold">(tú)</span>' : ''}</p>
+                    <p class="text-slate-400 text-sm truncate">${correoSeguro}</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-3 py-1 rounded-full text-xs font-bold border ${u.rol === 'admin' ? 'bg-brand-yellow/10 text-brand-yellow border-brand-yellow/30' : 'bg-brand-blue/10 text-brand-blue border-brand-blue/30'}">${rolInfo.nombre}</span>
+                    <span class="px-3 py-1 rounded-full text-xs font-bold border ${activa ? 'bg-green-500/10 text-green-400 border-green-500/30' : 'bg-slate-500/10 text-slate-400 border-slate-500/30'}">${activa ? 'Activa' : 'Desactivada'}</span>
+                </div>
+                <div class="flex gap-2" onclick="event.stopPropagation()">
+                    <button type="button" data-correo="${correoSeguro}" onclick="abrirFichaPersonal(this.dataset.correo)" title="Ver ficha" class="w-9 h-9 rounded-lg bg-dark-900 hover:bg-dark-700 border border-white/10 text-white flex items-center justify-center transition-colors"><i class="fa-solid fa-eye"></i></button>
+                    <button type="button" data-correo="${correoSeguro}" onclick="abrirModalPersonal(this.dataset.correo)" title="Editar" class="w-9 h-9 rounded-lg bg-dark-900 hover:bg-dark-700 border border-white/10 text-white flex items-center justify-center transition-colors"><i class="fa-solid fa-pen"></i></button>
+                    <button type="button" data-correo="${correoSeguro}" onclick="alternarEstadoPersonalAdmin(this.dataset.correo)" ${(activa && bloqueadaParaBaja) ? `disabled title="${motivoBloqueo}"` : `title="${activa ? 'Desactivar' : 'Activar'}"`} class="w-9 h-9 rounded-lg bg-dark-900 border border-white/10 text-white flex items-center justify-center transition-colors ${(activa && bloqueadaParaBaja) ? claseBloqueado : 'hover:bg-dark-700'}"><i class="fa-solid ${activa ? 'fa-user-slash' : 'fa-user-check'}"></i></button>
+                    <button type="button" data-correo="${correoSeguro}" onclick="eliminarPersonalAdmin(this.dataset.correo)" ${bloqueadaParaBaja ? `disabled title="${motivoBloqueo}"` : 'title="Eliminar"'} class="w-9 h-9 rounded-lg bg-dark-900 border border-white/10 text-brand-blue flex items-center justify-center transition-colors ${bloqueadaParaBaja ? claseBloqueado : 'hover:bg-brand-blue/10'}"><i class="fa-solid fa-trash"></i></button>
+                </div>
             </div>
-            <div class="flex-grow min-w-0">
-                <p class="text-white font-bold truncate">${escaparHtmlPersonal(u.nombre)}${esYo ? ' <span class="text-xs text-brand-yellow font-semibold">(tú)</span>' : ''}</p>
-                <p class="text-slate-400 text-sm truncate">${correoSeguro}</p>
-            </div>
-            <div class="flex flex-wrap gap-2">
-                <span class="px-3 py-1 rounded-full text-xs font-bold border ${u.rol === 'admin' ? 'bg-brand-yellow/10 text-brand-yellow border-brand-yellow/30' : 'bg-brand-blue/10 text-brand-blue border-brand-blue/30'}">${rolInfo.nombre}</span>
-                <span class="px-3 py-1 rounded-full text-xs font-bold border ${activa ? 'bg-green-500/10 text-green-400 border-green-500/30' : 'bg-slate-500/10 text-slate-400 border-slate-500/30'}">${activa ? 'Activa' : 'Desactivada'}</span>
-            </div>
-            <div class="flex gap-2">
-                <button type="button" data-correo="${correoSeguro}" onclick="abrirFichaPersonal(this.dataset.correo)" title="Ver ficha" class="w-9 h-9 rounded-lg bg-dark-900 hover:bg-dark-700 border border-white/10 text-white flex items-center justify-center transition-colors"><i class="fa-solid fa-eye"></i></button>
-                <button type="button" data-correo="${correoSeguro}" onclick="abrirModalPersonal(this.dataset.correo)" title="Editar" class="w-9 h-9 rounded-lg bg-dark-900 hover:bg-dark-700 border border-white/10 text-white flex items-center justify-center transition-colors"><i class="fa-solid fa-pen"></i></button>
-                <button type="button" data-correo="${correoSeguro}" onclick="alternarEstadoPersonalAdmin(this.dataset.correo)" ${(activa && bloqueadaParaBaja) ? `disabled title="${motivoBloqueo}"` : `title="${activa ? 'Desactivar' : 'Activar'}"`} class="w-9 h-9 rounded-lg bg-dark-900 border border-white/10 text-white flex items-center justify-center transition-colors ${(activa && bloqueadaParaBaja) ? claseBloqueado : 'hover:bg-dark-700'}"><i class="fa-solid ${activa ? 'fa-user-slash' : 'fa-user-check'}"></i></button>
-                <button type="button" data-correo="${correoSeguro}" onclick="eliminarPersonalAdmin(this.dataset.correo)" ${bloqueadaParaBaja ? `disabled title="${motivoBloqueo}"` : 'title="Eliminar"'} class="w-9 h-9 rounded-lg bg-dark-900 border border-white/10 text-brand-blue flex items-center justify-center transition-colors ${bloqueadaParaBaja ? claseBloqueado : 'hover:bg-brand-blue/10'}"><i class="fa-solid fa-trash"></i></button>
+            <div id="detalle-personal-${correoSeguro}" class="hidden mt-1 p-5 bg-dark-900 rounded-2xl border border-white/10 shadow-inner overflow-hidden">
             </div>
         </div>`;
         }).join('');
+    }
+
+    /** Muestra el panel inferior independiente con los datos y (si es counter) el historial de ventas */
+    window.toggleDetallePersonal = (correo) => {
+        const detallePanel = document.getElementById('admin-personal-detalle-panel');
+        if (!detallePanel) return;
+
+        const cuenta = listarPersonal().find(u => u.correo === correo);
+        if (!cuenta) return;
+
+        const activa = cuentaEstaActiva(cuenta);
+        const fechaIngreso = cuenta.creadoEn ? new Date(cuenta.creadoEn).toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
+        const rolInfo = ROLES_PERSONAL[cuenta.rol];
+        
+        let htmlContenido = `
+            <div class="flex justify-between items-start border-b border-white/10 pb-4 mb-2">
+                <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-full bg-dark-900 border-2 ${cuenta.rol === 'admin' ? 'border-brand-yellow text-brand-yellow' : 'border-brand-blue text-brand-blue'} flex items-center justify-center text-2xl">
+                        <i class="fa-solid ${cuenta.rol === 'admin' ? 'fa-user-shield' : 'fa-user'}"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white">${escaparHtmlPersonal(cuenta.nombre)}</h3>
+                        <p class="text-slate-400 text-sm">${escaparHtmlPersonal(cuenta.correo)}</p>
+                    </div>
+                </div>
+                <div class="flex flex-col items-end gap-2">
+                    <button onclick="document.getElementById('admin-personal-detalle-panel').classList.add('hidden')" class="text-slate-400 hover:text-white transition-colors mb-1" title="Cerrar detalle"><i class="fa-solid fa-xmark text-xl"></i></button>
+                    <div class="flex gap-2">
+                        <span class="px-3 py-1 rounded-full text-xs font-bold border ${cuenta.rol === 'admin' ? 'bg-brand-yellow/10 text-brand-yellow border-brand-yellow/30' : 'bg-brand-blue/10 text-brand-blue border-brand-blue/30'}">${rolInfo.nombre}</span>
+                        <span class="px-3 py-1 rounded-full text-xs font-bold border ${activa ? 'bg-green-500/10 text-green-400 border-green-500/30' : 'bg-brand-red/10 text-brand-red border-brand-red/30'}">${activa ? 'Activa' : 'Desactivada'}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 py-2">
+                <!-- Columna Izquierda: Datos -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between border-b border-white/5 pb-2">
+                        <span class="text-slate-400 text-sm font-bold w-1/3">DNI:</span>
+                        <span class="text-white w-2/3">${cuenta.dni || '—'}</span>
+                    </div>
+                    <div class="flex items-center justify-between border-b border-white/5 pb-2">
+                        <span class="text-slate-400 text-sm font-bold w-1/3">Celular:</span>
+                        <span class="text-white w-2/3">${cuenta.telefono || '—'}</span>
+                    </div>
+                    <div class="flex items-center justify-between border-b border-white/5 pb-2">
+                        <span class="text-slate-400 text-sm font-bold w-1/3">Contraseña:</span>
+                        <div class="flex items-center gap-2 w-2/3">
+                            <span class="text-white tracking-widest font-mono" data-real="${cuenta.contrasena || ''}">••••••••</span>
+                            <button onclick="const p = this.previousElementSibling; if(p.textContent === '••••••••'){ p.textContent = p.dataset.real; this.innerHTML = '<i class=\\'fa-solid fa-eye-slash\\'></i>'; } else { p.textContent = '••••••••'; this.innerHTML = '<i class=\\'fa-solid fa-eye\\'></i>'; }" class="text-slate-400 hover:text-white transition-colors w-6 h-6 flex items-center justify-center rounded border border-slate-600 bg-dark-900"><i class="fa-solid fa-eye text-xs"></i></button>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between border-b border-white/5 pb-2">
+                        <span class="text-slate-400 text-sm font-bold w-1/3">Estado:</span>
+                        <span class="text-white w-2/3">${activa ? 'Activada' : 'Desactivada'}</span>
+                    </div>
+                    <div class="flex items-center justify-between border-b border-white/5 pb-2">
+                        <span class="text-slate-400 text-sm font-bold w-1/3">Fecha de Ingreso:</span>
+                        <span class="text-white w-2/3">${fechaIngreso}</span>
+                    </div>
+                    <div class="flex items-center justify-between border-b border-white/5 pb-2">
+                        <span class="text-slate-400 text-sm font-bold w-1/3">Cuenta creada por:</span>
+                        <span class="text-slate-400 w-2/3 truncate font-medium" title="${cuenta.creadoPor || 'Sistema'}">${cuenta.creadoPor || 'Sistema'}</span>
+                    </div>
+                </div>
+
+                <!-- Columna Derecha: Nota Interna -->
+                <div class="flex flex-col h-full">
+                    <span class="text-slate-400 text-sm font-bold mb-2">Nota Interna:</span>
+                    <div class="bg-dark-900 border border-white/10 rounded-xl p-4 flex-grow text-slate-300 text-sm italic overflow-y-auto hide-scrollbar min-h-[140px]">
+                        ${cuenta.nota ? cuenta.nota.replace(/\n/g, '<br>') : 'Sin notas registradas.'}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        if (cuenta.rol === 'counter') {
+            const ventasGlobales = obtenerVentasGenerales();
+            const ventasCounter = ventasGlobales.filter(v => v.vendidoPor === correo);
+            ventasCounter.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+            htmlContenido += `<div class="mt-4 border-t border-white/10 pt-6">
+                <h4 class="text-white font-bold mb-4 flex items-center gap-2 text-base">Historial de Ventas:</h4>`;
+
+            if (ventasCounter.length === 0) {
+                htmlContenido += `<p class="text-slate-400 text-sm py-4 text-center bg-dark-900 rounded-xl border border-white/5">No hay ventas registradas.</p>`;
+            } else {
+                htmlContenido += `<div class="overflow-y-auto max-h-[350px] space-y-4 pr-2 hide-scrollbar">`;
+                
+                ventasCounter.forEach(v => {
+                    const peli = v.pelicula || v.peliculaTitulo || 'Solo Dulcería';
+                    const totalFormateado = v.total ? `S/ ${v.total.toFixed(2)}` : 'S/ 0.00';
+                    const formatoStr = v.formato ? ` | ${v.formato}` : '';
+                    
+                    htmlContenido += `
+                    <div class="bg-dark-900 border border-white/10 rounded-xl p-0 hover:border-brand-blue/30 transition-colors overflow-hidden">
+                        <div class="p-4">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="bg-brand-red text-white text-xs font-bold px-3 py-1 rounded shadow">${v.codigo}</span>
+                                <span class="text-xs font-bold text-slate-400 border border-white/10 px-3 py-1 rounded bg-dark-800">${new Date(v.fecha).toLocaleString('es-PE', {day:'2-digit', month:'2-digit', year:'numeric'})} | ${new Date(v.fecha).toLocaleString('es-PE', {hour:'2-digit', minute:'2-digit'})}</span>
+                            </div>
+                            <p class="text-brand-blue text-lg font-bold mb-3">${peli}</p>
+                            
+                            <div class="text-slate-400 text-sm space-y-1.5 mb-4">
+                                ${v.fechaFuncion ? `<p><i class="fa-regular fa-calendar-days w-5 text-center mr-1"></i>${v.fechaFuncion} ${v.horaFuncion}${formatoStr}</p>` : ''}
+                                ${v.asientos && v.asientos.length ? `<p><i class="fa-solid fa-couch w-5 text-center mr-1"></i>Butacas: ${v.asientos.map(a => typeof a === 'object' ? a.id : a).join(', ')}</p>` : ''}
+                            </div>
+                        </div>
+                        <div class="bg-dark-800/80 px-4 py-3 flex justify-between items-center border-t border-white/5">
+                            <span class="text-white font-bold text-sm">Total Pagado:</span>
+                            <span class="text-black bg-brand-yellow px-4 py-1.5 rounded font-bold font-mono shadow-md">${totalFormateado}</span>
+                        </div>
+                    </div>`;
+                });
+                htmlContenido += `</div>`;
+            }
+            htmlContenido += `</div>`;
+        }
+
+        detallePanel.innerHTML = htmlContenido;
+        detallePanel.classList.remove('hidden');
+        
+        // Hacemos scroll suave hasta el panel
+        setTimeout(() => {
+            detallePanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 50);
     }
 
     /** Abre el modal en modo "crear" (sin argumento) o "editar" (con el correo de la cuenta). */
