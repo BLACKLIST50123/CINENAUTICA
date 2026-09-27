@@ -2606,18 +2606,70 @@ window.crearCuponAdmin = async (e) => {
         const historial = (socio.historialPuntos || []).slice(0, 10);
         const contenedorHistorial = document.getElementById('admin-socio-historial');
         if (historial.length === 0) {
-            contenedorHistorial.innerHTML = '<p class="text-slate-500 text-sm text-center py-4">Este socio todavía no tiene movimientos de puntos.</p>';
+            contenedorHistorial.innerHTML = '<p class="text-slate-500 text-sm py-2">Este socio todavía no tiene movimientos de puntos.</p>';
         } else {
             contenedorHistorial.innerHTML = historial.map(mov => `
-            <div class="flex justify-between items-center bg-dark-900 rounded-lg px-3 py-2 text-sm">
+            <div class="flex justify-between items-center bg-dark-900 rounded-lg px-3 py-2 text-sm border border-white/5">
                 <div>
-                    <p class="text-slate-300">${mov.motivo}</p>
-                    <p class="text-slate-500 text-xs">${new Date(mov.fecha).toLocaleString('es-PE')}</p>
+                    <p class="text-slate-300 font-medium">${mov.motivo}</p>
+                    <p class="text-slate-500 text-[10px] uppercase mt-0.5">${new Date(mov.fecha).toLocaleString('es-PE', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'})}</p>
                 </div>
-                <span class="font-bold ${mov.cantidad >= 0 ? 'text-green-400' : 'text-brand-blue'}">${mov.cantidad >= 0 ? '+' : ''}${mov.cantidad} pts</span>
+                <span class="font-bold ${mov.cantidad >= 0 ? 'text-green-400 bg-green-400/10' : 'text-brand-blue bg-brand-blue/10'} px-2 py-0.5 rounded text-xs">${mov.cantidad >= 0 ? '+' : ''}${mov.cantidad} pts</span>
             </div>
         `).join('');
         }
+
+        // Historial de Compras (Nuevo)
+        const contenedorCompras = document.getElementById('admin-socio-compras-historial-container');
+        const compras = socio.compras || [];
+        
+        let htmlCompras = `<h4 class="text-white font-bold mb-4 flex items-center gap-2 text-base">Historial de Compras:</h4>`;
+        
+        if (compras.length === 0) {
+            htmlCompras += `<p class="text-slate-400 text-sm py-4 text-center bg-dark-900 rounded-xl border border-white/5">Este socio no tiene compras registradas.</p>`;
+        } else {
+            htmlCompras += `<div class="overflow-y-auto max-h-[350px] space-y-4 pr-2 custom-scrollbar">`;
+            
+            compras.forEach(v => {
+                const peli = v.pelicula || v.peliculaTitulo || 'Solo Dulcería';
+                const totalFormateado = v.total ? `S/ ${v.total.toFixed(2)}` : 'S/ 0.00';
+                const formatoStr = v.formato ? ` | ${v.formato}` : '';
+                
+                // Buscar cuántos puntos ganó en esta compra analizando su historial de puntos (buscando la palabra "Compra CR-XXX")
+                const movRelacionado = historial.find(m => m.motivo.includes(v.codigo));
+                const puntosGanados = movRelacionado ? movRelacionado.cantidad : 0;
+                const puntosBadge = puntosGanados > 0 
+                    ? `<span class="bg-green-400/20 text-green-400 border border-green-400/30 px-2 py-0.5 rounded text-xs font-bold shadow-sm">+${puntosGanados} pts</span>` 
+                    : '';
+                
+                htmlCompras += `
+                <div class="bg-dark-900 border border-white/10 rounded-xl p-0 hover:border-brand-blue/30 transition-colors overflow-hidden flex flex-col">
+                    <div class="p-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="bg-brand-red text-white text-xs font-bold px-3 py-1 rounded shadow">${v.codigo}</span>
+                            <span class="text-xs font-bold text-slate-400 border border-white/10 px-3 py-1 rounded bg-dark-800">${new Date(v.fecha).toLocaleString('es-PE', {day:'2-digit', month:'2-digit', year:'numeric'})} | ${new Date(v.fecha).toLocaleString('es-PE', {hour:'2-digit', minute:'2-digit'})}</span>
+                        </div>
+                        <p class="text-brand-blue text-lg font-bold mb-2">${peli}</p>
+                        
+                        <div class="text-slate-400 text-sm space-y-1.5 mb-2">
+                            ${v.fechaFuncion ? `<p><i class="fa-regular fa-calendar-days w-5 text-center mr-1"></i>${v.fechaFuncion} ${v.horaFuncion}${formatoStr}</p>` : ''}
+                            ${v.asientos && v.asientos.length ? `<p><i class="fa-solid fa-couch w-5 text-center mr-1"></i>Butacas: ${v.asientos.map(a => typeof a === 'object' ? a.id : a).join(', ')}</p>` : ''}
+                        </div>
+                    </div>
+                    <div class="bg-dark-800/80 px-4 py-3 flex justify-between items-center border-t border-white/5 mt-auto">
+                        <div class="flex items-center gap-2">
+                            <span class="text-white font-bold text-sm">Pagado:</span>
+                            <span class="text-black bg-brand-yellow px-3 py-1 rounded font-bold font-mono shadow">${totalFormateado}</span>
+                        </div>
+                        ${puntosBadge}
+                    </div>
+                </div>`;
+            });
+            htmlCompras += `</div>`;
+        }
+        
+        contenedorCompras.innerHTML = htmlCompras;
+        document.getElementById('admin-socio-resultado').classList.remove('hidden');
     }
 
     /** Vuelve a cargar y pintar al socio activo desde localStorage (tras validar el cumpleaños). */
@@ -2838,23 +2890,45 @@ window.crearCuponAdmin = async (e) => {
                     const totalFormateado = v.total ? `S/ ${v.total.toFixed(2)}` : 'S/ 0.00';
                     const formatoStr = v.formato ? ` | ${v.formato}` : '';
                     
+                    let puntosBadge = '';
+                    let tipoVentaBadge = '<span class="bg-slate-700 text-slate-300 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">Normal</span>';
+                    
+                    if (v.correoUsuario) {
+                        tipoVentaBadge = '<span class="bg-brand-blue/20 text-brand-blue border border-brand-blue/30 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider shadow-sm"><i class="fa-solid fa-crown mr-1"></i>Socio</span>';
+                        
+                        const usuarios = obtenerUsuarios();
+                        const socio = usuarios.find(s => s.correo === v.correoUsuario);
+                        if (socio && socio.historialPuntos) {
+                            const mov = socio.historialPuntos.find(m => m.motivo.includes(v.codigo));
+                            if (mov && mov.cantidad > 0) {
+                                puntosBadge = `<span class="bg-green-400/20 text-green-400 border border-green-400/30 px-2 py-0.5 rounded text-xs font-bold shadow-sm">+${mov.cantidad} pts</span>`;
+                            }
+                        }
+                    }
+
                     htmlContenido += `
-                    <div class="bg-dark-900 border border-white/10 rounded-xl p-0 hover:border-brand-blue/30 transition-colors overflow-hidden">
+                    <div class="bg-dark-900 border border-white/10 rounded-xl p-0 hover:border-brand-blue/30 transition-colors overflow-hidden flex flex-col">
                         <div class="p-4">
                             <div class="flex justify-between items-center mb-3">
-                                <span class="bg-brand-red text-white text-xs font-bold px-3 py-1 rounded shadow">${v.codigo}</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="bg-brand-red text-white text-xs font-bold px-3 py-1 rounded shadow">${v.codigo}</span>
+                                    ${tipoVentaBadge}
+                                </div>
                                 <span class="text-xs font-bold text-slate-400 border border-white/10 px-3 py-1 rounded bg-dark-800">${new Date(v.fecha).toLocaleString('es-PE', {day:'2-digit', month:'2-digit', year:'numeric'})} | ${new Date(v.fecha).toLocaleString('es-PE', {hour:'2-digit', minute:'2-digit'})}</span>
                             </div>
-                            <p class="text-brand-blue text-lg font-bold mb-3">${peli}</p>
+                            <p class="text-brand-blue text-lg font-bold mb-2">${peli}</p>
                             
-                            <div class="text-slate-400 text-sm space-y-1.5 mb-4">
+                            <div class="text-slate-400 text-sm space-y-1.5 mb-2">
                                 ${v.fechaFuncion ? `<p><i class="fa-regular fa-calendar-days w-5 text-center mr-1"></i>${v.fechaFuncion} ${v.horaFuncion}${formatoStr}</p>` : ''}
                                 ${v.asientos && v.asientos.length ? `<p><i class="fa-solid fa-couch w-5 text-center mr-1"></i>Butacas: ${v.asientos.map(a => typeof a === 'object' ? a.id : a).join(', ')}</p>` : ''}
                             </div>
                         </div>
-                        <div class="bg-dark-800/80 px-4 py-3 flex justify-between items-center border-t border-white/5">
-                            <span class="text-white font-bold text-sm">Total Pagado:</span>
-                            <span class="text-black bg-brand-yellow px-4 py-1.5 rounded font-bold font-mono shadow-md">${totalFormateado}</span>
+                        <div class="bg-dark-800/80 px-4 py-3 flex justify-between items-center border-t border-white/5 mt-auto">
+                            <div class="flex items-center gap-2">
+                                <span class="text-white font-bold text-sm">Total Pagado:</span>
+                                <span class="text-black bg-brand-yellow px-4 py-1.5 rounded font-bold font-mono shadow-md">${totalFormateado}</span>
+                            </div>
+                            ${puntosBadge}
                         </div>
                     </div>`;
                 });

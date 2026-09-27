@@ -1750,57 +1750,60 @@
                             se generan solo desde una venta real (web o "Nueva Venta" en counter); aquí no se editan a
                             mano.</p>
 
-                        <div class="bg-dark-800 border border-white/5 rounded-2xl p-6 shadow-xl mb-6">
-                            <div class="flex flex-col sm:flex-row gap-3 mb-4">
+                        <div class="bg-dark-800/40 border border-white/5 rounded-2xl p-2 mb-6">
+                            <div class="flex flex-col sm:flex-row gap-3 mb-2 px-2 pt-2">
                                 <input type="text" id="admin-socio-busqueda"
                                     placeholder="Buscar por nombre, correo, código o DNI..."
                                     class="flex-1 bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-yellow"
                                     oninput="filtrarListaSociosAdmin()">
                             </div>
-                            <div id="admin-socios-filtros-nivel" class="flex flex-wrap gap-2 mb-4"></div>
-                            <p id="admin-socios-contador" class="text-slate-500 text-xs mb-2"></p>
+                            <div id="admin-socios-filtros-nivel" class="flex flex-wrap gap-2 mb-2 px-2"></div>
+                            <p id="admin-socios-contador" class="text-slate-500 text-xs mb-2 px-2"></p>
                             <div id="admin-socios-lista"
-                                class="space-y-2 max-h-[480px] overflow-y-auto pr-1 hide-scrollbar"></div>
+                                class="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar"></div>
                         </div>
 
-                        <div id="admin-socio-resultado" class="hidden">
-                            <div class="bg-dark-800 border border-white/5 rounded-2xl p-6 shadow-xl mb-6">
-                                <div
-                                    class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-6 border-b border-white/10">
+                        <div id="admin-socio-resultado" class="hidden bg-dark-800 border border-white/5 rounded-2xl p-6 shadow-xl flex-col gap-6">
+                            <div class="flex justify-between items-start border-b border-white/10 pb-4 mb-2">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-14 h-14 rounded-full bg-dark-900 border-2 border-brand-yellow flex items-center justify-center text-2xl">
+                                        <i class="fa-solid fa-user text-brand-yellow"></i>
+                                    </div>
                                     <div>
                                         <h3 class="text-xl font-bold text-white" id="admin-socio-nombre">—</h3>
                                         <p class="text-slate-400 text-sm" id="admin-socio-correo">—</p>
                                         <p class="text-slate-500 text-xs font-mono mt-1" id="admin-socio-codigo">—</p>
                                     </div>
-                                    <div class="text-center md:text-right">
-                                        <span id="admin-socio-nivel-badge"
-                                            class="px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Bronce</span>
-                                        <p class="text-3xl font-bold text-brand-yellow mt-2" id="admin-socio-puntos">0
-                                            pts</p>
+                                </div>
+                                <div class="flex flex-col items-end gap-2">
+                                    <button onclick="document.getElementById('admin-socio-resultado').classList.add('hidden')" class="text-slate-400 hover:text-white transition-colors mb-1" title="Cerrar detalle"><i class="fa-solid fa-xmark text-xl"></i></button>
+                                    <div class="flex gap-2">
+                                        <span id="admin-socio-nivel-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Bronce</span>
+                                        <p class="text-brand-yellow font-bold px-2" id="admin-socio-puntos">0 pts</p>
                                     </div>
                                 </div>
+                            </div>
 
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                    <div class="bg-dark-900 rounded-xl p-4 flex items-center justify-between gap-3">
-                                        <span class="text-slate-300 text-sm flex items-center gap-2"><i
-                                                class="fa-solid fa-cake-candles text-brand-yellow"></i> <span
-                                                id="admin-socio-cumple-texto">—</span></span>
-                                        <button id="admin-socio-btn-cumple" onclick="validarCumpleanosAdmin()"
-                                            class="hidden bg-brand-yellow hover:bg-yellow-400 text-black px-3 py-1.5 rounded-lg font-bold text-xs whitespace-nowrap">Marcar
-                                            usada</button>
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 py-2">
+                                <div class="space-y-4">
+                                    <h4 class="text-brand-yellow font-bold mb-3 border-b border-white/10 pb-2"><i class="fa-solid fa-gift mr-2"></i> Beneficios Activos</h4>
+                                    <div class="bg-dark-900 rounded-xl p-4 flex items-center justify-between gap-3 border border-white/5">
+                                        <span class="text-slate-300 text-sm flex items-center gap-2"><i class="fa-solid fa-cake-candles text-brand-yellow"></i> <span id="admin-socio-cumple-texto">—</span></span>
+                                        <button id="admin-socio-btn-cumple" onclick="validarCumpleanosAdmin()" class="hidden bg-brand-yellow hover:bg-yellow-400 text-black px-3 py-1.5 rounded-lg font-bold text-xs whitespace-nowrap shadow-lg">Marcar usada</button>
                                     </div>
-                                    <div class="bg-dark-900 rounded-xl p-4 flex items-center gap-2">
+                                    <div class="bg-dark-900 rounded-xl p-4 flex items-center gap-2 border border-white/5">
                                         <i class="fa-solid fa-people-line text-green-400"></i>
                                         <span class="text-slate-300 text-sm" id="admin-socio-fila-texto">—</span>
                                     </div>
                                 </div>
-
+                                <div class="flex flex-col h-full">
+                                    <h4 class="text-brand-yellow font-bold mb-3 border-b border-white/10 pb-2"><i class="fa-solid fa-star mr-2"></i> Movimientos de Puntos</h4>
+                                    <div id="admin-socio-historial" class="space-y-2 overflow-y-auto custom-scrollbar max-h-[150px] pr-2"></div>
+                                </div>
                             </div>
 
-                            <div class="bg-dark-800 border border-white/5 rounded-2xl p-6 shadow-xl">
-                                <h4 class="text-white font-bold text-sm mb-3">Historial de puntos reciente</h4>
-                                <div id="admin-socio-historial"
-                                    class="space-y-2 max-h-64 overflow-y-auto hide-scrollbar"></div>
+                            <div id="admin-socio-compras-historial-container" class="mt-4 border-t border-white/10 pt-6">
+                                <!-- Inyectado por JS -->
                             </div>
                         </div>
                     </div>
