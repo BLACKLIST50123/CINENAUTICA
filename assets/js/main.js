@@ -1,4 +1,4 @@
-﻿/* ============================================================================
+/* ============================================================================
    CINE NÁUTICA — MAIN.JS — Inicialización general
    ------------------------------------------------------------------------
    Parte de la arquitectura modular de la app (Fase 14).
@@ -38,8 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     actualizarNavbarAuth();
     if (habiaSesionGuardada && !sesionSigueValida) mostrarToast('Tu sesión se cerró porque la cuenta ya no está activa.', 'info');
-
-    inicializarChatbot();
 });
 
 // MÓDULO 8: el evento 'storage' solo se dispara en OTRAS pestañas. Si el admin desactiva/elimina/cambia de rol

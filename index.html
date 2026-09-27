@@ -2144,58 +2144,7 @@
          (fechas + formato + hora + sala, sin choques de sala/fecha/hora)
          ============================================================ -->
 
-        <!-- ============================================================
-         CHAT IA (CineBot)
-         ============================================================ -->
-        <div id="widget-chat-ia" class="fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-none">
-            <div id="ventana-chat-ia"
-                class="hidden w-[90vw] md:w-96 bg-dark-800 border border-white/10 rounded-2xl shadow-2xl shadow-brand-blue/20 mb-4 flex-col overflow-hidden transition-all origin-bottom-right pointer-events-auto">
-                <div
-                    class="bg-gradient-to-r from-brand-dark-blue to-brand-blue p-4 flex justify-between items-center shadow-md">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
-                            <i class="fa-solid fa-robot text-white"></i>
-                        </div>
-                        <div>
-                            <span class="font-bold text-white block leading-tight">CineBot AI</span>
-                            <span class="text-xs text-white/80 flex items-center gap-1"><span
-                                    class="w-1.5 h-1.5 rounded-full bg-green-400"></span> En línea</span>
-                        </div>
-                    </div>
-                    <button id="cerrar-chat"
-                        class="text-white/80 hover:text-white transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10"><i
-                            class="fa-solid fa-xmark text-lg"></i></button>
-                </div>
-                <div id="mensajes-chat"
-                    class="h-80 p-4 overflow-y-auto flex flex-col gap-3 text-sm bg-dark-900/50 backdrop-blur-md">
-                    <div class="flex gap-2 chat-bubble-enter">
-                        <div
-                            class="w-6 h-6 rounded-full bg-brand-blue flex-shrink-0 flex items-center justify-center mt-1">
-                            <i class="fa-solid fa-robot text-[10px] text-white"></i>
-                        </div>
-                        <div
-                            class="bg-dark-700 text-white p-3 rounded-xl rounded-tl-none self-start max-w-[85%] border border-white/5 shadow-sm">
-                            ¡Hola! Soy CineBot 🍿, tu asistente virtual. ¿Buscas recomendaciones de películas o tienes
-                            dudas sobre precios y combos?
-                        </div>
-                    </div>
-                </div>
-                <div class="p-3 border-t border-white/10 bg-dark-800 flex gap-2 items-center">
-                    <input type="text" id="entrada-chat"
-                        class="flex-1 bg-dark-900 text-white rounded-full px-4 py-2.5 outline-none focus:ring-1 focus:ring-brand-blue text-sm border border-white/5"
-                        placeholder="Escribe tu mensaje...">
-                    <button id="enviar-chat"
-                        class="bg-brand-blue w-10 h-10 rounded-full flex flex-shrink-0 items-center justify-center text-white hover:bg-brand-dark-blue transition-all transform hover:scale-105"><i
-                            class="fa-solid fa-paper-plane"></i></button>
-                </div>
-            </div>
-            <button id="toggle-chat"
-                class="pointer-events-auto w-14 h-14 bg-brand-blue hover:bg-brand-dark-blue rounded-full shadow-xl shadow-brand-blue/30 flex items-center justify-center text-white text-2xl transition-all transform hover:scale-110 relative group">
-                <i class="fa-solid fa-message"></i>
-                <span
-                    class="absolute top-0 right-0 w-3.5 h-3.5 bg-brand-yellow border-2 border-dark-900 rounded-full"></span>
-            </button>
-        </div>
+
 
         <!-- ============================================================
          MODAL: LOGIN
@@ -2758,7 +2707,7 @@
     <script src="./assets/js/socios.js"></script>
     <script src="./assets/js/cliente.js"></script>
     <script src="./assets/js/admin.js"></script>
-    <script src="./assets/js/chatbot.js"></script>
+
     <script src="./assets/js/main.js"></script>
 </body>
 
