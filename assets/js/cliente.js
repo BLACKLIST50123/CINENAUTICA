@@ -1,7 +1,7 @@
 /* ============================================================================
-   CINERAMA — CLIENTE.JS — Todo el flujo de cara al usuario
+   CINE NÁUTICA — CLIENTE.JS — Todo el flujo de cara al usuario
    ------------------------------------------------------------------------
-   Parte de la arquitectura modular de Cinerama (Fase 14).
+   Parte de la arquitectura modular de la app (Fase 14).
    Cargado como <script> clásico (no ES module) para funcionar también
    abriendo index.html directamente con file://, sin necesidad de servidor.
    Navegación entre vistas, cartelera, detalle, horarios, asientos,
@@ -26,8 +26,14 @@ const TRANSICIONES_PERMITIDAS_EN_FLUJO_COMPRA = new Set([
 ]);
 
 async function cambiarVista(idDesde, idHacia) {
+    // MÓDULO 8: el programa Socio Náutica es solo para clientes. Cubre cualquier botón/link (actual o futuro) que intente abrir la vista con una cuenta de counter/admin.
+    if (idHacia === 'vista-beneficios' && usuarioActual && !usuarioEsSocio(usuarioActual)) {
+        mostrarToast('El programa Socio Náutica es solo para clientes.', 'info');
+        return;
+    }
+
     // FIX (bug reportado): algunos botones internos llamaban a cambiarVista() directamente
-    // (ej. "Volver a Cartelera" en Horarios, o el link "Socio Cinerama" del footer) sin pasar
+    // (ej. "Volver a Cartelera" en Horarios, o el link "Socio Náutica" del footer) sin pasar
     // por intentarSalirDelFlujoDeCompra(), así que salían del flujo sin avisar y dejaban el
     // temporizador/badge "vivo". Esta red de seguridad cubre cualquier botón, actual o futuro,
     // que intente lo mismo. Si la salida ya pasó por el wrapper (que limpia el pedido antes de
@@ -35,15 +41,37 @@ async function cambiarVista(idDesde, idHacia) {
     const esFugaDelFlujoDeCompra = VISTAS_FLUJO_COMPRA.includes(idDesde)
         && !TRANSICIONES_PERMITIDAS_EN_FLUJO_COMPRA.has(`${idDesde}|${idHacia}`);
 
-    if (esFugaDelFlujoDeCompra && estadoPedidoTieneProgreso()) {
+    if (esFugaDelFlujoDeCompra && (estadoPedidoTieneProgreso() || estadoPedido.modoReubicar)) {
+        let tituloConfirmacion = '¿Salir de la compra?';
+        let mensajeConfirmacion = 'Tienes una compra en curso. Si sales ahora, perderás los asientos y/o productos que seleccionaste.';
+        let textoConfirmar = 'Sí, salir';
+        let textoCancelar = 'Seguir comprando';
+
+        if (estadoPedido.modoReubicar) {
+            tituloConfirmacion = 'Cancelar Reubicación';
+            mensajeConfirmacion = 'Estás reubicando un ticket. Si cambias de vista, la reubicación se cancelará. ¿Continuar?';
+            textoConfirmar = 'Sí, cancelar reubicación';
+            textoCancelar = 'Continuar reubicando';
+        }
+
         const salir = await confirmarAccion({
-            titulo: '¿Salir de la compra?',
-            mensaje: 'Tienes una compra en curso. Si sales ahora, perderás los asientos y/o productos que seleccionaste.',
+            titulo: tituloConfirmacion,
+            mensaje: mensajeConfirmacion,
             tipo: 'advertencia',
-            textoConfirmar: 'Sí, salir',
-            textoCancelar: 'Seguir comprando'
+            textoConfirmar: textoConfirmar,
+            textoCancelar: textoCancelar
         });
+
         if (!salir) return;
+        
+        if (estadoPedido.modoReubicar) {
+            // Limpia el estado de reubicación sin forzar navegación redundante
+            delete estadoPedido.modoReubicar;
+            delete estadoPedido.ticketReubicando;
+            delete estadoPedido.cantidadAsientosRequeridos;
+            document.getElementById('banner-modo-reubicar').classList.add('hidden');
+            mostrarToast('Reubicación cancelada.', 'info');
+        }
         limpiarEstadoPedido();
     }
 
@@ -65,6 +93,7 @@ async function cambiarVista(idDesde, idHacia) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         vistaActualVisible = idHacia;
         renderizarStepperCompra(idHacia); // FASE 15: indicador de progreso de la compra
+        if (idHacia === 'vista-beneficios') renderizarVistaBeneficios(); // MÓDULO 7
         ajustarAlturaContenedorVistas(idHacia); // Módulo 1: footer estático al final del contenido
         actualizarVisibilidadFooter();          // Módulo 1: footer oculto en panel admin
     }, 300);
@@ -385,7 +414,7 @@ window.abrirHorarios = (peliculaId) => {
 
     estadoPedido.modoDirecto = false;
     estadoPedido.pelicula = pelicula;
-    estadoPedido.formato = null; estadoPedido.hora = null; estadoPedido.fecha = null;
+    estadoPedido.formato = null; estadoPedido.formatoId = null; estadoPedido.hora = null; estadoPedido.fecha = null;
 
     // Módulo 1 — fix bug de memoria: la barra flotante "Elegir Asientos" no vive
     // dentro del innerHTML que se regenera en renderizarContenidoHorarios(), así
@@ -415,24 +444,41 @@ const renderizarContenidoHorarios = (pelicula, fechasDisponibles) => {
     let horariosHTML = '';
     const funcionesDelDia = pelicula.horarios[estadoPedido.fecha];
     
-    let formatoOriginal = null;
-    if (estadoPedido.modoReubicar && estadoPedido.ticketReubicando && estadoPedido.ticketReubicando.detalle) {
-        formatoOriginal = estadoPedido.ticketReubicando.detalle.split(' • ')[2];
+    // Validar el formato original para bloquear otros formatos durante la reubicación
+    let formatoViejo = null;
+    if (estadoPedido.modoReubicar && estadoPedido.ticketReubicando) {
+        formatoViejo = estadoPedido.ticketReubicando.formato || 
+                      (estadoPedido.ticketReubicando.detalle ? estadoPedido.ticketReubicando.detalle.split(' • ')[2] : null);
     }
 
     funcionesDelDia.forEach(funcion => {
-        if (formatoOriginal && funcion.formato !== formatoOriginal) return;
-
         horariosHTML += `
             <div class="bg-dark-800 rounded-xl p-5 border border-white/5 mb-6">
                 <h4 class="text-lg font-bold text-white mb-4 border-l-4 border-brand-red pl-3">${funcion.formato}</h4>
                 <div class="flex flex-wrap gap-3">`;
+        // MÓDULO 9: el id del formato viaja junto al texto (grupos viejos sin formatoId se resuelven por nombre).
+        const formatoIdDeEsteGrupo = funcion.formatoId || resolverFormatoIdDesdeTextoCliente(funcion.formato);
         funcion.horas.forEach(horaRaw => {
-            // FASE 7: cada horario ahora trae su propia sala asignada { hora, sala }
-            const { hora, sala } = normalizarFuncionHorario(horaRaw);
-            horariosHTML += `<button onclick="seleccionarHorario(this, '${funcion.formato}', '${hora}', ${sala})" class="time-btn bg-dark-900 border border-gray-600 hover:border-brand-red hover:bg-brand-red/10 text-white font-bold py-2.5 px-6 rounded-lg transition-colors focus:outline-none flex flex-col items-center leading-tight">
-                <span>${hora}</span><span class="text-[10px] text-gray-500 font-normal">Sala ${sala}</span>
-            </button>`;
+            // FASE 7: cada horario ahora trae su propia sala asignada { hora, sala, estado }
+            const { hora, sala, estado } = normalizarFuncionHorario(horaRaw);
+            const esCancelada = estado === 'cancelada';
+            
+            const esFormatoIncompatible = estadoPedido.modoReubicar && formatoViejo && funcion.formato !== formatoViejo;
+
+            if (esCancelada) {
+                horariosHTML += `<button disabled class="time-btn bg-brand-red/20 border border-brand-red/50 text-white/50 font-bold py-2.5 px-6 rounded-lg focus:outline-none flex flex-col items-center leading-tight opacity-60 cursor-not-allowed">
+                    <span class="line-through">${hora}</span>
+                    <span class="text-[9px] text-brand-red mt-1 font-black bg-brand-red/20 px-1.5 rounded">CANCELADA</span>
+                </button>`;
+            } else if (esFormatoIncompatible) {
+                horariosHTML += `<button disabled onclick="mostrarToast('Solo puedes reubicar en el formato original (${formatoViejo})', 'error')" class="time-btn bg-dark-900 border border-gray-600 text-white/50 font-bold py-2.5 px-6 rounded-lg focus:outline-none flex flex-col items-center leading-tight opacity-60 cursor-not-allowed">
+                    <span>${hora}</span><span class="text-[10px] text-gray-500 font-normal">Sala ${sala}</span>
+                </button>`;
+            } else {
+                horariosHTML += `<button onclick="seleccionarHorario(this, '${funcion.formato}', '${formatoIdDeEsteGrupo}', '${hora}', ${sala})" class="time-btn bg-dark-900 border border-gray-600 hover:border-brand-red hover:bg-brand-red/10 text-white font-bold py-2.5 px-6 rounded-lg transition-colors focus:outline-none flex flex-col items-center leading-tight">
+                    <span>${hora}</span><span class="text-[10px] text-gray-500 font-normal">Sala ${sala}</span>
+                </button>`;
+            }
         });
         horariosHTML += `</div></div>`;
     });
@@ -465,12 +511,12 @@ const renderizarContenidoHorarios = (pelicula, fechasDisponibles) => {
 
 window.cambiarFechaHorario = (fecha) => {
     estadoPedido.fecha = fecha;
-    estadoPedido.formato = null; estadoPedido.hora = null;
+    estadoPedido.formato = null; estadoPedido.formatoId = null; estadoPedido.hora = null;
     document.getElementById('barra-confirmacion-horario').classList.add('translate-y-full');
     renderizarContenidoHorarios(estadoPedido.pelicula, Object.keys(estadoPedido.pelicula.horarios));
 };
 
-window.seleccionarHorario = (btnEl, formato, hora, sala = 1) => {
+window.seleccionarHorario = (btnEl, formato, formatoId, hora, sala = 1) => {
     document.querySelectorAll('.time-btn').forEach(btn => {
         btn.classList.remove('bg-brand-red', 'border-brand-red');
         btn.classList.add('bg-dark-900', 'border-gray-600');
@@ -479,6 +525,7 @@ window.seleccionarHorario = (btnEl, formato, hora, sala = 1) => {
     btnEl.classList.add('bg-brand-red', 'border-brand-red');
 
     estadoPedido.formato = formato;
+    estadoPedido.formatoId = formatoId; // MÓDULO 9: determina el recargo de formato en el precio
     estadoPedido.hora = hora;
     estadoPedido.sala = Number(sala) || 1; // FASE 7: sala asociada a esta función
 
@@ -488,12 +535,19 @@ window.seleccionarHorario = (btnEl, formato, hora, sala = 1) => {
     document.getElementById('barra-confirmacion-horario').classList.remove('translate-y-full');
 };
 
+/** MÓDULO 9: para funciones antiguas sin formatoId guardado, adivina el formato del catálogo por el texto. */
+function resolverFormatoIdDesdeTextoCliente(formatoTexto) {
+    const texto = String(formatoTexto || '').toUpperCase();
+    const coincidencia = obtenerCatalogoFormatos().find(f => texto.includes(f.nombre.toUpperCase()));
+    return coincidencia ? coincidencia.id : '2d';
+}
+
 /** FASE 7: normaliza un horario, que puede venir como string (dato antiguo) u objeto { hora, sala }. */
 function normalizarFuncionHorario(horaRaw) {
     if (horaRaw && typeof horaRaw === 'object') {
-        return { hora: horaRaw.hora, sala: Number(horaRaw.sala) || 1 };
+        return { hora: horaRaw.hora, sala: Number(horaRaw.sala) || 1, estado: horaRaw.estado || 'programada' };
     }
-    return { hora: horaRaw, sala: 1 };
+    return { hora: horaRaw, sala: 1, estado: 'programada' };
 }
 
 
@@ -628,30 +682,48 @@ function resolverAbreviaturaDiaDeEtiqueta(etiquetaFecha) {
  * (estadoPedido.pelicula + estadoPedido.fecha), siguiendo la jerarquía
  * estricta del negocio. Todos los asientos de una misma función pagan esta
  * misma tarifa (ya no hay distinción por tipo de entrada).
+ * Lee los montos desde obtenerTarifasDia() — editables en Admin > Tarifas.
  */
 function calcularTarifaFuncionActual() {
     const pelicula = estadoPedido.pelicula;
+    const tarifas = obtenerTarifasDia(); // { economica, media, alta }
 
-    // 1) Pre-estreno
-    if (pelicula && pelicula.tipoLanzamiento === 'Pre-Estreno') return TARIFA_FERIADO_FIN_DE_SEMANA;
+    // 1) Pre-estreno → tarifa alta
+    if (pelicula && pelicula.tipoLanzamiento === 'Pre-Estreno') return tarifas.alta;
 
-    // 2) Feriado / día no laborable (calendario del admin — Módulo 4 le pone UI)
-    const fechaISO = resolverFechaISODeEtiqueta(estadoPedido.fecha);
-    if (fechaISO && esFechaFeriadoONoLaborable(fechaISO)) return TARIFA_FERIADO_FIN_DE_SEMANA;
-
-    // 3-5) Según día de la semana
-    const abreviaturaDia = resolverAbreviaturaDiaDeEtiqueta(estadoPedido.fecha);
-    return TARIFAS_POR_DIA_SEMANA[abreviaturaDia] ?? TARIFA_FERIADO_FIN_DE_SEMANA; // fallback seguro
+    // 2) Según día de la semana
+    const dia = resolverAbreviaturaDiaDeEtiqueta(estadoPedido.fecha);
+    if (dia === 'Mar') return tarifas.economica;               // Martes
+    if (dia === 'Lun' || dia === 'Mié') return tarifas.media;  // Lun / Mié
+    return tarifas.alta;                                        // Jue / Vie / Sáb / Dom (fallback)
 }
 
-/** Actualiza el badge de "tarifa vigente" que se muestra sobre el mapa de asientos. */
+/** MÓDULO 9: tarifa base del día (calcularTarifaFuncionActual) + recargo del formato de la función elegida. Este es el precio de un asiento con tipo de entrada "General" (0% de descuento); cada tipo aplica su descuento sobre este monto. */
+function calcularPrecioBaseAsiento() {
+    const base = calcularTarifaFuncionActual();
+    const formato = estadoPedido.formatoId ? obtenerFormatoPorId(estadoPedido.formatoId) : null;
+    return base + (formato ? formato.recargo : 0);
+}
+
+/** MÓDULO 9: precio final de un asiento según su tipo de entrada (aplica el % de descuento del catálogo sobre la tarifa base+formato). */
+function calcularPrecioAsientoPorTipo(tipoEntradaId) {
+    const precioBase = calcularPrecioBaseAsiento();
+    const tipo = obtenerTipoEntradaPorId(tipoEntradaId) || obtenerTipoEntradaPorDefecto();
+    const precioFinal = precioBase * (1 - (tipo.descuentoPct || 0) / 100);
+    return Math.round(precioFinal * 100) / 100;
+}
+
+/** Actualiza el badge de "tarifa vigente" que se muestra sobre el mapa de asientos (precio de referencia con entrada General; el checkout ajusta por tipo de entrada elegido). */
 function actualizarBadgeTarifaVigente() {
     const el = document.getElementById('texto-tarifa-vigente');
     if (!el) return;
-    el.textContent = `${formatearMoneda(calcularTarifaFuncionActual())} c/u`;
+    const formato = estadoPedido.formatoId ? obtenerFormatoPorId(estadoPedido.formatoId) : null;
+    el.textContent = formato && formato.recargo > 0
+        ? `${formatearMoneda(calcularPrecioBaseAsiento())} c/u (incl. +${formatearMoneda(formato.recargo)} de ${formato.nombre})`
+        : `${formatearMoneda(calcularPrecioBaseAsiento())} c/u`;
 }
 
-window.clickAsiento = (asientoId) => {
+window.clickAsiento = async (asientoId) => {
     const indiceExistente = estadoPedido.asientos.findIndex(s => s.id === asientoId);
     const btn = document.getElementById(`asiento-btn-${asientoId}`);
 
@@ -661,26 +733,13 @@ window.clickAsiento = (asientoId) => {
         if (btn.dataset.accesible === 'true') btn.classList.add('asiento-cliente-accesible');
         else btn.classList.add('bg-green-600');
         liberarAsientoBloqueado(estadoPedido.sala || 1, estadoPedido.fecha, estadoPedido.hora, asientoId); // FIX bloqueo temporal
+        actualizarResumenAsientos();
     } else {
-        // Límite de asientos por transacción o por reubicación
-        const limiteAsientos = estadoPedido.modoReubicar ? estadoPedido.cantidadAsientosRequeridos : MAX_ASIENTOS_POR_COMPRA;
-        
-        if (estadoPedido.asientos.length >= limiteAsientos) {
-            mostrarToast(estadoPedido.modoReubicar ? `Debes reubicar exactamente ${limiteAsientos} asientos.` : `Solo puedes seleccionar hasta ${limiteAsientos} asientos por compra.`, 'error');
+        // Módulo 6: límite máximo de asientos por transacción.
+        if (estadoPedido.asientos.length >= MAX_ASIENTOS_POR_COMPRA) {
+            mostrarToast(`Solo puedes seleccionar hasta ${MAX_ASIENTOS_POR_COMPRA} asientos por compra.`, 'error');
             return;
         }
-<<<<<<< Updated upstream
-        // Módulo 2: ya no se pregunta el tipo de entrada; el precio lo determina
-        // automáticamente la tarifa vigente de la función (calcularTarifaFuncionActual).
-        estadoPedido.asientos.push({
-            id: asientoId,
-            tipoLabel: 'Entrada General',
-            precio: calcularTarifaFuncionActual()
-        });
-        btn.classList.remove('bg-green-600', 'hover:bg-green-500');
-        btn.classList.add('selected');
-        bloquearAsientoTemporalmente(estadoPedido.sala || 1, estadoPedido.fecha, estadoPedido.hora, asientoId); // FIX bloqueo temporal
-=======
 
         const esAccesible = btn.dataset.accesible === 'true';
 
@@ -698,16 +757,30 @@ window.clickAsiento = (asientoId) => {
         const procesarSeleccion = () => {
             let catalogoTipos = obtenerCatalogoTiposEntrada();
 
-            if (estadoPedido.modoReubicar && estadoPedido.ticketReubicando && estadoPedido.ticketReubicando.asientos) {
-                const contadorOriginal = {};
-                estadoPedido.ticketReubicando.asientos.forEach(a => {
-                    const tipoObj = typeof a === 'object' ? a.tipoEntradaId : obtenerTipoEntradaPorDefecto().id;
-                    contadorOriginal[tipoObj] = (contadorOriginal[tipoObj] || 0) + 1;
+            if (estadoPedido.modoReubicar) {
+                const asientosAntiguos = estadoPedido.ticketReubicando.asientos || [];
+                const cantidadesAntiguas = {};
+                asientosAntiguos.forEach(a => {
+                    const tipo = typeof a === 'object' ? (a.tipoEntradaId || a.tipo) : 'adulto-regular'; // Fallback for old tickets
+                    if (tipo) cantidadesAntiguas[tipo] = (cantidadesAntiguas[tipo] || 0) + 1;
                 });
+                
+                const cantidadesNuevas = {};
                 estadoPedido.asientos.forEach(a => {
-                    if (contadorOriginal[a.tipoEntradaId]) contadorOriginal[a.tipoEntradaId]--;
+                    const tipo = a.tipoEntradaId;
+                    cantidadesNuevas[tipo] = (cantidadesNuevas[tipo] || 0) + 1;
                 });
-                catalogoTipos = catalogoTipos.filter(t => contadorOriginal[t.id] > 0);
+                
+                catalogoTipos = catalogoTipos.filter(t => {
+                    const permitidos = cantidadesAntiguas[t.id] || 0;
+                    const actuales = cantidadesNuevas[t.id] || 0;
+                    return actuales < permitidos;
+                });
+                
+                if (catalogoTipos.length === 0) {
+                    mostrarToast('Ya has seleccionado todos los tipos de asiento correspondientes a tu compra original. (O los tipos no coinciden con los disponibles)', 'error');
+                    return;
+                }
             }
 
             let htmlTipos = catalogoTipos.map(t => {
@@ -771,8 +844,17 @@ window.clickAsiento = (asientoId) => {
         };
 
         procesarSeleccion();
->>>>>>> Stashed changes
     }
+};
+
+/** MÓDULO 9: cambia el tipo de entrada de un asiento ya elegido y recalcula su precio (sin tener que deseleccionarlo). */
+window.cambiarTipoEntradaAsiento = (asientoId, tipoEntradaId) => {
+    const asiento = estadoPedido.asientos.find(a => a.id === asientoId);
+    if (!asiento) return;
+    const tipo = obtenerTipoEntradaPorId(tipoEntradaId) || obtenerTipoEntradaPorDefecto();
+    asiento.tipoEntradaId = tipo.id;
+    asiento.tipoLabel = tipo.nombre;
+    asiento.precio = calcularPrecioAsientoPorTipo(tipo.id);
     actualizarResumenAsientos();
 };
 
@@ -791,16 +873,17 @@ const actualizarResumenAsientos = () => {
     let html = '<ul class="space-y-3">';
     let total = 0;
 
+    const catalogoTipos = obtenerCatalogoTiposEntrada();
     estadoPedido.asientos.forEach(asiento => {
         total += asiento.precio;
+        const tipoObj = catalogoTipos.find(t => t.id === asiento.tipoEntradaId);
+        const textoTipo = tipoObj ? `${tipoObj.nombre}${tipoObj.descuentoPct > 0 ? ` (-${tipoObj.descuentoPct}%)` : ''}` : asiento.tipoLabel;
         html += `
-            <li class="flex justify-between items-center text-sm bg-dark-900 p-2 rounded-lg border border-white/5">
-                <div>
-                    <span class="bg-brand-yellow text-black font-bold px-2 py-0.5 rounded text-xs mr-2">${asiento.id}</span>
-                    <span class="text-white">${asiento.tipoLabel}</span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <span class="text-white font-bold">${formatearMoneda(asiento.precio)}</span>
+            <li class="flex justify-between items-center gap-2 text-sm bg-dark-900 p-2 rounded-lg border border-white/5">
+                <span class="bg-brand-yellow text-black font-bold px-2 py-0.5 rounded text-xs flex-shrink-0">${asiento.id}</span>
+                <span class="flex-1 min-w-0 text-gray-300 text-xs truncate px-2">${textoTipo}</span>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <span class="text-white font-bold whitespace-nowrap">${formatearMoneda(asiento.precio)}</span>
                     <button onclick="clickAsiento('${asiento.id}')" class="text-gray-500 hover:text-brand-red transition-colors"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </li>
@@ -810,6 +893,12 @@ const actualizarResumenAsientos = () => {
     contenedor.innerHTML = html;
     totalEl.textContent = formatearMoneda(total);
     btnSiguiente.disabled = false;
+
+    if (estadoPedido.modoReubicar) {
+        btnSiguiente.innerHTML = `Confirmar Reubicación <i class="fa-solid fa-check"></i>`;
+    } else {
+        btnSiguiente.innerHTML = `Continuar a Dulcería <i class="fa-solid fa-popcorn"></i>`;
+    }
 };
 
 
@@ -905,12 +994,15 @@ function limpiarEstadoPedido() {
     estadoPedido.pelicula = null;
     estadoPedido.fecha = null;
     estadoPedido.formato = null;
+    estadoPedido.formatoId = null;
     estadoPedido.hora = null;
     estadoPedido.sala = null;
     estadoPedido.asientos = [];
     estadoPedido.carrito = {};
     estadoPedido.modoDirecto = false;
     estadoPedido.cupon = null;
+    estadoPedido.socioVinculadoCorreo = null;   // MÓDULO 8: la venta de counter termina desvinculada del socio
+    estadoPedido.checkoutCounterListo = false;  // MÓDULO 8: la próxima venta de counter arranca con el formulario limpio
 }
 
 /** Módulo 6: hay "progreso" desde que se eligió película (Horarios en adelante), no solo con
@@ -928,18 +1020,54 @@ function estadoPedidoTieneProgreso() {
  * @param {Function} accionNavegacion - función que ejecuta la navegación real.
  */
 async function intentarSalirDelFlujoDeCompra(accionNavegacion) {
-    if (!estadoPedidoTieneProgreso()) { accionNavegacion(); return; }
+    // 1. Mantenimiento: Verificación de cambios sin guardar en el Panel Admin (Salas)
+    if (typeof window.tieneCambiosAdminSinGuardar === 'function' && window.tieneCambiosAdminSinGuardar()) {
+        const descartar = await confirmarAccion({
+            titulo: 'Cambios sin guardar en Salas',
+            mensaje: 'Tienes cambios pendientes en la configuración de la sala. Si sales ahora, se perderán. ¿Deseas descartarlos y salir de todos modos?',
+            tipo: 'advertencia',
+            textoConfirmar: 'Sí, descartar y salir',
+            textoCancelar: 'Quedarme aquí'
+        });
+        if (!descartar) return; // Se queda en la vista actual
+        
+        // Descartamos los cambios
+        if (typeof window.descartarCambiosAdminForzado === 'function') {
+            window.descartarCambiosAdminForzado();
+        }
+    }
+
+    // 2. Verificación de flujo de compra (código existente)
+    if (!estadoPedidoTieneProgreso() && !estadoPedido.modoReubicar) { accionNavegacion(); return; }
+
+    let tituloConfirmacion = '¿Salir de la compra?';
+    let mensajeConfirmacion = 'Tienes una compra en curso. Si sales ahora, perderás los asientos y/o productos que seleccionaste.';
+    let textoConfirmar = 'Sí, salir';
+    let textoCancelar = 'Seguir comprando';
+
+    if (estadoPedido.modoReubicar) {
+        tituloConfirmacion = 'Cancelar Reubicación';
+        mensajeConfirmacion = 'Estás reubicando un ticket. Si cambias de vista, la reubicación se cancelará. ¿Continuar?';
+        textoConfirmar = 'Sí, cancelar reubicación';
+        textoCancelar = 'Continuar reubicando';
+    }
 
     const salir = await confirmarAccion({
-        titulo: '¿Salir de la compra?',
-        mensaje: 'Tienes una compra en curso. Si sales ahora, perderás los asientos y/o productos que seleccionaste.',
+        titulo: tituloConfirmacion,
+        mensaje: mensajeConfirmacion,
         tipo: 'advertencia',
-        textoConfirmar: 'Sí, salir',
-        textoCancelar: 'Seguir comprando'
+        textoConfirmar: textoConfirmar,
+        textoCancelar: textoCancelar
     });
+
     if (salir) {
-        limpiarEstadoPedido();
-        accionNavegacion();
+        if (estadoPedido.modoReubicar) {
+            cancelarModoReubicacion(); // esto internamente llama a limpiarEstadoPedido
+            accionNavegacion();
+        } else {
+            limpiarEstadoPedido();
+            accionNavegacion();
+        }
     }
 }
 window.intentarSalirDelFlujoDeCompra = intentarSalirDelFlujoDeCompra;
@@ -948,9 +1076,6 @@ window.intentarSalirDelFlujoDeCompra = intentarSalirDelFlujoDeCompra;
    9. DULCERÍA (incluye FASE 3 — flujo directo sin película)
    ============================================================================ */
 
-<<<<<<< Updated upstream
-window.irADulceria = () => {
-=======
 window.irADulceria = async () => {
     // MODO REUBICACIÓN: Interceptar el flujo aquí y terminar
     if (estadoPedido.modoReubicar) {
@@ -959,16 +1084,12 @@ window.irADulceria = async () => {
             return;
         }
 
-        const respuesta = await pedirMotivoContingencia({
-            titulo: 'Resolución de Reubicación',
-            opciones: [
-                'Reubicación por mantenimiento de sala',
-                'Cambio de horario solicitado por cliente',
-                'Fallas técnicas'
-            ]
+        const contingencia = await solicitarMotivoContingencia({
+            titulo: 'Finalizar Reubicación',
+            tipoOperacion: 'reubicacion'
         });
-
-        if (!respuesta) return;
+        
+        if (!contingencia) return;
 
         const ordenOriginal = estadoPedido.ticketReubicando;
 
@@ -981,7 +1102,7 @@ window.irADulceria = async () => {
             fechaFuncion: estadoPedido.fecha,
             horaFuncion: estadoPedido.hora,
             sala: estadoPedido.sala,
-            asientos: estadoPedido.asientos.map(s => typeof s === 'object' ? s.id : s),
+            asientos: [...estadoPedido.asientos],
             expiraAt: null
         });
         localStorage.setItem(LS_VENTAS_ASIENTOS, JSON.stringify(ventasAsientos));
@@ -997,18 +1118,12 @@ window.irADulceria = async () => {
             ventasGlobal[idx].sala = estadoPedido.sala;
             ventasGlobal[idx].asientos = [...estadoPedido.asientos];
             ventasGlobal[idx].estado = 'activa';
-            ventasGlobal[idx].contingencia = {
-                tipo: 'reubicacion',
-                motivo: respuesta.motivo,
-                observaciones: respuesta.observaciones,
-                fecha: new Date().toISOString()
-            };
+            ventasGlobal[idx].motivoContingencia = contingencia.motivo;
+            ventasGlobal[idx].observacionesContingencia = contingencia.obs;
             localStorage.setItem(LS_VENTAS_GENERAL, JSON.stringify(ventasGlobal));
         }
 
         mostrarToast(`Ticket ${ordenOriginal.codigo} reubicado con éxito.`, 'exito');
-        
-        // Limpiar banderas de reubicación pero NO limpiar estadoPedido aún
         delete estadoPedido.modoReubicar;
         delete estadoPedido.ticketReubicando;
         delete estadoPedido.cantidadAsientosRequeridos;
@@ -1039,7 +1154,6 @@ window.irADulceria = async () => {
         return;
     }
 
->>>>>>> Stashed changes
     renderizarGridDulceria('all');
     actualizarResumenFinal();
     aplicarModoDirectoUI();
@@ -1262,26 +1376,38 @@ window.irAPago = () => {
     const checkPrivacidad = document.getElementById('check-privacidad-pago');
     if (checkPrivacidad) checkPrivacidad.checked = false;
 
+    // MÓDULO 7: reinicia el canje de puntos en cada nuevo pedido y solo lo muestra a socios logueados.
+    estadoPedido.puntosCanjeados = 0;
+    const inputPuntos = document.getElementById('input-puntos-canje');
+    if (inputPuntos) inputPuntos.value = '';
+    document.getElementById('fila-descuento-puntos')?.classList.add('hidden');
+    // MÓDULO 8: en una venta de COUNTER se prepara el buscador de socio (y se limpia el formulario del cliente anterior).
+    prepararCheckoutCounter();
+    refrescarBloqueCanjePuntos();
+
     aplicarModoDirectoUI();
     recalcularTotalesPago();
-    autocompletarCheckout(); // FASE 7: rellena datos del socio si hay sesión iniciada
+    autocompletarCheckout(); // FASE 7: rellena datos del socio si hay sesión iniciada (el counter NO autocompleta con sus datos)
     cambiarVista('vista-dulceria', 'vista-pago');
     reiniciarTemporizadorCompra(); // Módulo 2: se avanzó de etapa
 };
 
 /** FASE 8: inserta un badge "Autocompletado desde tu cuenta" bajo un campo, sin duplicarlo si ya existe. */
-function marcarCampoAutocompletado(inputEl) {
+function marcarCampoAutocompletado(inputEl, texto = 'Autocompletado desde tu cuenta') {
     if (!inputEl || !inputEl.parentElement) return;
     if (inputEl.parentElement.querySelector('.badge-autocompletado')) return;
     const badge = document.createElement('span');
     badge.className = 'badge-autocompletado';
-    badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Autocompletado desde tu cuenta';
+    badge.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${texto}`;
     inputEl.parentElement.appendChild(badge);
 }
 
 /** FASE 8: si hay un usuarioActual, autocompleta Nombre, Correo, Documento y tarjeta simulada. */
 function autocompletarCheckout() {
     if (!usuarioActual) return;
+    // MÓDULO 8: la cuenta de counter es una herramienta de trabajo: sus datos (nombre/correo/tarjeta del cajero)
+    // NUNCA se ponen en el comprobante de un cliente. Los datos se llenan al vincular un socio o a mano (invitado).
+    if (usuarioActual.rol === 'counter') return;
 
     const campoNombre = document.getElementById('campo-nombre');
     const campoCorreo = document.getElementById('campo-correo');
@@ -1290,23 +1416,13 @@ function autocompletarCheckout() {
     if (campoNombre && !campoNombre.value) { campoNombre.value = usuarioActual.nombre; marcarCampoAutocompletado(campoNombre); }
     if (campoCorreo && !campoCorreo.value) { campoCorreo.value = usuarioActual.correo; marcarCampoAutocompletado(campoCorreo); }
 
-    // Simula un DNI estable para el socio (se genera una vez y se guarda en su perfil)
-    if (campoDni && !campoDni.value) {
-        if (!usuarioActual.dniSimulado) {
-            let usuarios = JSON.parse(localStorage.getItem(LS_USUARIOS)) || [];
-            const indice = usuarios.findIndex(u => u.correo === usuarioActual.correo);
-            const dniGenerado = String(Math.floor(10000000 + Math.random() * 89999999));
-            if (indice > -1) {
-                usuarios[indice].dniSimulado = dniGenerado;
-                usuarioActual = usuarios[indice];
-                localStorage.setItem(LS_USUARIOS, JSON.stringify(usuarios));
-                localStorage.setItem(LS_USUARIO_ACTUAL, JSON.stringify(usuarioActual));
-            } else {
-                usuarioActual.dniSimulado = dniGenerado;
-            }
+    // Simula un DNI estable para el socio (se genera una vez y se guarda en su perfil). MÓDULO 8: solo los socios tienen DNI simulado.
+    if (campoDni && !campoDni.value && usuarioEsSocio(usuarioActual)) {
+        const dniSocio = asegurarDniSimuladoDeSocio(usuarioActual.correo);
+        if (dniSocio) {
+            campoDni.value = dniSocio;
+            marcarCampoAutocompletado(campoDni);
         }
-        campoDni.value = usuarioActual.dniSimulado;
-        marcarCampoAutocompletado(campoDni);
     }
 
     // Si el socio tiene un método de pago guardado (últimos 4 dígitos), simula la tarjeta completa
@@ -1323,6 +1439,197 @@ function autocompletarCheckout() {
     }
 }
 
+/* ============================================================================
+   MÓDULO 8 — VENTA EN COUNTER (staff atendiendo a un cliente presencial)
+   ------------------------------------------------------------------------
+   El counter usa EL MISMO flujo de compra (cartelera -> asientos -> dulcería ->
+   pago -> ticket). Lo único distinto está en vista-pago: en vez de autocompletar
+   con la cuenta del cajero, busca al socio (buscarSocio, de socios.js) y vincula
+   la venta a él vía estadoPedido.socioVinculadoCorreo. La sesión del counter
+   nunca se toca: canje y puntos se aplican al correo del socio vinculado.
+   ============================================================================ */
+
+/** Nueva entrada de navegación solo para counter: reinicia cualquier pedido anterior y lleva a la cartelera. */
+window.abrirNuevaVentaCounter = () => {
+    if (!usuarioActual || usuarioActual.rol !== 'counter') {
+        mostrarToast('Solo el personal de counter puede iniciar una venta.', 'error');
+        return;
+    }
+    limpiarEstadoPedido();
+    reiniciarFormularioCheckout();
+    cambiarVista(vistaActualVisible, 'vista-inicio');
+    setTimeout(() => document.getElementById('grid-cartelera')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 450);
+    mostrarToast('Nueva venta: elige la película, o entra a Dulcería para una venta solo de productos.', 'info');
+};
+
+/** ¿A qué SOCIO pertenecen el canje y los puntos de este pedido? Cliente logueado -> él mismo; counter -> el socio vinculado; admin/invitado -> nadie. */
+function obtenerSocioTitularDelPedido() {
+    if (!usuarioActual) return null;
+    if (usuarioActual.rol === 'counter') {
+        return estadoPedido.socioVinculadoCorreo ? buscarSocio(estadoPedido.socioVinculadoCorreo) : null;
+    }
+    return usuarioEsSocio(usuarioActual) ? usuarioActual : null;
+}
+
+/** Muestra/oculta el bloque de canje de puntos según haya un socio titular, con SU saldo real. */
+function refrescarBloqueCanjePuntos() {
+    const bloque = document.getElementById('bloque-canje-puntos-pago');
+    if (!bloque) return;
+    const socio = obtenerSocioTitularDelPedido();
+    bloque.classList.toggle('hidden', !socio);
+    if (socio) document.getElementById('pago-puntos-disponibles').textContent = socio.puntos ?? 0;
+}
+
+/** Deja el formulario de pago en blanco (datos del comprobante, tarjeta, cupón, puntos, badges de autocompletado). */
+function reiniciarFormularioCheckout() {
+    ['campo-nombre', 'campo-correo', 'campo-dni', 'campo-ruc', 'campo-numero-tarjeta', 'campo-vencimiento-tarjeta',
+        'campo-cvv-tarjeta', 'campo-titular-tarjeta', 'input-cupon', 'input-puntos-canje', 'counter-busqueda-socio'].forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.value = '';
+            limpiarCampoInvalido(el);
+        });
+    document.querySelectorAll('#vista-pago .badge-autocompletado').forEach(b => b.remove());
+
+    const check = document.getElementById('check-privacidad-pago');
+    if (check) check.checked = false;
+    const boleta = document.querySelector('input[name="comprobante"][value="boleta"]');
+    if (boleta) { boleta.checked = true; toggleTipoDocumento(); }
+    const tarjeta = document.querySelector('input[name="paymethod"][value="card"]');
+    if (tarjeta) { tarjeta.checked = true; toggleMetodoPago(); }
+}
+
+/** Al entrar a Pago: solo para counter muestra el buscador de socio y, la primera vez de cada venta, limpia el formulario. */
+function prepararCheckoutCounter() {
+    const bloque = document.getElementById('bloque-socio-counter');
+    const esCounter = Boolean(usuarioActual && usuarioActual.rol === 'counter');
+    if (bloque) bloque.classList.toggle('hidden', !esCounter);
+    if (!esCounter) return;
+
+    if (!estadoPedido.checkoutCounterListo) {
+        reiniciarFormularioCheckout();
+        estadoPedido.socioVinculadoCorreo = null;
+        estadoPedido.checkoutCounterListo = true;
+    }
+    renderizarSocioVinculadoCounter();
+}
+
+/** Pinta (u oculta) la tarjeta del socio vinculado a la venta, con su nivel, saldo y beneficio de cumpleaños. */
+function renderizarSocioVinculadoCounter() {
+    const tarjeta = document.getElementById('counter-socio-vinculado');
+    const ayuda = document.getElementById('counter-socio-ayuda');
+    if (!tarjeta) return;
+
+    const socio = estadoPedido.socioVinculadoCorreo ? buscarSocio(estadoPedido.socioVinculadoCorreo) : null;
+    if (!socio) {
+        estadoPedido.socioVinculadoCorreo = null; // el socio pudo dejar de existir: se desvincula
+        tarjeta.classList.add('hidden');
+        if (ayuda) ayuda.classList.remove('hidden');
+        return;
+    }
+
+    tarjeta.classList.remove('hidden');
+    if (ayuda) ayuda.classList.add('hidden');
+
+    const nivel = obtenerNivelSocio(socio.puntos || 0);
+    document.getElementById('counter-socio-nombre').textContent = socio.nombre;
+    document.getElementById('counter-socio-codigo').textContent = socio.codigoSocio || '—';
+    document.getElementById('counter-socio-puntos').textContent = `${socio.puntos || 0} pts`;
+    const badge = document.getElementById('counter-socio-nivel');
+    badge.textContent = `Nivel ${nivel.nombre}`;
+    badge.style.backgroundColor = `${nivel.colorHex}22`;
+    badge.style.color = nivel.colorHex;
+    badge.style.border = `1px solid ${nivel.colorHex}55`;
+
+    const cumple = ValidadoresSocio.tieneBeneficioCumpleanosDisponible(socio);
+    document.getElementById('counter-socio-cumple').classList.toggle('hidden', !cumple.ok);
+}
+
+/** Busca al socio (código, correo o DNI) y, si existe, vincula la venta a él. Si no, la venta sigue como invitado. */
+window.buscarSocioParaVenta = () => {
+    if (!usuarioActual || usuarioActual.rol !== 'counter') return;
+    const input = document.getElementById('counter-busqueda-socio');
+    const termino = input.value.trim();
+
+    if (!Validadores.requerido(termino)) {
+        marcarCampoInvalido(input, 'Ingresa un código, correo o DNI para buscar.');
+        return;
+    }
+    limpiarCampoInvalido(input);
+
+    const socio = buscarSocio(termino);
+    if (!socio) {
+        mostrarToast('No se encontró ningún socio con ese dato. Si el cliente no es socio, continúa como invitado ingresando sus datos abajo.', 'info');
+        return;
+    }
+    vincularSocioAVenta(socio);
+    input.value = '';
+    mostrarToast(`Venta vinculada a ${socio.nombre}.`, 'exito');
+};
+
+/** Vincula la venta a un socio: autocompleta con SUS datos y habilita el canje con SU saldo real. */
+function vincularSocioAVenta(socio) {
+    estadoPedido.socioVinculadoCorreo = socio.correo;
+
+    // El canje que hubiera quedado aplicado era de otro socio (o de ninguno): se reinicia.
+    estadoPedido.puntosCanjeados = 0;
+    const inputPuntos = document.getElementById('input-puntos-canje');
+    if (inputPuntos) { inputPuntos.value = ''; limpiarCampoInvalido(inputPuntos); }
+
+    document.querySelectorAll('#vista-pago .badge-autocompletado').forEach(b => b.remove());
+    const textoBadge = 'Autocompletado desde la cuenta del socio';
+    const campoNombre = document.getElementById('campo-nombre');
+    const campoCorreo = document.getElementById('campo-correo');
+    const campoDni = document.getElementById('campo-dni');
+    if (campoNombre) { campoNombre.value = socio.nombre; limpiarCampoInvalido(campoNombre); marcarCampoAutocompletado(campoNombre, textoBadge); }
+    if (campoCorreo) { campoCorreo.value = socio.correo; limpiarCampoInvalido(campoCorreo); marcarCampoAutocompletado(campoCorreo, textoBadge); }
+    if (campoDni) {
+        const dni = asegurarDniSimuladoDeSocio(socio.correo);
+        if (dni) { campoDni.value = dni; limpiarCampoInvalido(campoDni); marcarCampoAutocompletado(campoDni, textoBadge); }
+    }
+
+    recalcularTotalesPago();
+    refrescarBloqueCanjePuntos();
+    renderizarSocioVinculadoCounter();
+}
+
+/** Desvincula al socio: la venta vuelve a ser de invitado (datos a mano, sin canje ni puntos). */
+window.quitarSocioDeVenta = () => {
+    estadoPedido.socioVinculadoCorreo = null;
+    estadoPedido.puntosCanjeados = 0;
+    ['campo-nombre', 'campo-correo', 'campo-dni', 'input-puntos-canje'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.value = ''; limpiarCampoInvalido(el); }
+    });
+    document.querySelectorAll('#vista-pago .badge-autocompletado').forEach(b => b.remove());
+
+    recalcularTotalesPago();
+    refrescarBloqueCanjePuntos();
+    renderizarSocioVinculadoCounter();
+    mostrarToast('Socio desvinculado. La venta sigue como invitado.', 'info');
+};
+
+/** El counter entrega en caja la entrada de cumpleaños del socio vinculado (beneficio de una sola vez al año, sin monto). */
+window.entregarCumpleanosSocioVinculado = async () => {
+    const socio = estadoPedido.socioVinculadoCorreo ? buscarSocio(estadoPedido.socioVinculadoCorreo) : null;
+    if (!socio) return;
+    const validacion = ValidadoresSocio.tieneBeneficioCumpleanosDisponible(socio);
+    if (!validacion.ok) { mostrarToast(validacion.motivo, 'error'); renderizarSocioVinculadoCounter(); return; }
+
+    const confirmado = await confirmarAccion({
+        titulo: '¿Entregar entrada de cumpleaños?',
+        mensaje: `Se marcará como usado el beneficio de cumpleaños de ${socio.nombre} para este año. Esta acción no se puede deshacer.`,
+        tipo: 'advertencia',
+        textoConfirmar: 'Sí, entregar',
+        textoCancelar: 'Cancelar'
+    });
+    if (!confirmado) return;
+
+    marcarBeneficioCumpleanosUsado(socio.correo);
+    mostrarToast('Entrada de cumpleaños entregada. ¡Que disfrute la función!', 'exito');
+    renderizarSocioVinculadoCounter();
+};
+
 /** Calcula subtotales, aplica el cupón (si existe) y refresca la UI de pago. */
 function recalcularTotalesPago() {
     const totalEntradas = estadoPedido.asientos.reduce((sum, s) => sum + s.precio, 0);
@@ -1333,7 +1640,14 @@ function recalcularTotalesPago() {
     if (estadoPedido.cupon) {
         descuento = subtotal * (estadoPedido.cupon.porcentaje / 100);
     }
-    const totalFinal = Math.max(subtotal - descuento, 0);
+
+    // MÓDULO 7: descuento por canje de puntos, tope MAX_PORCENTAJE_DESCUENTO_POR_PUNTOS sobre el subtotal.
+    let descuentoPuntos = 0;
+    if (estadoPedido.puntosCanjeados > 0) {
+        descuentoPuntos = calcularDescuentoPorPuntos(estadoPedido.puntosCanjeados, subtotal);
+    }
+
+    const totalFinal = Math.max(subtotal - descuento - descuentoPuntos, 0);
 
     document.getElementById('pago-total-entradas').textContent = formatearMoneda(totalEntradas);
     document.getElementById('pago-total-dulces').textContent = formatearMoneda(totalDulces);
@@ -1347,10 +1661,19 @@ function recalcularTotalesPago() {
         filaDescuento.classList.add('hidden');
     }
 
+    const filaDescuentoPuntos = document.getElementById('fila-descuento-puntos');
+    if (estadoPedido.puntosCanjeados > 0) {
+        filaDescuentoPuntos.classList.remove('hidden');
+        document.getElementById('pago-descuento-puntos-monto').textContent = `- ${formatearMoneda(descuentoPuntos)}`;
+        document.getElementById('pago-puntos-canjeados-texto').textContent = estadoPedido.puntosCanjeados;
+    } else {
+        filaDescuentoPuntos.classList.add('hidden');
+    }
+
     document.getElementById('pago-total-general').textContent = formatearMoneda(totalFinal);
     document.getElementById('monto-yape').textContent = formatearMoneda(totalFinal);
 
-    return { totalEntradas, totalDulces, subtotal, descuento, totalFinal };
+    return { totalEntradas, totalDulces, subtotal, descuento, descuentoPuntos, totalFinal };
 }
 
 /** FASE 5: Motor de descuentos — valida y aplica un cupón promocional. */
@@ -1381,6 +1704,27 @@ window.aplicarCupon = () => {
     estadoPedido.cupon = { codigo, porcentaje: cuponEncontrado.porcentaje };
     recalcularTotalesPago();
     mostrarToast(`Cupón "${codigo}" aplicado: -${cuponEncontrado.porcentaje}%`, 'exito');
+};
+
+/** MÓDULO 7: aplica (en pantalla) el canje de puntos de socio. Los puntos recién se descuentan de su saldo real al confirmar el pago. */
+window.aplicarPuntosSocio = () => {
+    const input = document.getElementById('input-puntos-canje');
+    const puntos = Math.floor(Number(input.value));
+
+    // MÓDULO 8: el saldo que manda es el del SOCIO titular del pedido (el cliente logueado, o el socio vinculado por el counter).
+    const validacion = ValidadoresSocio.puedeCanjearPuntos(obtenerSocioTitularDelPedido(), puntos);
+    if (!validacion.ok) {
+        marcarCampoInvalido(input, validacion.motivo);
+        mostrarToast(validacion.motivo, 'error');
+        estadoPedido.puntosCanjeados = 0;
+        recalcularTotalesPago();
+        return;
+    }
+
+    limpiarCampoInvalido(input);
+    estadoPedido.puntosCanjeados = puntos;
+    const totales = recalcularTotalesPago();
+    mostrarToast(`Canjeaste ${puntos} puntos: -${formatearMoneda(totales.descuentoPuntos)}`, 'exito');
 };
 
 window.toggleTipoDocumento = () => {
@@ -1476,7 +1820,7 @@ window.procesarPago = () => {
 
 /** FASE 8: lógica real de generación de ticket/comprobante, separada para poder simular el delay de "procesando...". */
 function finalizarProcesamientoPago() {
-    const nombre = document.getElementById('campo-nombre').value || 'Cliente Cinerama';
+    const nombre = document.getElementById('campo-nombre').value || 'Cliente Náutica';
     const tipoDoc = document.querySelector('input[name="comprobante"]:checked').value;
     const numeroDoc = tipoDoc === 'boleta' ? document.getElementById('campo-dni').value : document.getElementById('campo-ruc').value;
 
@@ -1496,7 +1840,7 @@ function finalizarProcesamientoPago() {
         document.getElementById('pdf-fecha').textContent = estadoPedido.fecha;
         document.getElementById('pdf-hora').textContent = estadoPedido.hora;
         // FASE 7 (fix): se usa la sala real de la función elegida, ya no un número aleatorio
-        document.getElementById('pdf-cine').textContent = `${estadoPedido.cine.replace('Cinerama ', '')} - Sala ${estadoPedido.sala || 1}`;
+        document.getElementById('pdf-cine').textContent = `${estadoPedido.cine} - Sala ${estadoPedido.sala || 1}`;
         document.getElementById('pdf-asientos').textContent = estadoPedido.asientos.map(s => s.id).join(', ') || '—';
     }
     const codigoTicket = Math.floor(Math.random() * 9000000000) + 1000000000;
@@ -1531,6 +1875,9 @@ function finalizarProcesamientoPago() {
     if (estadoPedido.cupon) {
         filasComprobante += `<tr><td class="py-1 text-brand-red">Cupón ${estadoPedido.cupon.codigo} (-${estadoPedido.cupon.porcentaje}%)</td><td class="text-right py-1 text-brand-red">-${totales.descuento.toFixed(2)}</td></tr>`;
     }
+    if (estadoPedido.puntosCanjeados > 0) {
+        filasComprobante += `<tr><td class="py-1 text-brand-red">Canje de ${estadoPedido.puntosCanjeados} pts Socio Náutica</td><td class="text-right py-1 text-brand-red">-${totales.descuentoPuntos.toFixed(2)}</td></tr>`;
+    }
     document.getElementById('pdf-items-comprobante').innerHTML = filasComprobante;
 
     const totalGeneral = totales.totalFinal;
@@ -1541,26 +1888,63 @@ function finalizarProcesamientoPago() {
     document.getElementById('pdf-igv').textContent = igv.toFixed(2);
     document.getElementById('pdf-total-comprobante').textContent = formatearMoneda(totalGeneral);
 
+    // MÓDULO 7: si el socio canjeó puntos en este pedido, recién ahora (pago confirmado) se
+    // descuentan de su saldo real — antes de esto solo era una simulación en pantalla.
+    // MÓDULO 8: el canje sale del saldo del socio titular (en venta de counter, el socio vinculado; nunca la cuenta del counter).
+    const socioTitularCanje = obtenerSocioTitularDelPedido();
+    if (socioTitularCanje && estadoPedido.puntosCanjeados > 0) {
+        canjearPuntosDeSocio(socioTitularCanje.correo, estadoPedido.puntosCanjeados, `Canje en compra CR-${codigoTicket}`);
+    }
+
     // FASE 1: guardar la compra en el historial del usuario actual (si hay sesión iniciada)
-    guardarCompraEnHistorial({
+    const resultadoPuntosCompra = guardarCompraEnHistorial({
         codigo: `CR-${codigoTicket}`,
         fecha: hoy.toISOString(),
         pelicula: (estadoPedido.modoDirecto || !estadoPedido.pelicula) ? 'Pedido de Dulcería' : estadoPedido.pelicula.titulo,
+        idPelicula: (estadoPedido.modoDirecto || !estadoPedido.pelicula) ? null : estadoPedido.pelicula.id,
+        sala: (estadoPedido.modoDirecto || !estadoPedido.sala) ? null : estadoPedido.sala,
+        fechaFuncion: (estadoPedido.modoDirecto || !estadoPedido.fecha) ? null : estadoPedido.fecha,
+        horaFuncion: (estadoPedido.modoDirecto || !estadoPedido.hora) ? null : estadoPedido.hora,
+        estado: 'pagada',
         detalle: (estadoPedido.modoDirecto || !estadoPedido.pelicula) ? 'Retiro en barra' : `${estadoPedido.fecha} • ${estadoPedido.hora} • ${estadoPedido.formato}`,
-        asientos: estadoPedido.asientos.map(s => s.id),
+        asientos: [...estadoPedido.asientos],
+        formato: estadoPedido.formato,
         dulces: Object.entries(estadoPedido.carrito).map(([id, cant]) => `${cant}x ${PRECIOS.dulces[id].nombre}`),
         total: totalGeneral,
         tipoDoc,
         numeroDoc
     });
 
+    // MÓDULO 7 (idea 2): banda de puntos ganados en la vista del ticket.
+    const bloquePuntosTicket = document.getElementById('ticket-puntos-ganados');
+    if (bloquePuntosTicket) {
+        if (resultadoPuntosCompra) {
+            document.getElementById('ticket-puntos-ganados-cantidad').textContent = resultadoPuntosCompra.puntosGanados;
+            // MÓDULO 8: en venta de counter el mensaje nombra al socio ("Lucía ganó...") en vez de "Ganaste...".
+            document.getElementById('ticket-puntos-ganados-sujeto').textContent = resultadoPuntosCompra.esVentaCounter ? `${resultadoPuntosCompra.socioNombre} ganó` : 'Ganaste';
+            bloquePuntosTicket.classList.remove('hidden');
+        } else {
+            bloquePuntosTicket.classList.add('hidden');
+        }
+    }
+
     // FASE 10 (FIX): registra las butacas como vendidas en su sala Y función exactas (fecha+hora),
     // para que Mantenimiento no pueda tocarlas y para no bloquear la misma butaca en otro horario.
     if (!estadoPedido.modoDirecto && estadoPedido.pelicula && estadoPedido.asientos.length > 0) {
-        registrarVentaAsientos(estadoPedido.sala || 1, estadoPedido.fecha, estadoPedido.hora, estadoPedido.asientos.map(s => s.id));
+        registrarVentaAsientos(`CR-${codigoTicket}`, estadoPedido.sala || 1, estadoPedido.fecha, estadoPedido.hora, estadoPedido.asientos.map(s => s.id));
     }
 
     mostrarToast('¡Pago procesado con éxito! Aquí está tu ticket.', 'exito');
+    // MÓDULO 8: tras una venta de counter el formulario se deja limpio (los datos del cliente atendido no deben quedar para el siguiente).
+    // La sesión del counter no se toca: nunca se inició sesión como el cliente.
+    if (usuarioActual && usuarioActual.rol === 'counter') reiniciarFormularioCheckout();
+
+    // Asegurarse de que el comprobante sea visible (pudo ocultarse en una reubicación) y el título sea el correcto
+    const comprobanteContenedor = document.getElementById('comprobante-imprimible');
+    if (comprobanteContenedor) comprobanteContenedor.parentElement.classList.remove('hidden');
+    document.querySelector('#vista-ticket h2').textContent = '¡Compra Exitosa!';
+    document.querySelector('#vista-ticket p.text-gray-400.text-lg').textContent = 'Tu reserva está confirmada. Descarga tus comprobantes.';
+
     cambiarVista('vista-pago', 'vista-ticket');
     // FIX: se limpia el pedido un instante después de la transición de vista (no antes), para que
     // el stepper de la vista de ticket siga mostrando correctamente el recorrido (normal o
@@ -1571,18 +1955,18 @@ function finalizarProcesamientoPago() {
 
 window.descargarPDF = (idElemento, nombreArchivo) => {
     const elemento = document.getElementById(idElemento);
-    
+
     // 1. Calculamos solo la altura real (el ancho ya es fijo de 350px en tu HTML)
     const alturaPx = elemento.scrollHeight;
-    
+
     // 2. Ancho fijo de ticketera (95mm) y altura "infinita" + 2mm de gracia
     const anchoMm = 95;
-    const alturaMm = (alturaPx * 0.264583) + 2; 
+    const alturaMm = (alturaPx * 0.264583) + 2;
 
     const opciones = {
-        margin: 0, 
+        margin: 0,
         filename: nombreArchivo,
-        image: { type: 'png', quality: 1 }, 
+        image: { type: 'png', quality: 1 },
         html2canvas: {
             scale: 3, // Subimos un poco la nitidez, 3 es el balance perfecto
             useCORS: true,
@@ -1593,7 +1977,7 @@ window.descargarPDF = (idElemento, nombreArchivo) => {
         pagebreak: { mode: 'avoid-all' },
         jsPDF: { unit: 'mm', format: [anchoMm, alturaMm], orientation: 'portrait' }
     };
-    
+
     html2pdf().set(opciones).from(elemento).save();
 };
 
@@ -1633,16 +2017,39 @@ window.cerrarModalesAuth = () => {
 window.manejarRegistro = (e) => {
     e.preventDefault();
     const inputNombre = document.getElementById('reg-nombre');
+    const inputDni = document.getElementById('reg-dni');
     const inputCorreo = document.getElementById('reg-correo');
     const inputContrasena = document.getElementById('reg-contrasena');
+    const inputNacimiento = document.getElementById('reg-fecha-nacimiento');
 
     // 1) Validación "frontend"
     const valido = validarFormulario([
         { input: inputNombre, prueba: () => Validadores.soloTexto(inputNombre.value), mensaje: 'Ingresa un nombre válido (solo letras).' },
+        { input: inputDni, prueba: () => /^\d{8}$/.test(inputDni.value), mensaje: 'Ingresa un DNI válido de 8 dígitos.' },
         { input: inputCorreo, prueba: () => Validadores.correo(inputCorreo.value), mensaje: 'Ingresa un correo electrónico válido.' },
         { input: inputContrasena, prueba: () => Validadores.contrasena(inputContrasena.value), mensaje: 'La contraseña debe tener al menos 6 caracteres.' }
     ]);
     if (!valido) return;
+
+    // Validación de Edad (Mayor a 18 años)
+    if (inputNacimiento && inputNacimiento.value) {
+        const fechaNac = new Date(inputNacimiento.value);
+        const hoy = new Date();
+        let edad = hoy.getFullYear() - fechaNac.getFullYear();
+        const mes = hoy.getMonth() - fechaNac.getMonth();
+        if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNac.getDate())) {
+            edad--;
+        }
+        if (edad < 18) {
+            marcarCampoInvalido(inputNacimiento, 'Debes ser mayor de 18 años para registrarte.');
+            mostrarToast('Debes ser mayor de 18 años para registrarte.', 'error');
+            return;
+        }
+    } else {
+        marcarCampoInvalido(inputNacimiento, 'Por favor, ingresa tu fecha de nacimiento.');
+        mostrarToast('Por favor, ingresa tu fecha de nacimiento.', 'error');
+        return;
+    }
 
     // Módulo 2 — Ley N° 29733: checkbox obligatorio de aceptación de Políticas de Privacidad.
     const checkPrivacidad = document.getElementById('check-privacidad-registro');
@@ -1652,11 +2059,13 @@ window.manejarRegistro = (e) => {
     }
 
     const nombre = inputNombre.value.trim();
+    const dni = inputDni.value.trim();
     const correo = inputCorreo.value.trim().toLowerCase();
     const contrasena = inputContrasena.value;
+    const fechaNacimiento = inputNacimiento.value;
 
     // 2) Validación "backend" (repetida antes de tocar el almacenamiento)
-    if (!Validadores.soloTexto(nombre) || !Validadores.correo(correo) || !Validadores.contrasena(contrasena)) {
+    if (!Validadores.soloTexto(nombre) || !/^\d{8}$/.test(dni) || !Validadores.correo(correo) || !Validadores.contrasena(contrasena)) {
         mostrarToast('No se pudo validar la información del registro.', 'error');
         return;
     }
@@ -1669,7 +2078,11 @@ window.manejarRegistro = (e) => {
         return;
     }
 
-    const nuevoUsuario = { nombre, correo, contrasena, rol: 'cliente', compras: [], metodoPago: null };
+    // MÓDULO 7: todo socio nuevo nace con su código de socio y su saldo de puntos en 0.
+    const nuevoUsuario = {
+        nombre, dni, correo, contrasena, rol: 'cliente', compras: [], metodoPago: null,
+        fechaNacimiento, codigoSocio: generarCodigoSocioUnico(usuarios), puntos: 0, historialPuntos: [], cumpleUsadoEnAnio: null
+    };
     usuarios.push(nuevoUsuario);
     localStorage.setItem(LS_USUARIOS, JSON.stringify(usuarios));
 
@@ -1698,6 +2111,13 @@ window.manejarLogin = (e) => {
     let usuarios = JSON.parse(localStorage.getItem(LS_USUARIOS)) || [];
     const usuario = usuarios.find(u => u.correo === correo && u.contrasena === contrasena);
 
+    // MÓDULO 8: una cuenta de personal desactivada por el admin no puede iniciar sesión.
+    if (usuario && !cuentaEstaActiva(usuario)) {
+        mensajeError.classList.add('hidden');
+        mostrarToast('Esta cuenta está desactivada. Contacta al administrador.', 'error');
+        return;
+    }
+
     if (usuario) {
         usuarioActual = usuario;
         localStorage.setItem(LS_USUARIO_ACTUAL, JSON.stringify(usuario));
@@ -1712,7 +2132,38 @@ window.manejarLogin = (e) => {
     }
 };
 
-window.cerrarSesion = () => {
+window.cerrarSesion = async () => {
+    // 1. Mantenimiento: Verificación de cambios sin guardar en el Panel Admin
+    if (typeof window.tieneCambiosAdminSinGuardar === 'function' && window.tieneCambiosAdminSinGuardar()) {
+        const descartar = await confirmarAccion({
+            titulo: 'Cambios sin guardar en Salas',
+            mensaje: 'Tienes cambios pendientes en la configuración de la sala. Si cierras sesión ahora, se perderán. ¿Deseas descartarlos y cerrar sesión de todos modos?',
+            tipo: 'advertencia',
+            textoConfirmar: 'Sí, descartar y cerrar',
+            textoCancelar: 'Quedarme aquí'
+        });
+        if (!descartar) return; // Cancela el cierre de sesión
+        
+        // Descartamos los cambios
+        if (typeof window.descartarCambiosAdminForzado === 'function') {
+            window.descartarCambiosAdminForzado();
+        }
+    }
+
+    // 2. MÓDULO 8: si un counter cierra sesión con una venta a medias...
+    const eraCounter = Boolean(usuarioActual && usuarioActual.rol === 'counter');
+    if (eraCounter && estadoPedidoTieneProgreso()) {
+        const confirmado = await confirmarAccion({
+            titulo: '¿Cerrar sesión?',
+            mensaje: 'Hay una venta en curso. Si cierras sesión ahora, se perderá.',
+            tipo: 'advertencia',
+            textoConfirmar: 'Sí, cerrar sesión',
+            textoCancelar: 'Volver a la venta'
+        });
+        if (!confirmado) return;
+    }
+    if (eraCounter) { limpiarEstadoPedido(); reiniciarFormularioCheckout(); }
+
     usuarioActual = null;
     localStorage.removeItem(LS_USUARIO_ACTUAL);
     actualizarNavbarAuth();
@@ -1752,8 +2203,52 @@ window.actualizarNavbarAuth = () => {
         if (linkAdminMovil) linkAdminMovil.classList.add('hidden');
     }
 
+    // MÓDULO 8: la mecánica de socio se muestra a invitados (para invitarlos a unirse) y a clientes, pero nunca a counter/admin;
+    // "Nueva Venta" y su ausencia de "Mis Compras" son exclusivos del rol counter.
+    const mostrarMecanicaSocio = !usuarioActual || usuarioEsSocio(usuarioActual);
+    const esCounter = Boolean(usuarioActual && usuarioActual.rol === 'counter');
+    const esCounterOAdmin = Boolean(usuarioActual && (usuarioActual.rol === 'counter' || usuarioActual.rol === 'admin'));
+    ['link-nav-socio', 'link-nav-socio-movil', 'link-footer-socio'].forEach(id => {
+        document.getElementById(id)?.classList.toggle('hidden', !mostrarMecanicaSocio);
+    });
+    ['link-nav-venta', 'link-nav-venta-movil'].forEach(id => {
+        document.getElementById(id)?.classList.toggle('hidden', !esCounter);
+    });
+    ['link-nav-atencion', 'link-nav-atencion-movil'].forEach(id => {
+        document.getElementById(id)?.classList.toggle('hidden', !esCounterOAdmin);
+    });
+    const btnMisComprasEscritorio = document.getElementById('btn-mis-compras');
+    if (btnMisComprasEscritorio) { btnMisComprasEscritorio.classList.toggle('hidden', esCounter); btnMisComprasEscritorio.classList.toggle('flex', !esCounter); }
+    document.getElementById('btn-mis-compras-movil')?.classList.toggle('hidden', esCounter);
+
     if (typeof actualizarVisibilidadFooter === 'function') actualizarVisibilidadFooter(); // Módulo 1
+    renderizarBannerCumpleanosSocio(); // MÓDULO 7 (idea 5)
+    renderizarInsigniaNivelNavbar(); // MÓDULO 7 (idea 7)
 };
+
+/** MÓDULO 7 (idea 7): pinta el borde del avatar del navbar con el color del nivel del socio (bronce/plata/oro). */
+function renderizarInsigniaNivelNavbar() {
+    const avatar = document.getElementById('avatar-navbar-usuario');
+    if (!avatar) return;
+    const contenedor = avatar.closest('.group');
+    // MÓDULO 8: solo los socios (rol 'cliente') tienen nivel. Counter/admin conservan el borde rojo normal.
+    if (!usuarioEsSocio(usuarioActual)) {
+        avatar.style.borderColor = '';
+        if (contenedor) contenedor.title = usuarioActual && ROLES_PERSONAL[usuarioActual.rol] ? `Mi perfil — ${ROLES_PERSONAL[usuarioActual.rol].nombre}` : 'Mi perfil';
+        return;
+    }
+    const nivel = obtenerNivelSocio(usuarioActual.puntos || 0);
+    avatar.style.borderColor = nivel.colorHex;
+    if (contenedor) contenedor.title = `Nivel ${nivel.nombre} — ${usuarioActual.puntos || 0} pts`;
+}
+
+/** MÓDULO 7 (idea 5): muestra/oculta la banda de cumpleaños en Inicio según el validador de beneficio. */
+function renderizarBannerCumpleanosSocio() {
+    const banner = document.getElementById('banner-cumpleanos-socio');
+    if (!banner) return;
+    const disponible = usuarioEsSocio(usuarioActual) && ValidadoresSocio.tieneBeneficioCumpleanosDisponible(usuarioActual).ok; // MÓDULO 8: solo socios
+    banner.classList.toggle('hidden', !disponible);
+}
 
 /** FASE 7: abre/cierra el menú hamburguesa (drawer) en dispositivos móviles. */
 window.toggleMenuMovil = (forzarEstado = null) => {
@@ -1783,26 +2278,44 @@ window.toggleMenuMovil = (forzarEstado = null) => {
    13. FASE 1 — HISTORIAL "MIS COMPRAS" Y MODAL DE PERFIL
    ============================================================================ */
 
-/** Guarda un ticket de compra dentro del arreglo `compras` del usuario logueado. */
+/** Guarda un ticket de compra en el libro general y en el historial personal ("Mis compras") de su titular.
+ *  MÓDULO 8: titular = el propio usuario logueado, salvo en venta de COUNTER, donde es el socio vinculado
+ *  (o nadie, si es invitado). Los puntos solo se otorgan si el titular es SOCIO; la cuenta del counter jamás acumula. */
 function guardarCompraEnHistorial(compra) {
+    const esVentaCounter = Boolean(usuarioActual && usuarioActual.rol === 'counter');
+    const titular = esVentaCounter ? obtenerSocioTitularDelPedido() : usuarioActual;
+
     // FIX: antes, si no había sesión, la función cortaba aquí y la compra de invitado se
     // perdía para siempre (no aparecía en ningún lado, ni en los reportes del admin). Ahora
     // TODA compra queda en el libro de ventas general; el bloque de abajo sigue siendo
-    // exclusivo para el historial personal ("Mis compras"), que solo aplica con sesión.
-    registrarVentaGeneral({ ...compra, correoUsuario: usuarioActual ? usuarioActual.correo : null });
+    // exclusivo para el historial personal ("Mis compras"), que solo aplica con un titular.
+    // MÓDULO 8: las ventas de counter guardan además quién las atendió (auditoría).
+    const registroVenta = { ...compra, correoUsuario: titular ? titular.correo : null };
+    if (esVentaCounter) { registroVenta.vendidoPor = usuarioActual.correo; registroVenta.canal = 'counter'; }
+    registrarVentaGeneral(registroVenta);
 
-    if (!usuarioActual) return; // Los invitados no tienen historial personal, pero la venta ya quedó registrada arriba
+    if (!titular) return null; // Invitados (con o sin counter): sin historial personal ni puntos
 
-    let usuarios = JSON.parse(localStorage.getItem(LS_USUARIOS)) || [];
-    const indice = usuarios.findIndex(u => u.correo === usuarioActual.correo);
-    if (indice === -1) return;
+    agregarCompraAUsuario(titular.correo, compra); // socios.js: guarda y sincroniza la sesión si el titular es quien está logueado
 
-    if (!Array.isArray(usuarios[indice].compras)) usuarios[indice].compras = [];
-    usuarios[indice].compras.unshift(compra);
+    if (!usuarioEsSocio(titular)) return null; // admin comprando: sin puntos
 
-    usuarioActual = usuarios[indice];
-    localStorage.setItem(LS_USUARIOS, JSON.stringify(usuarios));
-    localStorage.setItem(LS_USUARIO_ACTUAL, JSON.stringify(usuarioActual));
+    // MÓDULO 7: puntos de Socio Náutica — se ganan sobre el total ya pagado (con
+    // cupón y/o puntos canjeados ya descontados), así que no se puede "duplicar" descuento.
+    const resultadoPuntos = otorgarPuntosPorCompra(titular.correo, compra.total, `Compra ${compra.codigo}${esVentaCounter ? ' (counter)' : ''}`);
+    if (resultadoPuntos) {
+        mostrarToast(esVentaCounter
+            ? `${titular.nombre} ganó ${resultadoPuntos.puntosGanados} puntos Náutica por esta compra.`
+            : `Ganaste ${resultadoPuntos.puntosGanados} puntos Náutica por esta compra.`, 'info');
+        if (resultadoPuntos.subioDeNivel) {
+            mostrarToast(esVentaCounter
+                ? `¡${titular.nombre} subió a nivel ${resultadoPuntos.nivelNuevo.nombre}! 🎉`
+                : `¡Subiste a nivel ${resultadoPuntos.nivelNuevo.nombre}! 🎉`, 'exito');
+        }
+        renderizarInsigniaNivelNavbar(); // MÓDULO 7 (idea 7): refleja el nuevo saldo/nivel sin esperar a un nuevo login (no-op si quien está logueado no es socio)
+        return { ...resultadoPuntos, esVentaCounter, socioNombre: titular.nombre }; // idea 2: para pintarlo también en la vista del ticket
+    }
+    return null;
 }
 
 /** Lee el arreglo `compras` del usuario actual y lo renderiza en #vista-historial. */
@@ -1835,7 +2348,7 @@ window.abrirMisCompras = () => {
                 </div>
                 <h4 class="text-white font-bold text-lg mb-1">${compra.pelicula}</h4>
                 <p class="text-gray-400 text-sm mb-3">${compra.detalle}</p>
-                ${compra.asientos && compra.asientos.length ? `<p class="text-xs text-gray-400 mb-1"><i class="fa-solid fa-chair text-brand-yellow mr-1"></i> ${compra.asientos.join(', ')}</p>` : ''}
+                ${compra.asientos && compra.asientos.length ? `<p class="text-xs text-gray-400 mb-1"><i class="fa-solid fa-chair text-brand-yellow mr-1"></i> ${compra.asientos.map(a => typeof a === 'object' ? a.id : a).join(', ')}</p>` : ''}
                 ${compra.dulces && compra.dulces.length ? `<p class="text-xs text-gray-400 mb-3"><i class="fa-solid fa-popcorn text-brand-yellow mr-1"></i> ${compra.dulces.join(', ')}</p>` : ''}
                 <div class="border-t border-white/10 pt-3 flex justify-between items-center">
                     <span class="text-gray-400 text-sm">Total pagado</span>
@@ -1848,8 +2361,6 @@ window.abrirMisCompras = () => {
     cambiarVista(vistaActualVisible, 'vista-historial');
 };
 
-<<<<<<< Updated upstream
-=======
 /* ============================================================================
    14. MÓDULO 7 — VISTA "SOCIO CINERAMA" DINÁMICA
    ============================================================================ */
@@ -1860,15 +2371,19 @@ function renderizarVistaBeneficios() {
     const ctaInvitado = document.getElementById('beneficios-cta-invitado');
     if (!panel) return;
 
+    const panelHistorial = document.getElementById('panel-historial-beneficios');
+
     // MÓDULO 8: una cuenta de counter/admin no es socio: sin panel y sin invitación a registrarse (la vista ni se abre; esto es la red de seguridad).
     if (usuarioActual && !usuarioEsSocio(usuarioActual)) {
         panel.classList.add('hidden');
+        if (panelHistorial) panelHistorial.classList.add('hidden');
         if (ctaInvitado) ctaInvitado.classList.add('hidden');
         return;
     }
 
     if (!usuarioActual) {
         panel.classList.add('hidden');
+        if (panelHistorial) panelHistorial.classList.add('hidden');
         if (ctaInvitado) ctaInvitado.classList.remove('hidden');
         return;
     }
@@ -1913,44 +2428,32 @@ function renderizarVistaBeneficios() {
     const estadoFila = document.getElementById('beneficios-estado-fila');
     estadoFila.textContent = fila.ok ? 'Fila preferencial activa' : fila.motivo;
 
-    // Llenar Tarjeta de Perfil
-    const inicial = (usuarioActual.nombre || 'N').charAt(0).toUpperCase();
-    document.getElementById('perfil-inicial').textContent = inicial;
-    document.getElementById('perfil-nombre').textContent = usuarioActual.nombre || 'Socio';
-    document.getElementById('perfil-correo').textContent = usuarioActual.correo || '—';
-    document.getElementById('perfil-dni').textContent = usuarioActual.dni || '—';
-
-    // Llenar Historial de Compras
-    const tablaContenedor = document.getElementById('beneficios-historial-compras');
-    const tbody = document.getElementById('beneficios-historial-tabla');
-    const compras = usuarioActual.compras || [];
-
-    if (compras.length > 0) {
-        let html = '';
-        compras.forEach(compra => {
-            const esReembolsada = compra.estado === 'reembolsada';
-            const badgeColor = esReembolsada ? 'bg-gray-500' : 'bg-green-500/20 text-green-400 border border-green-500/30';
-            const badgeText = esReembolsada ? 'REEMBOLSADA' : 'COMPLETADA';
-            
-            let detalleStr = compra.peliculaTitulo || compra.pelicula || 'Productos de Dulcería';
-            if (compra.fechaFuncion) detalleStr += ` <span class="text-gray-500 block text-xs">${compra.fechaFuncion} &bull; ${compra.horaFuncion || ''}</span>`;
-            
-            html += `
-                <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
-                    <td class="py-4 font-mono text-gray-300">${compra.codigo}</td>
-                    <td class="py-4 text-gray-400">${new Date(compra.fechaCompra || Date.now()).toLocaleDateString('es-PE')}</td>
-                    <td class="py-4 text-white">${detalleStr}</td>
-                    <td class="py-4 text-right text-brand-yellow font-bold">S/ ${(compra.total || 0).toFixed(2)}</td>
-                    <td class="py-4 text-center">
-                        <span class="px-2 py-1 rounded text-[10px] font-bold ${badgeColor}">${badgeText}</span>
-                    </td>
-                </tr>
-            `;
-        });
-        tbody.innerHTML = html;
-        tablaContenedor.classList.remove('hidden');
-    } else {
-        tablaContenedor.classList.add('hidden');
+    // Renderizar Historial de Compras en la vista
+    if (panelHistorial) {
+        panelHistorial.classList.remove('hidden');
+        const contenedorHistorial = document.getElementById('contenedor-historial-beneficios');
+        const compras = usuarioActual.compras || [];
+        
+        if (compras.length === 0) {
+            contenedorHistorial.innerHTML = `<p class="text-gray-400 text-center py-4">Aún no tienes compras registradas.</p>`;
+        } else {
+            contenedorHistorial.innerHTML = compras.map(compra => `
+                <div class="bg-dark-800 rounded-2xl border border-white/5 p-5 shadow-xl hover:border-brand-red/50 transition-colors">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="bg-brand-red/10 text-brand-red text-xs font-bold px-2 py-1 rounded border border-brand-red/30">${compra.codigo}</span>
+                        <span class="text-gray-500 text-xs">${new Date(compra.fecha).toLocaleDateString('es-PE')}</span>
+                    </div>
+                    <h4 class="text-white font-bold text-lg mb-1">${compra.pelicula}</h4>
+                    <p class="text-gray-400 text-sm mb-3">${compra.detalle}</p>
+                    ${compra.asientos && compra.asientos.length ? `<p class="text-xs text-gray-400 mb-1"><i class="fa-solid fa-chair text-brand-yellow mr-1"></i> ${compra.asientos.map(a => typeof a === 'object' ? a.id : a).join(', ')}</p>` : ''}
+                    ${compra.dulces && compra.dulces.length ? `<p class="text-xs text-gray-400 mb-3"><i class="fa-solid fa-popcorn text-brand-yellow mr-1"></i> ${compra.dulces.join(', ')}</p>` : ''}
+                    <div class="border-t border-white/10 pt-3 flex justify-between items-center">
+                        <span class="text-gray-400 text-sm">Total pagado</span>
+                        <span class="text-brand-yellow font-bold text-lg">${formatearMoneda(compra.total)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
     }
 }
 
@@ -2007,7 +2510,6 @@ window.cerrarCarnetSocio = () => {
     document.removeEventListener('keydown', cerrarCarnetConEscape);
 };
 
->>>>>>> Stashed changes
 /** Alterna la visibilidad del modal de perfil (Nombre, Correo, método de pago). */
 window.toggleUserProfile = () => window.abrirModalPerfil();
 
@@ -2018,6 +2520,16 @@ window.abrirModalPerfil = () => {
     }
     document.getElementById('perfil-nombre').textContent = usuarioActual.nombre;
     document.getElementById('perfil-correo').textContent = usuarioActual.correo;
+    document.getElementById('perfil-dni').textContent = usuarioActual.dni || usuarioActual.dniSimulado || '—';
+    document.getElementById('perfil-nacimiento').textContent = usuarioActual.fechaNacimiento || '—';
+    // MÓDULO 8: código y puntos solo para socios; el counter tampoco guarda método de pago (es una cuenta de trabajo).
+    const esSocioPerfil = usuarioEsSocio(usuarioActual);
+    document.getElementById('perfil-bloque-socio')?.classList.toggle('hidden', !esSocioPerfil);
+    document.getElementById('perfil-bloque-metodo-pago')?.classList.toggle('hidden', usuarioActual.rol === 'counter');
+    if (esSocioPerfil) {
+        document.getElementById('perfil-codigo-socio').textContent = usuarioActual.codigoSocio || '—'; // MÓDULO 7 (idea 1)
+        document.getElementById('perfil-puntos-resumen').textContent = `${usuarioActual.puntos || 0} puntos • Nivel ${obtenerNivelSocio(usuarioActual.puntos || 0).nombre}`; // MÓDULO 7
+    }
     document.getElementById('perfil-metodo-actual').textContent = usuarioActual.metodoPago
         ? `Tarjeta guardada terminada en ${usuarioActual.metodoPago}`
         : 'No tienes un método de pago guardado.';
@@ -2126,7 +2638,7 @@ window.inicializarMapaUbicacion = () => {
     });
 
     L.marker(coordenadas, { icon: iconoCine }).addTo(mapaLeafletInstancia)
-        .bindPopup('<strong>Cinerama Chimbote</strong><br>Megaplaza Chimbote<br>Av. Principal, Chimbote, Perú')
+        .bindPopup('<strong>Cine Náutica</strong><br>Av. Principal, Perú')
         .openPopup();
 
     setTimeout(() => mapaLeafletInstancia.invalidateSize(), 200);
@@ -2156,6 +2668,9 @@ function renderizarPromociones() {
     const grid = document.getElementById('grid-promociones');
     if (!grid) return;
 
+    // MÓDULO 8: la tarjeta del programa de socios no se muestra a counter/admin.
+    const mostrarTarjetaSocio = !usuarioActual || usuarioEsSocio(usuarioActual);
+
     let html = `
         <div class="bg-dark-800 border border-white/5 rounded-2xl overflow-hidden shadow-xl hover:border-brand-yellow/50 transition-colors flex flex-col">
             <div class="h-40 bg-gradient-to-br from-brand-yellow to-yellow-600 flex items-center justify-center">
@@ -2168,17 +2683,19 @@ function renderizarPromociones() {
                 <button onclick="abrirDulceriaDirecta()" class="mt-4 w-full bg-brand-yellow hover:bg-yellow-400 text-black py-2.5 rounded-xl font-bold text-sm transition-colors">Ir a Dulcería</button>
             </div>
         </div>
+        ${mostrarTarjetaSocio ? `
         <div class="bg-dark-800 border border-white/5 rounded-2xl overflow-hidden shadow-xl hover:border-green-500/50 transition-colors flex flex-col">
             <div class="h-40 bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center">
                 <i class="fa-solid fa-crown text-6xl text-white/90"></i>
             </div>
             <div class="p-6 flex flex-col flex-grow">
                 <span class="inline-block w-max px-3 py-1 bg-green-500/10 text-green-400 border border-green-500/30 text-xs font-bold rounded-full uppercase mb-3">Exclusivo</span>
-                <h3 class="text-xl font-bold text-white mb-2">Beneficio Exclusivo Socio Cinerama</h3>
+                <h3 class="text-xl font-bold text-white mb-2">Beneficio Exclusivo Socio Náutica</h3>
                 <p class="text-gray-400 text-sm flex-grow">Los socios acumulan puntos en cada compra y acceden a preventas exclusivas y una entrada gratis por cumpleaños.</p>
                 <button onclick="cambiarVista(vistaActualVisible, 'vista-beneficios')" class="mt-4 w-full bg-transparent border border-green-500/40 text-green-400 hover:bg-green-500/10 py-2.5 rounded-xl font-bold text-sm transition-colors">Ver Beneficios</button>
             </div>
         </div>
+        ` : ''}
     `;
 
     // Cupones creados por el administrador (Panel Admin > Descuentos)
@@ -2206,8 +2723,8 @@ const CONTENIDO_LEGAL = {
     'terminos': {
         icono: 'fa-file-contract', titulo: 'Términos y Condiciones',
         texto: [
-            'El uso de la plataforma Cinerama implica la aceptación de estos términos. Las entradas y productos de dulcería adquiridos son para uso personal y no reembolsable, salvo cancelación de función por parte del cine.',
-            'Cinerama se reserva el derecho de modificar la cartelera, horarios y precios sin previo aviso. Los cupones de descuento aplican únicamente durante su periodo de vigencia y no son acumulables entre sí.'
+            'El uso de la plataforma Náutica implica la aceptación de estos términos. Las entradas y productos de dulcería adquiridos son para uso personal y no reembolsable, salvo cancelación de función por parte del cine.',
+            'Náutica se reserva el derecho de modificar la cartelera, horarios y precios sin previo aviso. Los cupones de descuento aplican únicamente durante su periodo de vigencia y no son acumulables entre sí.'
         ]
     },
     'privacidad': {
@@ -2227,7 +2744,7 @@ const CONTENIDO_LEGAL = {
     'quienes-somos': {
         icono: 'fa-film', titulo: '¿Quiénes somos?',
         texto: [
-            'Cinerama es la cadena de cines líder en Chimbote, comprometida con ofrecer la mejor experiencia audiovisual, tecnología de punta en salas y la dulcería más completa de la región.',
+            'Náutica es la cadena de cines líder en Chimbote, comprometida con ofrecer la mejor experiencia audiovisual, tecnología de punta en salas y la dulcería más completa de la región.',
             'Desde nuestros inicios buscamos acercar el mejor cine nacional e internacional a toda la familia.'
         ]
     },
@@ -2244,7 +2761,7 @@ const CONTENIDO_LEGAL = {
 window.abrirModalTrailer = (peliculaId, tipo = 'cartelera') => {
     const pelicula = tipo === 'estreno' ? baseDatosEstrenos[peliculaId] : baseDatosPeliculas[peliculaId];
     if (!pelicula) return;
-    
+
     document.getElementById('trailer-titulo').textContent = `Tráiler - ${pelicula.titulo}`;
 
     // Convertimos el enlace normal a formato "embed" automáticamente
@@ -2254,7 +2771,7 @@ window.abrirModalTrailer = (peliculaId, tipo = 'cartelera') => {
     } else if (urlBase.includes('youtu.be/')) {
         urlBase = urlBase.replace('youtu.be/', 'www.youtube.com/embed/');
     }
-    
+
     // Le inyectamos el enlace de YouTube al reproductor (iframe)
     const iframe = document.getElementById('trailer-iframe');
     // Le agregamos autoplay para que inicie solito al abrir
@@ -2270,8 +2787,8 @@ window.cerrarModalTrailer = () => {
     const modal = document.getElementById('modal-trailer');
     modal.classList.add('opacity-0');
     document.getElementById('trailer-contenido').classList.add('scale-95');
-    
-    setTimeout(() => { 
+
+    setTimeout(() => {
         modal.classList.add('hidden');
         // NUEVO MUY IMPORTANTE: Borramos el enlace al cerrar para que el video se apague y no suene de fondo
         document.getElementById('trailer-iframe').src = '';
@@ -2297,8 +2814,6 @@ window.cerrarModalLegal = () => {
     document.getElementById('legal-contenido').classList.add('scale-95');
     setTimeout(() => modal.classList.add('hidden'), 200);
 };
-<<<<<<< Updated upstream
-=======
 
 /* ============================================================================
    MÓDULO: ATENCIÓN AL CLIENTE (CONTINGENCIAS Y REUBICACIÓN)
@@ -2340,8 +2855,8 @@ window.buscarOrdenAtencionCliente = (e) => {
     resultados.forEach(compra => {
         const estadoPelicula = compra.estado || 'activa';
 
-        let esCancelada = false;
-        // Verificamos si la función está cancelada en baseDatosPeliculas
+        let esCancelada = compra.estado === 'funcion_cancelada';
+        // Verificamos adicionalmente si la función está marcada como cancelada en la base de datos
         const p = baseDatosPeliculas[compra.idPelicula];
         if (p && p.horarios && p.horarios[compra.fechaFuncion]) {
             p.horarios[compra.fechaFuncion].forEach(formato => {
@@ -2378,7 +2893,7 @@ window.buscarOrdenAtencionCliente = (e) => {
                     </div>
                 </div>
                 <p class="text-white text-sm mb-1">${titulo} ${formatoStr}</p>
-                <p class="text-gray-400 text-sm mb-3">${compra.asientos ? compra.asientos.length : 0} Asientos: ${compra.asientos ? compra.asientos.map(s => typeof s === 'object' ? s.id : s).join(', ') : 'Ninguno'}</p>
+                <p class="text-gray-400 text-sm mb-3">${compra.asientos ? compra.asientos.length : 0} Asientos: ${compra.asientos ? compra.asientos.map(a => typeof a === 'object' ? (a.id || a.numero) : a).join(', ') : 'Ninguno'}</p>
         `;
 
         if (esCancelada && compra.estado !== 'reembolsada') {
@@ -2397,24 +2912,12 @@ window.buscarOrdenAtencionCliente = (e) => {
 };
 
 window.reembolsarOrden = async (idOrden) => {
-    const respuesta = await pedirMotivoContingencia({
-        titulo: 'Reembolsar Orden',
-        opciones: [
-            'Cancelación de función por mantenimiento',
-            'Fallas técnicas en la sala',
-            'Problemas con el cliente',
-            'Error en la compra (Duplicado, etc.)'
-        ]
+    const contingencia = await solicitarMotivoContingencia({
+        titulo: `Reembolsar Ticket ${idOrden}`,
+        tipoOperacion: 'reembolso'
     });
     
-    if (!respuesta) return;
-
-    const confirmar = await confirmarAccion({
-        titulo: '¿Reembolsar Orden?',
-        mensaje: `Se reembolsará el ticket ${idOrden} y se liberarán sus asientos.\n\nMotivo: ${respuesta.motivo}\n\nEsta acción no se puede deshacer.`,
-        tipo: 'advertencia', textoConfirmar: 'Sí, Reembolsar', textoCancelar: 'Cancelar'
-    });
-    if (!confirmar) return;
+    if (!contingencia) return;
 
     const ventasGlobal = JSON.parse(localStorage.getItem(LS_VENTAS_GENERAL)) || [];
     const idx = ventasGlobal.findIndex(v => v.codigo === idOrden);
@@ -2422,12 +2925,8 @@ window.reembolsarOrden = async (idOrden) => {
 
     const orden = ventasGlobal[idx];
     orden.estado = 'reembolsada';
-    orden.contingencia = {
-        tipo: 'reembolso',
-        motivo: respuesta.motivo,
-        observaciones: respuesta.observaciones,
-        fecha: new Date().toISOString()
-    };
+    orden.motivoContingencia = contingencia.motivo;
+    orden.observacionesContingencia = contingencia.obs;
     localStorage.setItem(LS_VENTAS_GENERAL, JSON.stringify(ventasGlobal));
 
     // Liberar los asientos
@@ -2457,30 +2956,8 @@ window.iniciarReubicacion = (idOrden) => {
     cerrarModalAtencionCliente();
     
     if (orden.idPelicula) {
-        const formatoOriginal = orden.detalle ? orden.detalle.split(' • ')[2] : null;
-        let tieneHorariosValidos = false;
-        
-        const pelicula = baseDatosPeliculas[orden.idPelicula];
-        if (pelicula && pelicula.horarios && formatoOriginal) {
-            for (const fecha in pelicula.horarios) {
-                if (pelicula.horarios[fecha].some(f => f.formato === formatoOriginal)) {
-                    tieneHorariosValidos = true;
-                    break;
-                }
-            }
-        }
-
-        if (!tieneHorariosValidos && formatoOriginal) {
-            alertaBonita({ 
-                titulo: 'Reubicación No Posible', 
-                mensaje: `Ya no hay funciones disponibles en formato ${formatoOriginal} para esta película.\n\nPara cambiar de película o formato, debes realizar el reembolso primero.`, 
-                tipo: 'advertencia' 
-            });
-            return;
-        }
-
         abrirHorarios(orden.idPelicula);
-        mostrarToast(`Reubicación de ticket ${idOrden}. Selecciona un horario en formato ${formatoOriginal} y EXACTAMENTE ${estadoPedido.cantidadAsientosRequeridos} asientos.`, 'info');
+        mostrarToast(`Reubicación de ticket ${idOrden}. Selecciona un horario para "${orden.peliculaTitulo || orden.pelicula}" y EXACTAMENTE ${estadoPedido.cantidadAsientosRequeridos} asientos.`, 'info');
     } else {
         cambiarVista(vistaActualVisible, 'vista-inicio');
         mostrarToast(`Modo Reubicación activo. Selecciona una nueva función y EXACTAMENTE ${estadoPedido.cantidadAsientosRequeridos} asientos.`, 'info');
@@ -2497,4 +2974,3 @@ window.cancelarModoReubicacion = () => {
     cambiarVista(vistaActualVisible, 'vista-inicio');
     mostrarToast('Reubicación cancelada.', 'info');
 };
->>>>>>> Stashed changes

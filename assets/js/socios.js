@@ -166,6 +166,7 @@ function buscarSocio(termino) {
         usuarioEsSocio(u) && (
             (u.codigoSocio && u.codigoSocio.toLowerCase() === t) ||
             (u.correo && u.correo.toLowerCase() === t) ||
+            (u.dni && u.dni === t) ||
             (u.dniSimulado && u.dniSimulado === t)
         )
     ) || null;
@@ -176,18 +177,15 @@ function asegurarDniSimuladoDeSocio(correoUsuario) {
     const usuarios = obtenerUsuarios();
     const indice = usuarios.findIndex(u => u.correo === correoUsuario);
     if (indice === -1 || !usuarioEsSocio(usuarios[indice])) return null;
-    
-    // Si ya tiene un DNI real (ahora se pide en registro), lo usamos.
     if (usuarios[indice].dni) return usuarios[indice].dni;
-    // Retrocompatibilidad: si tenía un simulado antiguo, lo usamos.
     if (usuarios[indice].dniSimulado) return usuarios[indice].dniSimulado;
 
     let dni;
     do {
         dni = String(Math.floor(10000000 + Math.random() * 89999999));
-    } while (usuarios.some(u => u.dni === dni || u.dniSimulado === dni));
+    } while (usuarios.some(u => u.dniSimulado === dni || u.dni === dni));
 
-    usuarios[indice].dni = dni; // Lo guardamos ya como DNI oficial
+    usuarios[indice].dniSimulado = dni;
     guardarUsuarios(usuarios);
     sincronizarUsuarioActualSiCorresponde(usuarios[indice]);
     return dni;

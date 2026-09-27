@@ -1,7 +1,7 @@
 /* ============================================================================
-   CINERAMA — ESTADO.JS — Estado global, constantes y datos mock
+   CINE NÁUTICA — ESTADO.JS — Estado global, constantes y datos mock
    ------------------------------------------------------------------------
-   Parte de la arquitectura modular de Cinerama (Fase 14).
+   Parte de la arquitectura modular de la app (Fase 14).
    Cargado como <script> clásico (no ES module) para funcionar también
    abriendo index.html directamente con file://, sin necesidad de servidor.
    Debe cargarse PRIMERO: define baseDatosPeliculas, baseDatosEstrenos,
@@ -13,10 +13,16 @@
    1. ESTADO GLOBAL Y CONFIGURACIÓN
    ============================================================================ */
 
+// MÓDULO 9: nombre del cine, centralizado para poder ofrecer esta app a cualquier cine sin
+// tener que buscar y reemplazar texto por todo el proyecto. El resto del código lee de aquí.
+const NOMBRE_CINE = 'Cine Náutica';
+const NOMBRE_CINE_CORTO = 'Náutica';
+
 // Estado del pedido en curso (entradas + dulcería)
 const estadoPedido = {
     pelicula: null,
-    cine: 'Cinerama Chimbote', // por defecto
+    cine: NOMBRE_CINE, // por defecto
+    formatoId: null, // MÓDULO 9: id del formato de proyección de la función elegida (catálogo de formatos)
     fecha: null,
     formato: null,
     hora: null,
@@ -24,7 +30,10 @@ const estadoPedido = {
     asientos: [],   // Array de { id: 'D4', tipoLabel: 'Adulto', precio: 20.0 }
     carrito: {},    // Objeto contador de snacks { 'combo1': 2 }
     modoDirecto: false, // FASE 3: true cuando se entra por "Dulcería directa" (sin película)
-    cupon: null      // FASE 5: { codigo, porcentaje } cupón aplicado
+    cupon: null,     // FASE 5: { codigo, porcentaje } cupón aplicado
+    puntosCanjeados: 0, // MÓDULO 7: puntos de Socio Náutica que el usuario decidió canjear en este pedido
+    socioVinculadoCorreo: null, // MÓDULO 8: solo en venta de COUNTER — correo del socio al que se vincula la venta (canje y puntos van a él, nunca a la cuenta del counter)
+    checkoutCounterListo: false // MÓDULO 8: true cuando el formulario de pago del counter ya se limpió para esta venta (evita arrastrar datos del cliente anterior)
 };
 
 // --- SISTEMA DE USUARIOS (localStorage) ---
@@ -41,6 +50,11 @@ const LS_DULCES = 'cinerama_dulces';
 const LS_SALAS_MANTENIMIENTO = 'cinerama_salas_mantenimiento';
 const NUMERO_TOTAL_SALAS = 8;
 const LS_VENTAS_ASIENTOS = 'cinerama_ventas_asientos'; // FASE 10: registro persistente de butacas vendidas por sala
+
+// --- MÓDULO 9: catálogo de formatos de proyección (2D/3D/4DX/...) y tipos de entrada (General/Niño/...) ---
+const LS_FORMATOS_PROYECCION = 'cinerama_formatos_proyeccion';
+const LS_TIPOS_ENTRADA = 'cinerama_tipos_entrada';
+const LS_TARIFAS_DIA = 'cinerama_tarifas_dia'; // MÓDULO 2 (ampliado): tarifas base por día, editables desde Admin > Tarifas
 
 // --- FIX (corrección solicitada): ventas por FUNCIÓN real (no solo por sala) ---
 // Cada registro de LS_VENTAS_ASIENTOS ahora también guarda fecha/hora de la función,
@@ -115,103 +129,120 @@ const PRECIOS = {
 // FASE 5: Cupones por defecto (se combinan con los creados desde el panel admin)
 const CUPONES_BASE = {
     'VERANO20': { porcentaje: 20, descripcion: 'Descuento de verano' },
-    'CINERAMA10': { porcentaje: 10, descripcion: 'Bienvenida Cinerama' }
+    'NAUTICA10': { porcentaje: 10, descripcion: 'Bienvenida Náutica' }
 };
 
 /* ============================================================================
-   MÓDULO 2 — JERARQUÍA DE TARIFAS DINÁMICAS
+   MÓDULO 2 — JERARQUÍA DE TARIFAS DINÁMICAS (editables desde Admin > Tarifas)
    ------------------------------------------------------------------------
-   Reemplaza el precio fijo por tipo de entrada (Adulto/Niño/Mayor/Preferencial):
-   ahora todos los asientos de una función pagan la misma tarifa, determinada
-   por el día en que se ve la película. Orden de evaluación (estricto):
-     1) ¿Película en Pre-Estreno?              -> tarifa feriado/fin de semana
-     2) ¿Fecha marcada como feriado/no laborable (calendario admin)? -> ídem
-     3) Jueves / Viernes / Sábado / Domingo     -> S/18
-     4) Lunes / Miércoles                       -> S/13
-     5) Martes                                  -> S/12
+   El precio final de un asiento se construye en 3 pasos:
+     1) Tarifa base del día  (este bloque — editable desde el panel Admin)
+     2) Recargo del formato  (catálogo de formatos — 2D/3D/4DX/...)
+     3) Descuento del tipo   (catálogo de tipos de entrada — General/Niño/...)
+
+   Jerarquía de evaluación de la tarifa base (estricta):
+     1) ¿Película en Pre-Estreno?                                 -> Tarifa Alta
+     2) Jueves / Viernes / Sábado / Domingo                       -> Tarifa Alta
+     3) Lunes / Miércoles                                         -> Tarifa Media
+     4) Martes                                                    -> Tarifa Económica
    ============================================================================ */
-const TARIFA_FERIADO_FIN_DE_SEMANA = 18.0;
-const TARIFAS_POR_DIA_SEMANA = {
-    'Lun': 13.0, 'Mié': 13.0,
-    'Mar': 12.0,
-    'Jue': TARIFA_FERIADO_FIN_DE_SEMANA,
-    'Vie': TARIFA_FERIADO_FIN_DE_SEMANA,
-    'Sáb': TARIFA_FERIADO_FIN_DE_SEMANA,
-    'Dom': TARIFA_FERIADO_FIN_DE_SEMANA
+
+// Valores por defecto de fábrica (solo se usan la primera vez que no hay localStorage).
+const TARIFAS_DIA_INICIALES = {
+    economica: 12.0,  // Martes
+    media:     13.0,  // Lunes / Miércoles
+    alta:      18.0   // Jue / Vie / Sáb / Dom / Pre-Estrenos
 };
+
+function obtenerTarifasDia() {
+    const guardado = JSON.parse(localStorage.getItem(LS_TARIFAS_DIA));
+    if (guardado && typeof guardado.economica === 'number') return guardado;
+    guardarEnLocalStorageSeguro(LS_TARIFAS_DIA, TARIFAS_DIA_INICIALES);
+    return { ...TARIFAS_DIA_INICIALES };
+}
+
+function guardarTarifasDia(obj) {
+    return guardarEnLocalStorageSeguro(LS_TARIFAS_DIA, obj);
+}
+
+/** Conveniencia: tarifa de un slot de día ('economica'|'media'|'alta') como número. */
+function obtenerTarifaPorSlot(slot) {
+    return obtenerTarifasDia()[slot] ?? obtenerTarifasDia().alta;
+}
 
 // MÓDULO 3 — margen de limpieza obligatorio entre funciones de una misma sala.
 const MARGEN_LIMPIEZA_MINUTOS = 30;
 
+
 /* ============================================================================
-   MÓDULO 2/4 — CALENDARIO DE FERIADOS Y DÍAS NO LABORABLES
+   MÓDULO 9 — CATÁLOGO DE FORMATOS DE PROYECCIÓN (tab Admin > Tarifas)
    ------------------------------------------------------------------------
-   Precargado con los 16 feriados nacionales oficiales del Perú (fuente:
-   calendario laboral 2026). El Módulo 4 agrega la UI para que el admin
-   añada/quite fechas excepcionales; ambos leen/escriben el mismo localStorage.
+   Cada formato tiene un recargo en soles que se suma a la tarifa base del día
+   (ver calcularTarifaBaseFuncionActual, en cliente.js). Las salas declaran qué
+   formatos de esta lista soportan (crearConfiguracionSala) y las películas qué
+   formatos ofrecen (campo `formatosDisponibles`); así el admin nunca puede
+   programar un formato que la sala no tiene o que la película no ofrece.
+   El id '2d' es el formato base del catálogo y no se puede eliminar (siempre
+   tiene que existir al menos un formato "de entrada" con recargo 0).
    ============================================================================ */
-const LS_FERIADOS = 'cinerama_feriados';
-
-// Feriados de fecha fija (mismo día/mes todos los años)
-const FERIADOS_FIJOS_RECURRENTES = [
-    { mesDia: '01-01', nombre: 'Año Nuevo' },
-    { mesDia: '05-01', nombre: 'Día del Trabajo' },
-    { mesDia: '06-07', nombre: 'Batalla de Arica y Día de la Bandera' },
-    { mesDia: '06-29', nombre: 'San Pedro y San Pablo' },
-    { mesDia: '07-23', nombre: 'Día de la Fuerza Aérea del Perú' },
-    { mesDia: '07-28', nombre: 'Fiestas Patrias' },
-    { mesDia: '07-29', nombre: 'Fiestas Patrias' },
-    { mesDia: '08-06', nombre: 'Batalla de Junín' },
-    { mesDia: '08-30', nombre: 'Santa Rosa de Lima' },
-    { mesDia: '10-08', nombre: 'Combate de Angamos' },
-    { mesDia: '11-01', nombre: 'Todos los Santos' },
-    { mesDia: '12-08', nombre: 'Inmaculada Concepción' },
-    { mesDia: '12-09', nombre: 'Batalla de Ayacucho' },
-    { mesDia: '12-25', nombre: 'Navidad' }
+const FORMATOS_PROYECCION_INICIALES = [
+    { id: '2d', nombre: '2D', recargo: 0, protegido: true },
+    { id: '3d', nombre: '3D', recargo: 5 },
+    { id: '4dx', nombre: '4DX', recargo: 15 },
+    { id: 'xd', nombre: 'XD', recargo: 8 },
+    { id: 'vip', nombre: 'VIP', recargo: 20 },
+    { id: 'dbox', nombre: 'D-BOX', recargo: 15 }
 ];
 
-// Feriados de fecha móvil (Semana Santa, depende de la Pascua): se precargan
-// como fechas exactas del año en curso. IMPORTANTE: hay que revisarlos/
-// actualizarlos cada año — el admin también puede editarlos a mano (Módulo 4).
-const FERIADOS_MOVILES_PRECARGADOS = [
-    { fecha: '2026-04-02', nombre: 'Jueves Santo' },
-    { fecha: '2026-04-03', nombre: 'Viernes Santo' }
+function obtenerCatalogoFormatos() {
+    const guardado = JSON.parse(localStorage.getItem(LS_FORMATOS_PROYECCION));
+    if (guardado && Array.isArray(guardado) && guardado.length > 0) return guardado;
+    guardarEnLocalStorageSeguro(LS_FORMATOS_PROYECCION, FORMATOS_PROYECCION_INICIALES);
+    return FORMATOS_PROYECCION_INICIALES;
+}
+
+function guardarCatalogoFormatos(lista) {
+    return guardarEnLocalStorageSeguro(LS_FORMATOS_PROYECCION, lista);
+}
+
+function obtenerFormatoPorId(id) {
+    return obtenerCatalogoFormatos().find(f => f.id === id) || null;
+}
+
+/* ============================================================================
+   MÓDULO 9 — CATÁLOGO DE TIPOS DE ENTRADA (tab Admin > Tarifas)
+   ------------------------------------------------------------------------
+   Descuento en % sobre la tarifa ya calculada (base del día + recargo del
+   formato). El id 'general' es el tipo por defecto al elegir un asiento y no
+   se puede eliminar (siempre tiene que quedar un tipo sin condiciones).
+   'conadis' refleja el descuento del 20% de la Ley N° 29973 (Perú); queda
+   como un tipo de entrada editable más, sin tope de entradas por función.
+   ============================================================================ */
+const TIPOS_ENTRADA_INICIALES = [
+    { id: 'general', nombre: 'General / Adulto', descuentoPct: 0, protegido: true },
+    { id: 'nino', nombre: 'Niño', descuentoPct: 30 },
+    { id: 'adulto-mayor', nombre: 'Adulto Mayor', descuentoPct: 20 },
+    { id: 'conadis', nombre: 'CONADIS', descuentoPct: 20 }
 ];
 
-/** Combina feriados fijos + móviles precargados en fechas ISO exactas del año dado. */
-function generarFeriadosFijosDelAnio(anio) {
-    const deFijos = FERIADOS_FIJOS_RECURRENTES.map(f => ({ fecha: `${anio}-${f.mesDia}`, nombre: f.nombre, tipo: 'feriado' }));
-    const deMoviles = FERIADOS_MOVILES_PRECARGADOS
-        .filter(f => f.fecha.startsWith(`${anio}-`))
-        .map(f => ({ fecha: f.fecha, nombre: f.nombre, tipo: 'feriado' }));
-    return [...deFijos, ...deMoviles];
+function obtenerCatalogoTiposEntrada() {
+    const guardado = JSON.parse(localStorage.getItem(LS_TIPOS_ENTRADA));
+    if (guardado && Array.isArray(guardado) && guardado.length > 0) return guardado;
+    guardarEnLocalStorageSeguro(LS_TIPOS_ENTRADA, TIPOS_ENTRADA_INICIALES);
+    return TIPOS_ENTRADA_INICIALES;
 }
 
-/**
- * Lee el calendario de feriados/no-laborables desde localStorage. Si no existe
- * aún (primera carga), lo inicializa con los feriados precargados del año actual.
- * Estructura: { [fechaISO]: { nombre, tipo: 'feriado'|'no-laborable' } }
- */
-function obtenerCalendarioFeriados() {
-    const guardado = JSON.parse(localStorage.getItem(LS_FERIADOS));
-    if (guardado && Object.keys(guardado).length > 0) return guardado;
-
-    const anioActual = new Date().getFullYear();
-    const mapa = {};
-    generarFeriadosFijosDelAnio(anioActual).forEach(f => { mapa[f.fecha] = { nombre: f.nombre, tipo: f.tipo }; });
-    guardarEnLocalStorageSeguro(LS_FERIADOS, mapa);
-    return mapa;
+function guardarCatalogoTiposEntrada(lista) {
+    return guardarEnLocalStorageSeguro(LS_TIPOS_ENTRADA, lista);
 }
 
-function guardarCalendarioFeriados(mapa) {
-    return guardarEnLocalStorageSeguro(LS_FERIADOS, mapa);
+function obtenerTipoEntradaPorId(id) {
+    return obtenerCatalogoTiposEntrada().find(t => t.id === id) || null;
 }
 
-/** ¿La fecha ISO (YYYY-MM-DD) dada está marcada como feriado o día no laborable? */
-function esFechaFeriadoONoLaborable(fechaISO) {
-    if (!fechaISO) return false;
-    const calendario = obtenerCalendarioFeriados();
-    return Boolean(calendario[fechaISO]);
+function obtenerTipoEntradaPorDefecto() {
+    const catalogo = obtenerCatalogoTiposEntrada();
+    return catalogo.find(t => t.id === 'general') || catalogo[0];
 }
 
 const baseDatosPeliculas = {
@@ -220,7 +251,7 @@ const baseDatosPeliculas = {
         titulo: 'Spider-Man: Un Nuevo Día',
         banner: 'assets/img/banners/SpidermanHorizontal.jpg',
         poster: 'assets/img/posters/Spiderman.webp',
-        genero: 'Acción / Aventura', clasificacion: 'APT', duracion: '2h 25m', tipoLanzamiento: 'Estreno',
+        genero: 'Acción / Aventura', clasificacion: 'APT', duracion: '2h 25m', tipoLanzamiento: 'Estreno', formatosDisponibles: ['2d', 'xd'],
         sinopsis: 'Peter Parker se enfrenta a su mayor desafío cuando las barreras entre multiversos colisionan inesperadamente. Viejos enemigos de realidades alternativas llegan a Nueva York, y Peter deberá aliarse con versiones de sí mismo para restaurar el equilibrio antes de que su mundo sea destruido por completo.',
         trailer: 'https://www.youtube.com/watch?v=QXibcL7-XbU',
         horarios: {
@@ -243,7 +274,7 @@ const baseDatosPeliculas = {
         titulo: 'La Noche del Demonio',
         banner: 'assets/img/banners/LaNocheDelDemonioHorizontal.jpg',
         poster: 'assets/img/posters/LaNocheDelDemonio.jpg',
-        genero: 'Terror / Suspenso', clasificacion: '+14', duracion: '1h 46m', tipoLanzamiento: 'Pre-Estreno',
+        genero: 'Terror / Suspenso', clasificacion: '+14', duracion: '1h 46m', tipoLanzamiento: 'Pre-Estreno', formatosDisponibles: ['2d', 'dbox'],
         sinopsis: 'Una familia se muda a una nueva casa buscando un nuevo comienzo, solo para descubrir que el lugar está plagado de entidades oscuras. A medida que las manifestaciones empeoran, descubren que el verdadero mal no reside en la casa, sino que ha poseído a su hijo menor.',
         trailer: 'https://www.youtube.com/watch?v=orvNgTGq6cg',
         horarios: {
@@ -262,7 +293,7 @@ const baseDatosPeliculas = {
         titulo: 'La Odisea Espacial',
         banner: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?q=80&w=2070',
         poster: 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?q=80&w=600&auto=format&fit=crop',
-        genero: 'Ciencia Ficción', clasificacion: 'APT', duracion: '2h 52m', tipoLanzamiento: 'Regular',
+        genero: 'Ciencia Ficción', clasificacion: 'APT', duracion: '2h 52m', tipoLanzamiento: 'Regular', formatosDisponibles: ['2d'],
         sinopsis: 'Un grupo de astronautas se embarca en una misión secreta hacia Júpiter acompañados por HAL 9000, una inteligencia artificial que controla la nave. A mitad de camino, la máquina comienza a exhibir un comportamiento extraño y letal.',
         trailer: 'https://www.youtube.com/embed/xhRUxPbp_c',
         horarios: {
@@ -278,7 +309,7 @@ const baseDatosEstrenos = {
         titulo: 'El Caballero Oscuro',
         poster: 'https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?q=80&w=600',
         banner: 'https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?q=80&w=2070',
-        genero: 'Acción / Thriller', clasificacion: '+14', duracion: '2h 32m',
+        genero: 'Acción / Thriller', clasificacion: '+14', duracion: '2h 32m', formatosDisponibles: ['2d', '3d'],
         sinopsis: 'Gotham City se enfrenta a una nueva amenaza cuando un criminal anarquista conocido como el Joker emerge para sumir la ciudad en el caos.',
         trailer: 'https://www.youtube.com/embed/EXeTwQWrcwY'
     },
@@ -287,7 +318,7 @@ const baseDatosEstrenos = {
         titulo: 'El Planeta Perdido',
         poster: 'https://images.unsplash.com/photo-1618331835717-801e976710b2?q=80&w=600',
         banner: 'https://images.unsplash.com/photo-1618331835717-801e976710b2?q=80&w=2070',
-        genero: 'Aventura / Sci-Fi', clasificacion: 'APT', duracion: '3h 10m',
+        genero: 'Aventura / Sci-Fi', clasificacion: 'APT', duracion: '3h 10m', formatosDisponibles: ['2d', '3d', '4dx'],
         sinopsis: 'Exploradores humanos llegan a un planeta exuberante y deben aprender a convivir con la flora y fauna alienígena que lo habita.',
         trailer: 'https://www.youtube.com/embed/a8Gx8wiNbs8'
     }

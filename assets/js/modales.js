@@ -1,7 +1,7 @@
 /* ============================================================================
-   CINERAMA — MODALES.JS — Componente reutilizable de confirmación / alerta
+   CINE NÁUTICA — MODALES.JS — Componente reutilizable de confirmación / alerta
    ------------------------------------------------------------------------
-   Parte de la arquitectura modular de Cinerama (Módulo 1 — infraestructura).
+   Parte de la arquitectura modular de la app (Módulo 1 — infraestructura).
    Reemplaza alert() y confirm() nativos por modales con la estética de la
    app. Se inyecta una única vez en el DOM (no requiere tocar index.html)
    y se reutiliza en todos los módulos siguientes.
@@ -31,7 +31,7 @@ function crearModalConfirmacionSiNoExiste() {
                 <i id="confirmacion-global-icono" class="fa-solid text-2xl"></i>
             </div>
             <h3 id="confirmacion-global-titulo" class="text-white font-bold text-lg text-center mb-2"></h3>
-            <p id="confirmacion-global-mensaje" class="text-gray-400 text-sm text-center mb-6 leading-relaxed"></p>
+            <p id="confirmacion-global-mensaje" class="text-gray-400 text-sm text-center mb-6 leading-relaxed whitespace-pre-line"></p>
             <div id="confirmacion-global-barra-tiempo-track" class="hidden w-full h-1 bg-white/10 rounded-full overflow-hidden mb-6 -mt-3">
                 <div id="confirmacion-global-barra-tiempo" class="h-full bg-brand-yellow rounded-full" style="width:100%"></div>
             </div>
@@ -74,6 +74,14 @@ window.confirmarAccion = ({
         const trackTiempo = document.getElementById('confirmacion-global-barra-tiempo-track');
         const barraTiempo = document.getElementById('confirmacion-global-barra-tiempo');
 
+        // PREVENCIÓN DE SOLAPAMIENTO: si hay otra promesa de confirmación activa, la cancelamos y limpiamos
+        if (window._confirmacionCerrarActual) {
+            window._confirmacionCerrarActual(false, true); // true = solapado
+        }
+        if (window._timeoutOcultarConfirmacion) {
+            clearTimeout(window._timeoutOcultarConfirmacion);
+        }
+
         document.getElementById('confirmacion-global-titulo').textContent = titulo;
         document.getElementById('confirmacion-global-mensaje').textContent = mensaje;
 
@@ -88,16 +96,22 @@ window.confirmarAccion = ({
 
         let idTimeoutLimite = null;
 
-        const cerrar = (resultado) => {
-            modal.classList.add('opacity-0');
-            contenido.classList.add('scale-95');
-            setTimeout(() => modal.classList.add('hidden'), 200);
+        const cerrar = (resultado, solapado = false) => {
+            window._confirmacionCerrarActual = null;
             btnConfirmar.removeEventListener('click', onConfirmar);
             btnCancelar.removeEventListener('click', onCancelar);
             document.removeEventListener('keydown', onEscape);
             if (idTimeoutLimite) clearTimeout(idTimeoutLimite);
+            
+            if (!solapado) {
+                modal.classList.add('opacity-0');
+                contenido.classList.add('scale-95');
+                window._timeoutOcultarConfirmacion = setTimeout(() => modal.classList.add('hidden'), 200);
+            }
             resolve(resultado);
         };
+        window._confirmacionCerrarActual = cerrar;
+
         const onConfirmar = () => cerrar(true);
         const onCancelar = () => cerrar(false);
         const onEscape = (ev) => { if (ev.key === 'Escape') cerrar(false); };
@@ -142,80 +156,68 @@ window.alertaBonita = ({ titulo = 'Aviso', mensaje = '', tipo = 'info' } = {}) =
     }).then(() => {});
 };
 
-function crearModalMotivoSiNoExiste() {
-    if (document.getElementById('modal-motivo-global')) return;
-
-    const div = document.createElement('div');
-    div.id = 'modal-motivo-global';
-    div.className = 'hidden fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-center justify-center opacity-0 transition-opacity duration-200 p-4';
-    div.innerHTML = `
-        <div class="bg-dark-800 p-6 rounded-2xl border border-white/10 shadow-2xl max-w-sm w-full transform scale-95 transition-transform duration-200" id="motivo-global-contenido">
-            <h3 id="motivo-global-titulo" class="text-white font-bold text-lg text-center mb-4"></h3>
-            <div class="mb-4">
-                <label class="block text-gray-400 text-xs uppercase font-bold tracking-wider mb-2">Motivo</label>
-                <select id="motivo-global-select" class="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-brand-yellow">
-                </select>
-            </div>
-            <div class="mb-6">
-                <label class="block text-gray-400 text-xs uppercase font-bold tracking-wider mb-2">Observaciones (Opcional)</label>
-                <textarea id="motivo-global-observaciones" rows="3" class="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-2 text-white resize-none focus:outline-none focus:border-brand-yellow"></textarea>
-            </div>
-            <div class="flex gap-3">
-                <button id="motivo-global-btn-cancelar" type="button" class="flex-1 bg-dark-900 hover:bg-dark-700 border border-white/10 text-white py-2.5 rounded-xl font-bold text-sm transition-colors">Cancelar</button>
-                <button id="motivo-global-btn-confirmar" type="button" class="flex-1 bg-brand-yellow hover:bg-yellow-400 text-black py-2.5 rounded-xl font-bold text-sm transition-colors">Confirmar</button>
-            </div>
-        </div>`;
-    document.body.appendChild(div);
-}
-
-/**
- * Pide al usuario que seleccione un motivo y agregue una observación.
- * Devuelve { motivo, observaciones } o null si cancela.
- */
-window.pedirMotivoContingencia = ({
-    titulo = 'Resolución de Contingencia',
-    opciones = []
+window.solicitarMotivoContingencia = ({
+    titulo = 'Motivo de Contingencia',
+    tipoOperacion = 'reubicacion' // 'reubicacion' | 'reembolso'
 } = {}) => {
-    crearModalMotivoSiNoExiste();
-
     return new Promise((resolve) => {
-        const modal = document.getElementById('modal-motivo-global');
-        const contenido = document.getElementById('motivo-global-contenido');
-        const select = document.getElementById('motivo-global-select');
-        const textarea = document.getElementById('motivo-global-observaciones');
-        const btnConfirmar = document.getElementById('motivo-global-btn-confirmar');
-        const btnCancelar = document.getElementById('motivo-global-btn-cancelar');
+        const idModal = 'modal-contingencia';
+        let div = document.getElementById(idModal);
+        if (!div) {
+            div = document.createElement('div');
+            div.id = idModal;
+            div.className = 'hidden fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center opacity-0 transition-opacity duration-200 p-4';
+            document.body.appendChild(div);
+        }
 
-        document.getElementById('motivo-global-titulo').textContent = titulo;
-        
-        select.innerHTML = opciones.map(o => `<option value="${o}">${o}</option>`).join('');
-        // Opción libre al final
-        select.innerHTML += `<option value="Otro">Otro (Especificar en observaciones)</option>`;
-        textarea.value = '';
+        const opcionesMotivo = tipoOperacion === 'reubicacion' 
+            ? ['Reubicación por mantenimiento de sala', 'Reubicación por cambio de horario', 'Deseo del cliente (excepción)', 'Error en compra inicial']
+            : ['Cancelación de función', 'Emergencia de sala', 'Deseo del cliente (excepción)', 'Error en compra inicial', 'Duplicidad de cobro'];
 
-        const cerrar = (confirmado) => {
-            modal.classList.add('opacity-0');
-            contenido.classList.add('scale-95');
-            setTimeout(() => modal.classList.add('hidden'), 200);
-            btnConfirmar.removeEventListener('click', onConfirmar);
-            btnCancelar.removeEventListener('click', onCancelar);
-            if (confirmado) {
-                resolve({ motivo: select.value, observaciones: textarea.value.trim() });
-            } else {
-                resolve(null);
-            }
+        div.innerHTML = `
+            <div class="bg-dark-800 p-6 rounded-2xl border border-white/10 shadow-2xl max-w-sm w-full transform scale-95 transition-transform duration-200" id="${idModal}-contenido">
+                <div class="w-12 h-12 rounded-full flex items-center justify-center mb-4 mx-auto bg-brand-yellow/15 text-brand-yellow">
+                    <i class="fa-solid fa-clipboard-question text-2xl"></i>
+                </div>
+                <h3 class="text-white font-bold text-lg text-center mb-4">${titulo}</h3>
+                
+                <div class="mb-4 text-left">
+                    <label class="block text-gray-400 text-xs font-bold mb-1">Motivo</label>
+                    <select id="${idModal}-motivo" class="w-full bg-dark-900 border border-white/10 text-white rounded-lg p-2.5 focus:border-brand-yellow outline-none transition-colors">
+                        ${opcionesMotivo.map(m => `<option value="${m}">${m}</option>`).join('')}
+                        <option value="Otro">Otro...</option>
+                    </select>
+                </div>
+                
+                <div class="mb-6 text-left">
+                    <label class="block text-gray-400 text-xs font-bold mb-1">Observaciones (Opcional)</label>
+                    <textarea id="${idModal}-obs" rows="2" placeholder="Detalles adicionales..." class="w-full bg-dark-900 border border-white/10 text-white rounded-lg p-2.5 focus:border-brand-yellow outline-none transition-colors resize-none"></textarea>
+                </div>
+
+                <div class="flex gap-3">
+                    <button id="${idModal}-btn-cancelar" type="button" class="flex-1 bg-dark-900 hover:bg-dark-700 border border-white/10 text-white py-2.5 rounded-xl font-bold text-sm transition-colors">Cancelar</button>
+                    <button id="${idModal}-btn-confirmar" type="button" class="flex-1 bg-brand-yellow hover:bg-yellow-400 text-black py-2.5 rounded-xl font-bold text-sm transition-colors">Confirmar</button>
+                </div>
+            </div>`;
+
+        div.classList.remove('hidden');
+        setTimeout(() => { div.classList.remove('opacity-0'); document.getElementById(`${idModal}-contenido`).classList.remove('scale-95'); }, 10);
+
+        const btnConfirmar = document.getElementById(`${idModal}-btn-confirmar`);
+        const btnCancelar = document.getElementById(`${idModal}-btn-cancelar`);
+
+        const cerrar = (resultado) => {
+            div.classList.add('opacity-0');
+            document.getElementById(`${idModal}-contenido`).classList.add('scale-95');
+            setTimeout(() => div.classList.add('hidden'), 200);
+            resolve(resultado);
         };
 
-        const onConfirmar = () => cerrar(true);
-        const onCancelar = () => cerrar(false);
-
-        btnConfirmar.addEventListener('click', onConfirmar);
-        btnCancelar.addEventListener('click', onCancelar);
-
-        modal.classList.remove('hidden');
-        setTimeout(() => {
-            modal.classList.remove('opacity-0');
-            contenido.classList.remove('scale-95');
-        }, 10);
+        btnConfirmar.onclick = () => {
+            const motivo = document.getElementById(`${idModal}-motivo`).value;
+            const obs = document.getElementById(`${idModal}-obs`).value.trim();
+            cerrar({ motivo, obs });
+        };
+        btnCancelar.onclick = () => cerrar(null);
     });
 };
