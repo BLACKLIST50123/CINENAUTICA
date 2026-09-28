@@ -63,7 +63,7 @@ async function cambiarVista(idDesde, idHacia) {
         });
 
         if (!salir) return;
-        
+
         if (estadoPedido.modoReubicar) {
             // Limpia el estado de reubicación sin forzar navegación redundante
             delete estadoPedido.modoReubicar;
@@ -443,12 +443,12 @@ const renderizarContenidoHorarios = (pelicula, fechasDisponibles) => {
 
     let horariosHTML = '';
     const funcionesDelDia = pelicula.horarios[estadoPedido.fecha];
-    
+
     // Validar el formato original para bloquear otros formatos durante la reubicación
     let formatoViejo = null;
     if (estadoPedido.modoReubicar && estadoPedido.ticketReubicando) {
-        formatoViejo = estadoPedido.ticketReubicando.formato || 
-                      (estadoPedido.ticketReubicando.detalle ? estadoPedido.ticketReubicando.detalle.split(' • ')[2] : null);
+        formatoViejo = estadoPedido.ticketReubicando.formato ||
+            (estadoPedido.ticketReubicando.detalle ? estadoPedido.ticketReubicando.detalle.split(' • ')[2] : null);
     }
 
     funcionesDelDia.forEach(funcion => {
@@ -462,7 +462,7 @@ const renderizarContenidoHorarios = (pelicula, fechasDisponibles) => {
             // FASE 7: cada horario ahora trae su propia sala asignada { hora, sala, estado }
             const { hora, sala, estado } = normalizarFuncionHorario(horaRaw);
             const esCancelada = estado === 'cancelada';
-            
+
             const esFormatoIncompatible = estadoPedido.modoReubicar && formatoViejo && funcion.formato !== formatoViejo;
 
             if (esCancelada) {
@@ -764,19 +764,19 @@ window.clickAsiento = async (asientoId) => {
                     const tipo = typeof a === 'object' ? (a.tipoEntradaId || a.tipo) : 'adulto-regular'; // Fallback for old tickets
                     if (tipo) cantidadesAntiguas[tipo] = (cantidadesAntiguas[tipo] || 0) + 1;
                 });
-                
+
                 const cantidadesNuevas = {};
                 estadoPedido.asientos.forEach(a => {
                     const tipo = a.tipoEntradaId;
                     cantidadesNuevas[tipo] = (cantidadesNuevas[tipo] || 0) + 1;
                 });
-                
+
                 catalogoTipos = catalogoTipos.filter(t => {
                     const permitidos = cantidadesAntiguas[t.id] || 0;
                     const actuales = cantidadesNuevas[t.id] || 0;
                     return actuales < permitidos;
                 });
-                
+
                 if (catalogoTipos.length === 0) {
                     mostrarToast('Ya has seleccionado todos los tipos de asiento correspondientes a tu compra original. (O los tipos no coinciden con los disponibles)', 'error');
                     return;
@@ -787,7 +787,7 @@ window.clickAsiento = async (asientoId) => {
                 let precio = calcularPrecioAsientoPorTipo(t.id);
                 let esConadis = t.nombre.toUpperCase().includes('CONADIS');
                 let extraClasses = (esAccesible && esConadis) ? 'border-brand-yellow shadow-[0_0_15px_rgba(250,204,21,0.5)] bg-brand-yellow/10' : 'border-white/10 hover:border-brand-blue bg-dark-900';
-                
+
                 return `
                     <button type="button" class="w-full ${extraClasses} rounded-xl p-3 flex justify-between items-center transition-colors mb-2 text-left border" onclick="seleccionarTipoAsientoTemp('${t.id}')">
                         <div>
@@ -1030,7 +1030,7 @@ async function intentarSalirDelFlujoDeCompra(accionNavegacion) {
             textoCancelar: 'Quedarme aquí'
         });
         if (!descartar) return; // Se queda en la vista actual
-        
+
         // Descartamos los cambios
         if (typeof window.descartarCambiosAdminForzado === 'function') {
             window.descartarCambiosAdminForzado();
@@ -1088,7 +1088,7 @@ window.irADulceria = async () => {
             titulo: 'Finalizar Reubicación',
             tipoOperacion: 'reubicacion'
         });
-        
+
         if (!contingencia) return;
 
         const ordenOriginal = estadoPedido.ticketReubicando;
@@ -1134,7 +1134,7 @@ window.irADulceria = async () => {
         document.querySelector('#vista-ticket p.text-slate-400.text-lg').textContent = 'Tu nuevo horario está confirmado. Descarga tu ticket actualizado.';
         const bloquePuntosTicket = document.getElementById('ticket-puntos-ganados');
         if (bloquePuntosTicket) bloquePuntosTicket.classList.add('hidden');
-        
+
         document.getElementById('pdf-titulo-pelicula').textContent = estadoPedido.pelicula.titulo;
         document.getElementById('pdf-formato').textContent = estadoPedido.formato.toUpperCase();
         document.getElementById('pdf-fecha').textContent = estadoPedido.fecha;
@@ -1142,9 +1142,9 @@ window.irADulceria = async () => {
         document.getElementById('pdf-cine').textContent = `${estadoPedido.cine || 'Cine Náutica'} - Sala ${estadoPedido.sala || 1}`;
         document.getElementById('pdf-asientos').textContent = estadoPedido.asientos.map(s => s.id).join(', ') || '—';
         document.getElementById('pdf-codigo').textContent = ordenOriginal.codigo.replace('CR-', '');
-        
+
         document.getElementById('pdf-dulces').innerHTML = '<li class="text-slate-500 font-normal">Revisar boleta original.</li>';
-        
+
         // Ocultar la parte de la boleta (ya que es solo reubicación)
         const comprobanteContenedor = document.getElementById('comprobante-imprimible');
         if (comprobanteContenedor) comprobanteContenedor.parentElement.classList.add('hidden');
@@ -1706,13 +1706,13 @@ function verificarCumpleanosCheckout() {
     const bloqueCumple = document.getElementById('bloque-cumpleanos');
     const btnReclamar = document.getElementById('btn-aplicar-cumpleanos');
     if (!bloqueCumple) return;
-    
+
     if (estadoPedido.usaCumpleanos) {
         bloqueCumple.classList.remove('hidden');
         if (btnReclamar) btnReclamar.classList.add('hidden');
         return;
     }
-    
+
     const socio = obtenerSocioTitularDelPedido();
     if (socio && typeof ValidadoresSocio !== 'undefined' && typeof ValidadoresSocio.tieneBeneficioCumpleanosDisponible === 'function') {
         const val = ValidadoresSocio.tieneBeneficioCumpleanosDisponible(socio);
@@ -2193,7 +2193,7 @@ window.cerrarSesion = async () => {
             textoCancelar: 'Quedarme aquí'
         });
         if (!descartar) return; // Cancela el cierre de sesión
-        
+
         // Descartamos los cambios
         if (typeof window.descartarCambiosAdminForzado === 'function') {
             window.descartarCambiosAdminForzado();
@@ -2483,7 +2483,7 @@ function renderizarVistaBeneficios() {
         panelHistorial.classList.remove('hidden');
         const contenedorHistorial = document.getElementById('contenedor-historial-beneficios');
         const compras = usuarioActual.compras || [];
-        
+
         if (compras.length === 0) {
             contenedorHistorial.innerHTML = `<p class="text-slate-400 text-center py-4">Aún no tienes compras registradas.</p>`;
         } else {
@@ -2966,7 +2966,7 @@ window.reembolsarOrden = async (idOrden) => {
         titulo: `Reembolsar Ticket ${idOrden}`,
         tipoOperacion: 'reembolso'
     });
-    
+
     if (!contingencia) return;
 
     const ventasGlobal = JSON.parse(localStorage.getItem(LS_VENTAS_GENERAL)) || [];
@@ -3004,7 +3004,7 @@ window.iniciarReubicacion = (idOrden) => {
     document.getElementById('banner-modo-reubicar').classList.remove('hidden');
 
     cerrarModalAtencionCliente();
-    
+
     if (orden.idPelicula) {
         abrirHorarios(orden.idPelicula);
         mostrarToast(`Reubicación de ticket ${idOrden}. Selecciona un horario para "${orden.peliculaTitulo || orden.pelicula}" y EXACTAMENTE ${estadoPedido.cantidadAsientosRequeridos} asientos.`, 'info');
@@ -3023,4 +3023,103 @@ window.cancelarModoReubicacion = () => {
     limpiarEstadoPedido();
     cambiarVista(vistaActualVisible, 'vista-inicio');
     mostrarToast('Reubicación cancelada.', 'info');
+};
+
+// --- MODAL PROMO EXCLUSIVA (BANNER EMERGENTE) ---
+
+window.abrirModalPromoBanner = () => {
+    // Solo mostrar si no se ha mostrado en esta sesión
+    if (sessionStorage.getItem('promoBannerMostrada')) return;
+
+    // Obtener la película destacada del banner
+    const peliculasPromo = obtenerPeliculasParaBanner();
+    if (!peliculasPromo || peliculasPromo.length === 0) return;
+
+    const promo = peliculasPromo[0];
+
+    document.getElementById('promo-banner-bg').style.backgroundImage = `url('${promo.banner || promo.poster}')`;
+    document.getElementById('promo-banner-titulo').textContent = promo.titulo;
+    document.getElementById('promo-banner-genero').textContent = `${promo.genero} • ${promo.duracion}`;
+
+    // Etiquetas dinámicas
+    const badgeTipo = document.getElementById('promo-banner-tipo-lanzamiento');
+    if (promo.tipoLanzamiento && promo.tipoLanzamiento.toLowerCase() !== 'regular') {
+        badgeTipo.textContent = promo.tipoLanzamiento;
+        badgeTipo.classList.remove('hidden');
+    } else {
+        badgeTipo.classList.add('hidden');
+    }
+
+    const badgeFormato = document.getElementById('promo-banner-formato');
+    if (promo.formatosDisponibles && promo.formatosDisponibles.length > 0) {
+        const formatosUpper = promo.formatosDisponibles.map(f => f.toUpperCase());
+        let formatoText = formatosUpper.includes('4DX') ? '4DX' : 
+                          (formatosUpper.includes('XD') ? 'XD' : 
+                          (formatosUpper.includes('DBOX') ? 'D-BOX' : 
+                          (formatosUpper[0] === '2D' ? 'Dolby Digital' : formatosUpper[0])));
+        badgeFormato.textContent = formatoText;
+        badgeFormato.classList.remove('hidden');
+    } else {
+        badgeFormato.classList.add('hidden');
+    }
+
+    const badgeClasif = document.getElementById('promo-banner-clasificacion');
+    if (promo.clasificacion) {
+        badgeClasif.textContent = promo.clasificacion;
+        badgeClasif.classList.remove('hidden');
+        if (promo.clasificacion.includes('14') || promo.clasificacion.includes('18')) {
+            badgeClasif.className = 'px-2 py-0.5 border border-brand-red/50 text-brand-red text-xs font-bold rounded uppercase';
+        } else {
+            badgeClasif.className = 'px-2 py-0.5 border border-green-500/50 text-green-400 text-xs font-bold rounded uppercase';
+        }
+    } else {
+        badgeClasif.classList.add('hidden');
+    }
+
+    // Convertir enlace a embed para el trailer promocional
+    let urlBase = promo.trailer || '';
+    if (urlBase.includes('watch?v=')) {
+        urlBase = urlBase.replace('watch?v=', 'embed/');
+    } else if (urlBase.includes('youtu.be/')) {
+        urlBase = urlBase.replace('youtu.be/', 'www.youtube.com/embed/');
+    }
+
+    // Le agregamos autoplay, mute y limpiamos los controles (solo play visual)
+    const paramsLimpieza = 'autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&showinfo=0';
+    const urlVideo = urlBase.includes('?') ? `${urlBase}&${paramsLimpieza}` : `${urlBase}?${paramsLimpieza}`;
+    document.getElementById('promo-banner-trailer').src = urlBase ? urlVideo : '';
+
+    const btnComprar = document.getElementById('promo-banner-btn-comprar');
+    btnComprar.onclick = () => {
+        cerrarModalPromoBanner();
+        setTimeout(() => {
+            abrirHorarios(promo.id);
+        }, 300);
+    };
+
+    const modal = document.getElementById('modal-promo-banner');
+    const contenido = document.getElementById('promo-banner-contenido');
+
+    modal.classList.remove('hidden');
+    // Pequeño timeout para la transición CSS
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        contenido.classList.remove('scale-95');
+    }, 50);
+
+    sessionStorage.setItem('promoBannerMostrada', 'true');
+};
+
+window.cerrarModalPromoBanner = () => {
+    const modal = document.getElementById('modal-promo-banner');
+    const contenido = document.getElementById('promo-banner-contenido');
+
+    modal.classList.add('opacity-0');
+    contenido.classList.add('scale-95');
+
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        const trailer = document.getElementById('promo-banner-trailer');
+        if (trailer) trailer.src = '';
+    }, 300);
 };

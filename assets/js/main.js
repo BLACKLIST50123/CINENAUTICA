@@ -38,6 +38,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     actualizarNavbarAuth();
     if (habiaSesionGuardada && !sesionSigueValida) mostrarToast('Tu sesión se cerró porque la cuenta ya no está activa.', 'info');
+
+    // Lanzar el modal promo exclusiva (tras 1s)
+    setTimeout(() => {
+        if (typeof abrirModalPromoBanner === 'function' && vistaActualVisible === 'vista-inicio') {
+            abrirModalPromoBanner();
+        }
+    }, 1000);
 });
 
 // MÓDULO 8: el evento 'storage' solo se dispara en OTRAS pestañas. Si el admin desactiva/elimina/cambia de rol
