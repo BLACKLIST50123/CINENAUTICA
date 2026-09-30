@@ -649,7 +649,7 @@ window.addEventListener('storage', (evento) => {
 /* ============================================================================
    MÓDULO 2 — MOTOR DE TARIFAS DINÁMICAS
    ============================================================================ */
-const MESES_ABREV_A_INDICE = { 'Ene': 0, 'Feb': 1, 'Mar': 2, 'Abr': 3, 'May': 4, 'Jun': 5, 'Jul': 6, 'Ago': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dic': 11 };
+const MESES_ABREV_A_INDICE = { 'Ene': 0, 'Feb': 1, 'Mar': 2, 'Abr': 3, 'May': 4, 'Jun': 5, 'Jul': 6, 'Ago': 7, 'Sep': 8, 'Set': 8, 'Oct': 9, 'Nov': 10, 'Dic': 11 };
 const DIAS_SEMANA_ABREV = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
 /** Convierte una etiqueta de horario ("Jue, 27 Ago" / "Hoy, 26 Ago") en fecha ISO (YYYY-MM-DD) del año en curso. */
@@ -3053,10 +3053,10 @@ window.abrirModalPromoBanner = () => {
     const badgeFormato = document.getElementById('promo-banner-formato');
     if (promo.formatosDisponibles && promo.formatosDisponibles.length > 0) {
         const formatosUpper = promo.formatosDisponibles.map(f => f.toUpperCase());
-        let formatoText = formatosUpper.includes('4DX') ? '4DX' : 
-                          (formatosUpper.includes('XD') ? 'XD' : 
-                          (formatosUpper.includes('DBOX') ? 'D-BOX' : 
-                          (formatosUpper[0] === '2D' ? 'Dolby Digital' : formatosUpper[0])));
+        let formatoText = formatosUpper.includes('4DX') ? '4DX' :
+            (formatosUpper.includes('XD') ? 'XD' :
+                (formatosUpper.includes('DBOX') ? 'D-BOX' :
+                    (formatosUpper[0] === '2D' ? 'Dolby Digital' : formatosUpper[0])));
         badgeFormato.textContent = formatoText;
         badgeFormato.classList.remove('hidden');
     } else {
@@ -3089,13 +3089,45 @@ window.abrirModalPromoBanner = () => {
     const urlVideo = urlBase.includes('?') ? `${urlBase}&${paramsLimpieza}` : `${urlBase}?${paramsLimpieza}`;
     document.getElementById('promo-banner-trailer').src = urlBase ? urlVideo : '';
 
+    const esProximoEstreno = typeof baseDatosEstrenos !== 'undefined' && baseDatosEstrenos[promo.id] !== undefined;
+
+    const tituloEtiqueta = document.getElementById('promo-banner-etiqueta-exclusiva');
+    const textoFomo = document.getElementById('promo-banner-fomo');
     const btnComprar = document.getElementById('promo-banner-btn-comprar');
-    btnComprar.onclick = () => {
-        cerrarModalPromoBanner();
-        setTimeout(() => {
-            abrirHorarios(promo.id);
-        }, 300);
-    };
+    const textoSocios = document.getElementById('promo-banner-texto-socios');
+
+    if (esProximoEstreno) {
+        if (tituloEtiqueta) tituloEtiqueta.textContent = '¡Próximo Estreno!';
+        if (textoFomo) textoFomo.textContent = '"¡Próximamente en nuestra cartelera!"';
+
+        if (btnComprar) {
+            btnComprar.innerHTML = '<i class="fa-solid fa-calendar-check"></i> Próximamente';
+            btnComprar.className = 'bg-dark-700 hover:bg-dark-600 text-white px-8 py-4 rounded-xl font-bold text-lg md:text-xl transition-all transform flex items-center justify-center gap-3 w-full sm:w-max cursor-default opacity-80';
+            btnComprar.onclick = (e) => { e.preventDefault(); };
+        }
+
+        if (textoSocios) {
+            textoSocios.innerHTML = 'Agéndala y sé el primero en disfrutarla. <strong class="text-white/90">Muy pronto.</strong>';
+        }
+    } else {
+        if (tituloEtiqueta) tituloEtiqueta.textContent = '¡Promoción Exclusiva!';
+        if (textoFomo) textoFomo.textContent = '"¡Mírala hoy, solo en cines!"';
+
+        if (btnComprar) {
+            btnComprar.innerHTML = '<i class="fa-solid fa-ticket-simple"></i> Comprar Entradas';
+            btnComprar.className = 'bg-brand-blue hover:bg-brand-dark-blue text-white px-8 py-4 rounded-xl font-bold text-lg md:text-xl transition-all shadow-[0_0_20px_rgba(10,126,177,0.4)] hover:shadow-[0_0_30px_rgba(10,126,177,0.6)] transform hover:-translate-y-1 flex items-center justify-center gap-3 w-full sm:w-max';
+            btnComprar.onclick = () => {
+                cerrarModalPromoBanner();
+                setTimeout(() => {
+                    abrirHorarios(promo.id);
+                }, 300);
+            };
+        }
+
+        if (textoSocios) {
+            textoSocios.innerHTML = 'Socios CineNáutica acumulan <strong class="text-white/90">doble puntaje</strong> con esta función.';
+        }
+    }
 
     const modal = document.getElementById('modal-promo-banner');
     const contenido = document.getElementById('promo-banner-contenido');

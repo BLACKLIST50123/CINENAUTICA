@@ -610,6 +610,9 @@ function renderizarTarjetasEnGrid(slots) {
             } else if (tipoLanzamiento === 'Pre-Estreno') {
                 clasesTipo = 'tipo-pre-estreno';
                 tagTipo = '<span class="grid-funcion-card-tag tag-pre-estreno">PRE-ESTRENO</span>';
+            } else if (tipoLanzamiento === 'Re-Estreno') {
+                clasesTipo = 'tipo-re-estreno';
+                tagTipo = '<span class="grid-funcion-card-tag tag-re-estreno">RE-ESTRENO</span>';
             }
 
             // Encontrar el índice en funcionesDelDiaActual para pasar al modal
@@ -1056,7 +1059,7 @@ function renderizarAdminCartelera() {
                 <div class="min-w-0">
                     <p class="text-white font-bold text-sm truncate">${p.titulo}</p>
                     <p class="text-slate-500 text-xs truncate">${p.genero}</p>
-                    <span class="inline-block bg-brand-yellow/10 text-brand-yellow text-[10px] font-bold px-1.5 py-0.5 rounded mt-1">ESTRENO</span>
+                    <span class="inline-block bg-brand-yellow/10 text-brand-yellow text-[10px] font-bold px-1.5 py-0.5 rounded mt-1">PRÓXIMO ESTRENO</span>
                 </div>
             </div>
             <div class="flex items-center gap-3 flex-shrink-0">
@@ -1113,7 +1116,7 @@ function renderizarAdminBanner() {
                     <img src="${p.poster}" class="w-8 h-11 object-cover rounded flex-shrink-0">
                     <div class="min-w-0">
                         <p class="text-white font-bold text-sm truncate">${p.titulo}</p>
-                        <span class="inline-block ${p.origen === 'estreno' ? 'bg-brand-yellow/10 text-brand-yellow' : 'bg-brand-blue/10 text-brand-blue'} text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5">${p.origen === 'estreno' ? 'ESTRENO' : 'CARTELERA'}</span>
+                        <span class="inline-block ${p.origen === 'estreno' ? 'bg-brand-yellow/10 text-brand-yellow' : 'bg-brand-blue/10 text-brand-blue'} text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5">${p.origen === 'estreno' ? 'PRÓXIMO ESTRENO' : 'CARTELERA'}</span>
                     </div>
                 </label>
                 ${activo ? `

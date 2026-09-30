@@ -953,6 +953,11 @@ body {
     border-left-color: #a855f7;
 }
 
+.grid-funcion-card.tipo-re-estreno {
+    background: rgba(34, 211, 238, 0.15);
+    border-left-color: #22d3ee;
+}
+
 .grid-funcion-card-body {
     flex: 1;
     padding: 6px 8px;
@@ -1003,6 +1008,11 @@ body {
 .grid-funcion-card-tag.tag-pre-estreno {
     background: rgba(168, 85, 247, 0.2);
     color: #c084fc;
+}
+
+.grid-funcion-card-tag.tag-re-estreno {
+    background: rgba(34, 211, 238, 0.2);
+    color: #22d3ee;
 }
 
 /* Acciones de la tarjeta (editar/eliminar) */
@@ -1322,6 +1332,11 @@ body {
 .grid-leyenda-item .swatch-pre-estreno {
     background: rgba(168, 85, 247, 0.25);
     border-left: 3px solid #a855f7;
+}
+
+.grid-leyenda-item .swatch-re-estreno {
+    background: rgba(34, 211, 238, 0.25);
+    border-left: 3px solid #22d3ee;
 }
 
 .grid-leyenda-item .swatch-limpieza {

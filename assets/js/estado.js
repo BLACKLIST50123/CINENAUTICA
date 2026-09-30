@@ -246,6 +246,55 @@ function obtenerTipoEntradaPorDefecto() {
 }
 
 const baseDatosPeliculas = {
+    'endgame-bonus': {
+        id: 'endgame-bonus',
+        titulo: 'Avengers: Endgame Encore',
+        banner: 'https://w0.peakpx.com/wallpaper/857/946/HD-wallpaper-avengers-end-game-banner-avengers-endgame-2019-movies-movies-superheroes.jpg',
+        poster: 'https://m.media-amazon.com/images/M/MV5BMWEyNDM2ZmQtMmFkNi00MTQ1LTk1MjItMzdlZGJlYmIyYzZlXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg',
+        genero: 'Acción / Ciencia Ficción', clasificacion: 'APT', duracion: '3h 06m', tipoLanzamiento: 'Re-Estreno', formatosDisponibles: ['2d', 'imax'],
+        sinopsis: 'El reestreno del épico final de la Saga del Infinito. Incluye 4 minutos de material extra inédito y escenas especiales que funcionan como puente directo hacia Avengers: Doomsday.',
+        trailer: 'https://www.youtube.com/watch?v=u7QErIFCc7k',
+        // Duración (3h 06m) + Limpieza (30m) = Bloques de 3h 36m
+        horarios: {
+            'Mar, 29 Set': [
+                { formato: '2D Doblada', horas: [{ hora: '14:00', sala: 1 }, { hora: '18:00', sala: 1 }] },
+                { formato: 'IMAX', horas: [{ hora: '15:00', sala: 2 }, { hora: '19:00', sala: 2 }] }
+            ],
+            'Mié, 30 Set': [
+                { formato: '2D Doblada', horas: [{ hora: '14:00', sala: 1 }, { hora: '18:00', sala: 1 }] }
+            ],
+            'Jue, 1 Oct': [
+                { formato: '2D Subtitulada', horas: [{ hora: '16:00', sala: 1 }, { hora: '20:00', sala: 1 }] }
+            ],
+            'Vie, 2 Oct': [
+                { formato: 'IMAX', horas: [{ hora: '17:00', sala: 2 }, { hora: '21:00', sala: 2 }] }
+            ]
+        }
+    },
+    're-noche-cero': {
+        id: 're-noche-cero',
+        titulo: 'Resident Evil: Noche Cero',
+        banner: 'https://sm.ign.com/ign_latam/screenshot/default/blob_24hq.jpg',
+        poster: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQi1JbvAmZ5e0KgN2PzUgaLXtbxQWBvyIqTAER2zKH5paWC7YdRpWuJfI7r&s=10',
+        genero: 'Terror / Acción', clasificacion: '+14', duracion: '1h 30m', tipoLanzamiento: 'Regular', formatosDisponibles: ['2d', 'dbox'],
+        sinopsis: 'Un mensajero médico se ve envuelto en una carrera por la supervivencia llena de acción y sin parar, mientras una noche fatídica y aterradora se derrumba a su alrededor en el caos.',
+        trailer: 'https://www.youtube.com/watch?v=8iKTeIV2xgE',
+        // Duración (1h 30m) + Limpieza (30m) = Bloques de 2h 00m
+        horarios: {
+            'Mar, 29 Set': [
+                { formato: '2D Doblada', horas: [{ hora: '16:00', sala: 3 }, { hora: '18:30', sala: 3 }, { hora: '21:00', sala: 3 }] }
+            ],
+            'Mié, 30 Set': [
+                { formato: 'D-BOX', horas: [{ hora: '17:30', sala: 6 }, { hora: '20:00', sala: 6 }, { hora: '22:30', sala: 6 }] }
+            ],
+            'Jue, 1 Oct': [
+                { formato: '2D Doblada', horas: [{ hora: '17:30', sala: 3 }, { hora: '20:00', sala: 3 }] }
+            ],
+            'Vie, 2 Oct': [
+                { formato: 'D-BOX', horas: [{ hora: '19:00', sala: 4 }, { hora: '21:30', sala: 4 }] }
+            ]
+        }
+    },
     'spiderman': {
         id: 'spiderman',
         titulo: 'Spider-Man: Un Nuevo Día',
@@ -254,18 +303,61 @@ const baseDatosPeliculas = {
         genero: 'Acción / Aventura', clasificacion: 'APT', duracion: '2h 25m', tipoLanzamiento: 'Estreno', formatosDisponibles: ['2d', 'xd'],
         sinopsis: 'Peter Parker se enfrenta a su mayor desafío cuando las barreras entre multiversos colisionan inesperadamente. Viejos enemigos de realidades alternativas llegan a Nueva York, y Peter deberá aliarse con versiones de sí mismo para restaurar el equilibrio antes de que su mundo sea destruido por completo.',
         trailer: 'https://www.youtube.com/watch?v=QXibcL7-XbU',
+        // Duración (2h 25m) + Limpieza (30m) = Bloques de 2h 55m
         horarios: {
-            'Hoy, 26 Ago': [
-                { formato: '2D Doblada', horas: [{ hora: '13:00', sala: 1 }, { hora: '15:30', sala: 1 }, { hora: '18:00', sala: 2 }] },
-                { formato: 'SALA XD', horas: [{ hora: '14:00', sala: 3 }, { hora: '17:00', sala: 3 }, { hora: '20:30', sala: 3 }] }
+            'Sáb, 26 Set': [
+                { formato: '2D Doblada', horas: [{ hora: '13:00', sala: 1 }, { hora: '16:00', sala: 1 }, { hora: '19:00', sala: 1 }] },
+                { formato: 'SALA XD', horas: [{ hora: '14:00', sala: 3 }, { hora: '17:00', sala: 3 }, { hora: '20:00', sala: 3 }] }
             ],
-            'Jue, 27 Ago': [
-                { formato: '2D Doblada', horas: [{ hora: '14:00', sala: 1 }, { hora: '16:30', sala: 1 }, { hora: '19:00', sala: 2 }] },
-                { formato: 'SALA XD', horas: [{ hora: '15:00', sala: 3 }, { hora: '18:00', sala: 3 }, { hora: '21:30', sala: 3 }] }
+            'Dom, 27 Set': [
+                { formato: '2D Doblada', horas: [{ hora: '13:00', sala: 1 }, { hora: '16:00', sala: 1 }, { hora: '19:00', sala: 1 }] },
+                { formato: 'SALA XD', horas: [{ hora: '14:00', sala: 3 }, { hora: '17:00', sala: 3 }, { hora: '20:00', sala: 3 }] }
             ],
-            'Vie, 28 Ago': [
-                { formato: '2D Subtitulada', horas: [{ hora: '18:00', sala: 2 }, { hora: '21:00', sala: 2 }] },
-                { formato: 'SALA XD', horas: [{ hora: '19:30', sala: 3 }, { hora: '22:30', sala: 3 }] }
+            'Lun, 28 Set': [
+                { formato: '2D Subtitulada', horas: [{ hora: '17:00', sala: 2 }, { hora: '20:00', sala: 2 }] },
+                { formato: 'SALA XD', horas: [{ hora: '16:30', sala: 3 }, { hora: '19:30', sala: 3 }, { hora: '22:30', sala: 3 }] }
+            ]
+        }
+    },
+    'coyote-acme': {
+        id: 'coyote-acme',
+        titulo: 'Coyote vs. Acme',
+        banner: 'https://dx35vtwkllhj9.cloudfront.net/ketchup-entertainment/coyote-vs-acme/images/regions/us/header.jpg',
+        poster: 'https://www.aceprensa.com/wp-content/uploads/2026/09/coyote_vs_acme-208646783-large.jpg',
+        genero: 'Animación / Comedia', clasificacion: 'APT', duracion: '1h 44m', tipoLanzamiento: 'Regular', formatosDisponibles: ['2d', 'dbox'],
+        sinopsis: 'Después de décadas fallando en atrapar al Correcaminos, el Coyote decide hacer lo impensado: demandar a ACME, la compañía responsable de todos los productos defectuosos que arruinaron sus planes.',
+        trailer: 'https://www.youtube.com/watch?v=H-43VeYGiPM',
+        // Duración (1h 44m) + Limpieza (30m) = Bloques de 2h 14m
+        horarios: {
+            'Mar, 29 Set': [
+                { formato: '2D Doblada', horas: [{ hora: '14:30', sala: 4 }, { hora: '17:00', sala: 4 }, { hora: '19:30', sala: 4 }] }
+            ],
+            'Mié, 30 Set': [
+                { formato: '2D Doblada', horas: [{ hora: '14:30', sala: 4 }, { hora: '17:00', sala: 4 }, { hora: '19:30', sala: 4 }] }
+            ],
+            'Jue, 1 Oct': [
+                { formato: 'D-BOX', horas: [{ hora: '15:00', sala: 6 }, { hora: '17:30', sala: 6 }] }
+            ]
+        }
+    },
+    'sombra-exorcista': {
+        id: 'sombra-exorcista',
+        titulo: 'La Sombra del Exorcista',
+        banner: 'https://exorcine.com/wp-content/uploads/2026/09/la-sombra-del-exorcista-2.jpg',
+        poster: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS3N9ZGThaHM_sos4OLN-UW49t7VflG9c2u_7NMVBvH9PELM1VxGtRGNFY&s=10',
+        genero: 'Terror / Sobrenatural', clasificacion: '+18', duracion: '1h 27m', tipoLanzamiento: 'Estreno', formatosDisponibles: ['2d', 'premier'],
+        sinopsis: 'Mientras un exorcista de élite realiza un exorcismo no autorizado a su padre, empieza a sospechar que la entidad con la que está luchando podría ser un ser sagrado, quizá incluso Dios, o no.',
+        trailer: 'https://www.youtube.com/watch?v=EE8T4kI5BbY',
+        // Duración (1h 27m) + Limpieza (30m) = Bloques de 1h 57m
+        horarios: {
+            'Mar, 29 Set': [
+                { formato: '2D Doblada', horas: [{ hora: '18:00', sala: 5 }, { hora: '20:30', sala: 5 }] }
+            ],
+            'Mié, 30 Set': [
+                { formato: '2D Doblada', horas: [{ hora: '18:00', sala: 5 }, { hora: '20:30', sala: 5 }] }
+            ],
+            'Jue, 1 Oct': [
+                { formato: '2D Subtitulada', horas: [{ hora: '19:00', sala: 2 }, { hora: '21:30', sala: 2 }] }
             ]
         }
     },
@@ -277,51 +369,57 @@ const baseDatosPeliculas = {
         genero: 'Terror / Suspenso', clasificacion: '+14', duracion: '1h 46m', tipoLanzamiento: 'Pre-Estreno', formatosDisponibles: ['2d', 'dbox'],
         sinopsis: 'Una familia se muda a una nueva casa buscando un nuevo comienzo, solo para descubrir que el lugar está plagado de entidades oscuras. A medida que las manifestaciones empeoran, descubren que el verdadero mal no reside en la casa, sino que ha poseído a su hijo menor.',
         trailer: 'https://www.youtube.com/watch?v=orvNgTGq6cg',
+        // Duración (1h 46m) + Limpieza (30m) = Bloques de 2h 16m
         horarios: {
-            'Hoy, 26 Ago': [
-                { formato: '2D Doblada', horas: [{ hora: '16:00', sala: 4 }, { hora: '21:00', sala: 4 }] },
-                { formato: 'D-BOX', horas: [{ hora: '19:00', sala: 5 }, { hora: '23:30', sala: 5 }] }
+            'Sáb, 26 Set': [
+                { formato: '2D Doblada', horas: [{ hora: '16:00', sala: 4 }, { hora: '18:30', sala: 4 }, { hora: '21:00', sala: 4 }] },
+                { formato: 'D-BOX', horas: [{ hora: '19:00', sala: 5 }, { hora: '21:30', sala: 5 }] }
             ],
-            'Jue, 27 Ago': [
-                { formato: '2D Doblada', horas: [{ hora: '17:00', sala: 4 }, { hora: '22:00', sala: 4 }] },
-                { formato: 'D-BOX', horas: [{ hora: '20:00', sala: 5 }, { hora: '23:50', sala: 5 }] }
+            'Dom, 27 Set': [
+                { formato: '2D Doblada', horas: [{ hora: '16:00', sala: 4 }, { hora: '18:30', sala: 4 }, { hora: '21:00', sala: 4 }] },
+                { formato: 'D-BOX', horas: [{ hora: '19:00', sala: 5 }, { hora: '21:30', sala: 5 }] }
             ]
-        }
-    },
-    'odisea': {
-        id: 'odisea',
-        titulo: 'La Odisea Espacial',
-        banner: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?q=80&w=2070',
-        poster: 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?q=80&w=600&auto=format&fit=crop',
-        genero: 'Ciencia Ficción', clasificacion: 'APT', duracion: '2h 52m', tipoLanzamiento: 'Regular', formatosDisponibles: ['2d'],
-        sinopsis: 'Un grupo de astronautas se embarca en una misión secreta hacia Júpiter acompañados por HAL 9000, una inteligencia artificial que controla la nave. A mitad de camino, la máquina comienza a exhibir un comportamiento extraño y letal.',
-        trailer: 'https://www.youtube.com/embed/xhRUxPbp_c',
-        horarios: {
-            'Hoy, 26 Ago': [{ formato: '2D Subtitulada', horas: [{ hora: '14:15', sala: 6 }, { hora: '17:45', sala: 6 }, { hora: '21:15', sala: 7 }] }],
-            'Jue, 27 Ago': [{ formato: '2D Subtitulada', horas: [{ hora: '15:15', sala: 6 }, { hora: '18:45', sala: 7 }] }]
         }
     }
 };
 
 const baseDatosEstrenos = {
-    'batman': {
-        id: 'batman',
-        titulo: 'El Caballero Oscuro',
-        poster: 'https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?q=80&w=600',
-        banner: 'https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?q=80&w=2070',
-        genero: 'Acción / Thriller', clasificacion: '+14', duracion: '2h 32m', formatosDisponibles: ['2d', '3d'],
-        sinopsis: 'Gotham City se enfrenta a una nueva amenaza cuando un criminal anarquista conocido como el Joker emerge para sumir la ciudad en el caos.',
-        trailer: 'https://www.youtube.com/embed/EXeTwQWrcwY'
+    'doomsday': {
+        id: 'doomsday',
+        titulo: 'Avengers: Doomsday',
+        poster: 'https://m.media-amazon.com/images/M/MV5BNGEwYWZkN2UtOTQ5Mi00MGQzLWEzNjYtMWMyNDBkMTkzMWNkXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg',
+        banner: 'https://sm.ign.com/t/ign_latam/screenshot/default/avengers-doomsday_e91x.1200.jpg',
+        genero: 'Acción / Superhéroes', clasificacion: 'APT', duracion: 'Por confirmar', formatosDisponibles: ['2d', '3d', 'imax'],
+        sinopsis: 'En medio del colapso del multiverso, grupos de héroes de tres universos diferentes —los Vengadores, los 4 Fantásticos y los X-Men— convergen para enfrentarse a la amenaza existencial del Doctor Doom.',
+        trailer: 'https://www.youtube.com/watch?v=lAr_uspgHm8',
     },
-    'avatar': {
-        id: 'avatar',
-        titulo: 'El Planeta Perdido',
-        poster: 'https://images.unsplash.com/photo-1618331835717-801e976710b2?q=80&w=600',
-        banner: 'https://images.unsplash.com/photo-1618331835717-801e976710b2?q=80&w=2070',
-        genero: 'Aventura / Sci-Fi', clasificacion: 'APT', duracion: '3h 10m', formatosDisponibles: ['2d', '3d', '4dx'],
-        sinopsis: 'Exploradores humanos llegan a un planeta exuberante y deben aprender a convivir con la flora y fauna alienígena que lo habita.',
-        trailer: 'https://www.youtube.com/embed/a8Gx8wiNbs8'
-    }
+    'godzilla-minus-one': {
+        id: 'godzilla-minus-one',
+        titulo: 'Godzilla Minus One',
+        poster: 'https://metalcorrosivo.com/wp-content/uploads/2026/09/1790563661955.jpg',
+        banner: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTf6PKRnMbbLVkCLtKETQQ69gM8Q7hwvz3G_RklEs9t3FySfT_yrSzf4l8&s=10',
+        genero: 'Ciencia Ficción / Kaiju', clasificacion: '+14', duracion: '2h 05m', formatosDisponibles: ['2d', '4dx'],
+        sinopsis: 'En el Japón de la posguerra, un país ya devastado entra en una nueva crisis con la repentina aparición de un monstruo atómico gigante.',
+        trailer: 'https://www.youtube.com/watch?v=jXLC1D5EaY0',
+    },
+    'street-fighter': {
+        id: 'street-fighter',
+        titulo: 'Street Fighter',
+        poster: 'https://m.media-amazon.com/images/M/MV5BYjhlN2EyNGUtY2U4YS00ZTQ3LTg0NTgtNGIxZmVhMDlmMjIyXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg',
+        banner: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSQ9ETt17ApkXjxXwmFmPOUvTOB2FuSHwYXbCmMOjGpI5DiV7KA8CJANLs&s=10',
+        genero: 'Acción / Aventura', clasificacion: '+14', duracion: 'Por confirmar', formatosDisponibles: ['2d', '4dx'],
+        sinopsis: 'Adaptación en imagen real de la icónica franquicia de videojuegos de lucha de Capcom, donde los guerreros más fuertes del mundo se enfrentan en combate.',
+        trailer: 'https://www.youtube.com/watch?v=mzYHS4VIjgY',
+    },
+    'juegos-hambre-cosecha': {
+        id: 'juegos-hambre-cosecha',
+        titulo: 'Los Juegos del Hambre: Amanecer en la Cosecha',
+        poster: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR-uPV6Sz1kBFP1ECzxe3cyNSfC5lxngoH4H19DkQZ_9jJkiGKxPqeeHxM&s=10',
+        banner: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRpGASByiImj976fG9mih5cLZEqUyTwdeNF58T_1OKDUnhdtlbFO-MPXS2M&s=10',
+        genero: 'Acción / Ciencia Ficción', clasificacion: '+14', duracion: '2h 30m', formatosDisponibles: ['2d', 'xd'],
+        sinopsis: 'La esperada precuela de la saga nos remonta veinticuatro años atrás para conocer la historia de un joven Haymitch Abernathy y el Segundo Vasallaje de los Veinticinco.',
+        trailer: 'https://www.youtube.com/watch?v=9v6nJk4JWHE',
+    },
 };
 
 const formatearMoneda = (monto) => `S/ ${monto.toFixed(2)}`;
