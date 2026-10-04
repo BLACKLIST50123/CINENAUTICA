@@ -298,8 +298,8 @@ const baseDatosPeliculas = {
     'spiderman': {
         id: 'spiderman',
         titulo: 'Spider-Man: Un Nuevo Día',
-        banner: 'assets/img/banners/SpidermanHorizontal.jpg',
-        poster: 'assets/img/posters/Spiderman.webp',
+        banner: 'https://images7.alphacoders.com/141/thumb-1920-1411911.jpg',
+        poster: 'https://cdn.marvel.com/content/2x/smbnd_online_1400x2100_hoodie_02.webp',
         genero: 'Acción / Aventura', clasificacion: 'APT', duracion: '2h 25m', tipoLanzamiento: 'Estreno', formatosDisponibles: ['2d', 'xd'],
         sinopsis: 'Peter Parker se enfrenta a su mayor desafío cuando las barreras entre multiversos colisionan inesperadamente. Viejos enemigos de realidades alternativas llegan a Nueva York, y Peter deberá aliarse con versiones de sí mismo para restaurar el equilibrio antes de que su mundo sea destruido por completo.',
         trailer: 'https://www.youtube.com/watch?v=QXibcL7-XbU',
@@ -364,8 +364,8 @@ const baseDatosPeliculas = {
     'demonio': {
         id: 'demonio',
         titulo: 'La Noche del Demonio',
-        banner: 'assets/img/banners/LaNocheDelDemonioHorizontal.jpg',
-        poster: 'assets/img/posters/LaNocheDelDemonio.jpg',
+        banner: 'https://i0.wp.com/www.lacosacine.com/wp-content/uploads/2026/04/La-Noche-del-Demonio-Banner-1.jpg?resize=1200%2C720&ssl=1',
+        poster: 'https://i.pinimg.com/474x/4d/b9/98/4db998ba858a2680820def663582223e.jpg',
         genero: 'Terror / Suspenso', clasificacion: '+14', duracion: '1h 46m', tipoLanzamiento: 'Pre-Estreno', formatosDisponibles: ['2d', 'dbox'],
         sinopsis: 'Una familia se muda a una nueva casa buscando un nuevo comienzo, solo para descubrir que el lugar está plagado de entidades oscuras. A medida que las manifestaciones empeoran, descubren que el verdadero mal no reside en la casa, sino que ha poseído a su hijo menor.',
         trailer: 'https://www.youtube.com/watch?v=orvNgTGq6cg',
