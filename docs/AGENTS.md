@@ -88,6 +88,7 @@ dejarlo en la memoria.
 - ✅ Siempre: actualizar `MEMORY.md` al terminar cada tarea. 
 - ⚠️ **Preguntar antes:** dependencias nuevas; archivos o carpetas nuevas fuera de la estructura del plan; cambios de esquema o de reglas de negocio (ver decisiones abiertas D-1…D-15); cambios en el formato de datos o en políticas RLS.
 - 🚫 **Nunca:** usar `any` o desactivar `strict`; llamar a `supabase.from(...)` desde componentes; confiar en el `sede_id` enviado por el cliente; calcular el precio cobrado en el navegador; usar `service_role` en el frontend; guardar contraseñas o tarjetas; `DELETE` físico en catálogo; commitear claves o `.env`; usar `localStorage` como base de datos en el proyecto nuevo; editar `database.types.ts` a mano.
+- 🚫 **Nunca:** intentar programar algoritmos de Machine Learning, importar librerías de IA en el package.json o mezclar Python en este repositorio. El Machine Learning (Fase 5) será un script externo; el frontend solo leerá los datos de la base de datos.
 
 ## Verificación
 

@@ -8,6 +8,7 @@ Migración de un sistema de cine unisede (HTML/JS/Tailwind con `localStorage`) a
 ## 2. Stack Tecnológico y Arquitectura
 - **Frontend:** Angular (Standalone components, Signals nativos para estado), TypeScript estricto, Tailwind CSS.
 - **Backend / BD:** Supabase (PostgreSQL, Auth, Storage, Row Level Security - RLS).
+- **Machine Learning:** Script externo en Python (Pandas, Scikit-learn).
 - **Arquitectura UI:** Patrón DAO para conexión aislada con Supabase, DTOs para tipado de datos entre BD y Vistas, e inyección de dependencias (SOLID). Componentes "tontos" en la UI y lógica en los servicios.
 
 ## 3. Arquitectura de Roles y Diseño de Interfaz (Admin)
@@ -39,40 +40,41 @@ Su catálogo es de **solo lectura**. El diseño utilizará **Sub-tabs horizontal
     2. *Productos Locales:* Lista habilitada para editar precio local y activar *toggle* de control de stock.
 *   **Tarifas:** Edición normal solo para "Tarifa Base por Día". "Formatos" y "Tipos de Entrada" son de solo lectura (sin botones de editar/crear).
 *   **Descuentos:** Oculta modal de "Nuevo Cupón". Usa 2 Sub-tabs horizontales: *Cupones Globales* (toggles para activar) y *Cupones Activos*.
-*   **Operativa Local (Salas, Horarios, Personal, Dashboard):** Mantienen el diseño estándar, pero el Agente debe asegurar que las consultas y mutaciones operen estrictamente sobre el `sedeId` actual.
+*   **Operativa Local (Salas, Horarios, Personal, Dashboard):** Mantienen el diseño estándar, operando estrictamente sobre el `sedeId` actual.
 
 ### 3.3. Interfaces Adicionales
 *   **Counter:** Empleado de caja de una sede. Vende entradas/dulces y vincula compras a socios.
 *   **Cliente (Público):** Pantalla inicial con filtro de Región, Ciudad y Sede para cargar dinámicamente la cartelera.
 
 ## 4. Machine Learning Universitario (Fase 5)
-Implementación de modelos predictivos en el Dashboard Global del Super Admin para demostrar innovación técnica en el MVP.
-- **Enfoque MVP:** No se usarán microservicios en Python. La inteligencia consumirá la data histórica directamente de las Vistas SQL o DAOs.
-- **Modelos propuestos a programar en TypeScript/JS:** Regresión Lineal Simple o Medias Móviles para *Proyección de ventas para la próxima semana* o *Identificación de horas pico por género de película*.
+Implementación de un modelo predictivo para el Dashboard Global del Super Admin.
+- **Enfoque MVP (Desacoplado):** Se desarrollará un script independiente en **Python** (usando `pandas` para limpieza de datos y `scikit-learn` para el modelo). 
+- **Flujo:** El script de Python se conectará a PostgreSQL (Supabase), extraerá el histórico de ventas (`orden`, `detalle_entrada`), entrenará una **Regresión Lineal** para proyectar la demanda (asistencia) de los próximos 7 días, y guardará los resultados en la tabla `ml_prediccion`.
+- **Angular:** El frontend no ejecuta Machine Learning. Simplemente consumirá la tabla `ml_prediccion` a través de un DAO y mostrará la gráfica de proyección en el Dashboard.
 
 ## 5. Fases de Desarrollo Paso a Paso para la IA
 
-*   **Fase 1: Base de Datos.** El usuario ya habrá creado en Supabase el esquema multisede (tablas globales, tabla `sedes`, tablas pivote `pelicula_sede`, etc.). El agente generará/consumirá los tipos de TypeScript basados en este esquema.
+*   **Fase 1: Base de Datos.** El usuario ya habrá creado en Supabase el esquema multisede. El agente generará/consumirá los tipos de TypeScript basados en este esquema.
 *   **Fase 2: Arquitectura Angular.** Setup de Tailwind, Supabase Client, y estructura de carpetas (DAO, DTO, Mappers, Servicios).
 *   **Fase 3: Migración Core (MVP Sede 1).** Construir el flujo de reserva (asientos, carrito, checkout) apuntando a un `sede_id = 1` estático para validar la conexión Angular+Supabase antes de añadir los roles.
-*   **Fase 4: Roles y Vistas (El Grueso del Trabajo).** Implementar Guards, Layouts y las interfaces descritas en la Sección 3 (Macro-tabs del Super Admin, Sub-tabs horizontales del Admin Sede, Impersonación).
-*   **Fase 5: Dashboard y ML.** Implementar los gráficos estadísticos y los algoritmos matemáticos en TypeScript para las proyecciones del Super Admin.
+*   **Fase 4: Roles y Vistas.** Implementar Guards, Layouts y las interfaces descritas en la Sección 3 (Macro-tabs del Super Admin, Sub-tabs horizontales del Admin Sede, Impersonación).
+*   **Fase 5: Dashboard y ML.** Construir las vistas de gráficos en Angular. Posteriormente, se solicitará la creación del script en Python para poblar las predicciones en la base de datos.
 
 ## 6. Patrones de Diseño a Implementar
 El Agente deberá estructurar el código aplicando los siguientes Patrones de Diseño de Software para asegurar escalabilidad y cumplir con los principios SOLID:
 
 *   **Facade (Fachada):**
     *   *¿Para qué?* Para desacoplar los componentes visuales de la lógica de negocio compleja.
-    *   *Aplicación:* Los componentes de Angular solo deben invocar métodos de un `FacadeService`. Este Facade internamente orquestará llamadas a múltiples DAOs y manejará el estado, dejando los componentes de UI 100% "tontos" y limpios.
+    *   *Aplicación:* Los componentes de Angular solo deben invocar métodos de un `FacadeService`. Este Facade internamente orquestará llamadas a múltiples DAOs y manejará el estado, dejando los componentes de UI limpios.
 *   **Strategy (Estrategia):**
     *   *¿Para qué?* Para evitar bloques masivos de `if/else` en lógicas que pueden crecer en el futuro.
-    *   *Aplicación:* Ideal para el **cálculo del precio final de la entrada**. Se usarán estrategias intercambiables para calcular el recargo por formato (2D, 3D), la tarifa del día (Económica, Feriado) y la aplicación de cupones de descuento.
+    *   *Aplicación:* Ideal para el **cálculo del precio final de la entrada**. Se usarán estrategias intercambiables para calcular el recargo por formato, la tarifa del día y la aplicación de cupones de descuento.
 *   **Adapter / Mapper:**
     *   *¿Para qué?* Para proteger el frontend de cambios en la base de datos.
-    *   *Aplicación:* Transformar los datos crudos obtenidos de Supabase (normalmente en `snake_case`) hacia los DTOs y modelos de negocio en Angular (en `camelCase`).
+    *   *Aplicación:* Transformar los datos crudos obtenidos de Supabase (en `snake_case`) hacia los DTOs y modelos de negocio en Angular (en `camelCase`).
 *   **Observer (Reactividad):**
     *   *¿Para qué?* Para mantener partes del sistema sincronizadas en tiempo real.
-    *   *Aplicación:* Se utilizará mediante los **Signals** nativos de Angular para el Carrito de Compras (si cambia un ítem, se actualizan precios en todos lados) y para el Mapa de Butacas, apoyándose en Supabase Realtime para que los bloqueos de asientos se reflejen instantáneamente a otros usuarios.
+    *   *Aplicación:* Se utilizará mediante los **Signals** nativos de Angular para el Carrito de Compras y para el Mapa de Butacas, apoyándose en Supabase Realtime.
 *   **Singleton (vía Inyección de Dependencias):**
     *   *¿Para qué?* Para tener instancias únicas de servicios críticos en toda la aplicación.
-    *   *Aplicación:* Para el manejo de sesión del usuario (Auth), el contexto de la sede actual (`SedeContextStore`), y la instancia única de conexión a Supabase (`providedIn: 'root'`).
+    *   *Aplicación:* Para el manejo de sesión del usuario (Auth), el contexto de la sede actual (`SedeContextStore`), y la instancia única de conexión a Supabase.
