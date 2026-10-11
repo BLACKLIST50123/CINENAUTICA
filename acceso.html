@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cine Náutica — Acceso del personal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script>tailwind.config = { theme: { extend: { colors: { dark: { 900: '#050B14', 800: '#0D1627', 700: '#1A2845' }, brand: { blue: '#0A7EB1', darkBlue: '#075A80', yellow: '#DC9E3F', red: '#DC2026', darkRed: '#7E1616' } } } } }</script>
+    <link rel="stylesheet" href="./assets/css/style.css">
+    <link rel="stylesheet" href="./assets/css/multisede.css">
+</head>
+<body class="bg-dark-900 text-white min-h-screen antialiased">
+<div class="min-h-screen grid lg:grid-cols-2">
+    <section class="relative hidden lg:flex flex-col justify-between p-12 overflow-hidden">
+        <div class="absolute inset-0 bg-cover bg-center opacity-40" style="background-image:url('https://images7.alphacoders.com/141/thumb-1920-1411911.jpg')"></div>
+        <div class="absolute inset-0 bg-gradient-to-br from-dark-900 via-dark-900/85 to-brand-blue/30"></div>
+        <div class="relative z-10 flex items-center gap-3"><img src="./assets/img/logo/logocinenautica.png" class="h-12" alt="Logo"><span class="text-2xl font-bold tracking-tighter">CINE<span class="text-brand-blue">NÁUTICA</span></span></div>
+        <div class="relative z-10 max-w-md"><h1 class="text-5xl font-bold leading-tight mb-5">Portal del <span class="text-brand-yellow">personal</span></h1>
+            <p class="text-slate-300 text-lg mb-8">Gestiona sedes, cartelera, ventas en el local y todo lo que mueve a Cine Náutica.</p>
+            <div class="space-y-4 text-sm text-slate-300"><p class="flex items-center gap-3"><i class="fa-solid fa-crown text-purple-300 w-5"></i>Super Admin — visión global de todas las sedes</p><p class="flex items-center gap-3"><i class="fa-solid fa-store text-brand-yellow w-5"></i>Admin de sede — programación, salas y equipo local</p><p class="flex items-center gap-3"><i class="fa-solid fa-cash-register text-green-300 w-5"></i>Counter — punto de venta en el cine</p></div></div>
+        <p class="relative z-10 text-xs text-slate-500">© 2026 Cine Náutica · Uso interno</p>
+    </section>
+    <section class="flex items-center justify-center p-6 md:p-12">
+        <div class="w-full max-w-md fade-in">
+            <a href="index.html" class="text-slate-400 hover:text-white text-sm flex items-center gap-2 mb-8"><i class="fa-solid fa-arrow-left"></i> Volver al sitio</a>
+            <h2 class="text-3xl font-bold mb-1">Acceso del personal</h2><p class="text-slate-400 text-sm mb-8">Ingresa con tu cuenta corporativa. Te llevaremos a tu pantalla según tu rol.</p>
+            <form id="form-acceso" onsubmit="ingresar(event)" class="space-y-4">
+                <div><label class="text-[11px] text-slate-500 mb-1 block">Correo</label><div class="relative"><i class="fa-regular fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i><input type="email" value="rosa.medina@cinenautica.pe" class="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-yellow pl-11"></div></div>
+                <div><label class="text-[11px] text-slate-500 mb-1 block">Contraseña</label><div class="relative"><i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i><input type="password" value="••••••••" class="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-yellow pl-11"></div></div>
+                <div class="pt-2"><div class="flex items-center justify-between mb-2"><label class="text-[11px] text-slate-500">Rol <span class="text-slate-600">(solo demostración)</span></label></div>
+                    <div class="grid grid-cols-3 gap-3"><button type="button" data-rol="super" onclick="elegirRol('super')" class="rol-opcion "><i class="fa-solid fa-crown"></i><b>Super Admin</b><small>Global</small></button><button type="button" data-rol="admin" onclick="elegirRol('admin')" class="rol-opcion activo"><i class="fa-solid fa-store"></i><b>Admin de sede</b><small>Una sede</small></button><button type="button" data-rol="counter" onclick="elegirRol('counter')" class="rol-opcion "><i class="fa-solid fa-cash-register"></i><b>Counter</b><small>Ventas en local</small></button></div>
+                    <p class="text-[11px] text-slate-500 mt-2"><i class="fa-solid fa-circle-info text-brand-blue mr-1"></i>En el sistema real el rol viene de la cuenta; aquí lo eliges para recorrer cada vista.</p></div>
+                <div id="campo-sede"><label class="text-[11px] text-slate-500 mb-1 block">Sede asignada <span class="text-slate-600">(demostración)</span></label><select class="filtro-select !pl-4"><option value="s1">Náutica Megaplaza — Chimbote</option><option value="s2">Náutica Costa Azul — Chimbote</option><option value="s3">Náutica Nuevo Chimbote — Nuevo Chimbote</option><option value="s4">Náutica Trujillo Centro — Trujillo</option><option value="s5">Náutica Mall Trujillo — Trujillo</option><option value="s6">Náutica Lima Norte — Lima Metropolitana</option><option value="s7">Náutica Miraflores — Lima Metropolitana</option><option value="s8">Náutica San Miguel — Lima Metropolitana</option></select></div>
+                <button type="submit" class="w-full bg-brand-yellow hover:bg-yellow-400 text-black py-3.5 rounded-xl font-bold text-lg transition-colors shadow-lg shadow-yellow-500/20 mt-2">Ingresar <i class="fa-solid fa-arrow-right ml-1"></i></button>
+                <button type="button" onclick="demo()" class="w-full text-center text-sm text-slate-400 hover:text-white">¿Olvidaste tu contraseña?</button>
+            </form>
+        </div></section></div>
+<div id="contenedor-toasts"></div>
+<script src="./assets/js/common.js"></script>
+<script>
+let rolSel = 'admin';
+const DESTINO = { super: 'super-admin.html', admin: 'admin-sede.html', counter: 'counter.html' };
+function elegirRol(r) { rolSel = r; $$('.rol-opcion').forEach(b => b.classList.toggle('activo', b.dataset.rol === r)); $('campo-sede').style.display = r === 'super' ? 'none' : ''; }
+function ingresar(e) { e.preventDefault(); mostrarToast('Ingresando…', 'exito'); setTimeout(() => { window.location.href = DESTINO[rolSel]; }, 500); }
+</script></body></html>
