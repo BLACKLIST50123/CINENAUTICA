@@ -406,6 +406,8 @@ document.addEventListener('cantidad-producto-cambiada', event => {
 function toggleTipoDocumento() {
     const f = document.querySelector('input[name="comprobante"]:checked').value === 'factura';
     $('campo-dni').classList.toggle('hidden', f); $('campo-ruc').classList.toggle('hidden', !f);
+    /* En factura el nombre del comprobante es la razón social (comprobante.nombre_cliente) */
+    $('campo-nombre').placeholder = f ? 'Razón Social' : 'Nombres y Apellidos';
 }
 function toggleMetodoPago() {
     const y = document.querySelector('input[name="paymethod"]:checked').value === 'yape';
@@ -524,18 +526,6 @@ function iniciarMapa() {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(mapa);
     marcador = L.marker(c).addTo(mapa).bindPopup(`<strong>${SEDES[sedeMapa].nombre}</strong>`).openPopup();
     setTimeout(() => mapa.invalidateSize(), 200);
-}
-
-/* ---------- Navegador de pantallas ---------- */
-function irAPantalla(id) {
-    toggleNavegadorPantallas();
-    if (id === 'detalle') return abrirDetallePelicula('spiderman');
-    if (id === 'vista-asientos') { abrirDetallePelicula('spiderman'); setTimeout(irAAsientos, 400); return; }
-    if (id === 'vista-ubicacion') return abrirVistaUbicacion();
-    if (id === 'vista-dulceria') { $('btn-volver-asientos-dulceria').classList.remove('hidden'); pintarSedeDulceria(); }
-    if (['vista-beneficios', 'vista-historial', 'modal-perfil', 'modal-carnet-socio'].includes(id)) setSesion(true);
-    if (id.startsWith('modal-')) return abrirModal(id);
-    cambiarVista(vistaActualVisible, id);
 }
 
 document.addEventListener('DOMContentLoaded', () => {

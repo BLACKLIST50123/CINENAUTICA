@@ -133,10 +133,11 @@ function clickMatrizEstructura(event) {
     }
     actualizarContadorSala();
 }
-function toggleEstadoSalaAdmin(activa) {
-    $('admin-sala-estado-texto').textContent = activa ? 'Activa' : 'Inactiva';
-    $('admin-sala-estado-texto').classList.toggle('text-green-500', activa);
-    $('admin-sala-estado-texto').classList.toggle('text-brand-red', !activa);
+/* Estado operativo de la sala: ACTIVA | MANTENIMIENTO | INACTIVA (enum estado_sala) */
+function cambiarEstadoSalaAdmin(valor) {
+    const s = $('admin-sala-estado');
+    s.classList.remove('text-green-500', 'text-brand-yellow', 'text-brand-red');
+    s.classList.add(valor === 'ACTIVA' ? 'text-green-500' : valor === 'MANTENIMIENTO' ? 'text-brand-yellow' : 'text-brand-red');
 }
 function guardarCambiosSala() {
     mostrarToast(`Cambios de Sala ${$('admin-select-sala').value} guardados en esta demostración.`, 'exito');
@@ -145,6 +146,25 @@ function restablecerCambiosSala() {
     generarMatriz();
     mostrarToast('Distribución de asientos restablecida.', 'info');
 }
+/* ---------- Cancelar / reprogramar función (reprogramacion_funcion: motivo + detalle obligatorios) ---------- */
+const abrirModalCancelarFuncion = () => abrirModal('modal-cancelar-funcion');
+function modoCambioFuncion(btn, modo) {
+    segmento(btn);
+    $('cambio-funcion-reprogramar').classList.toggle('hidden', modo !== 'reprogramar');
+    $('cambio-funcion-confirmar').textContent = modo === 'reprogramar' ? 'Confirmar reprogramación' : 'Confirmar cancelación';
+}
+function confirmarCambioFuncion(event) {
+    event.preventDefault();
+    cerrarModal('modal-cancelar-funcion');
+    cerrarModalFuncion();
+    demo();
+}
+/* Idioma de audio de la función: una sola opción (funcion.idioma_audio) */
+document.addEventListener('click', event => {
+    const chip = event.target.closest('#funcion-idioma-chips .chip-selector');
+    if (!chip) return;
+    $$('#funcion-idioma-chips .chip-selector').forEach(c => c.classList.toggle('chip-selector-activo', c === chip));
+});
 const toggleDatepickerHorarios = () => $('datepicker-dropdown').classList.toggle('visible');
 function verSocioAdmin() { const r = $('admin-socio-resultado'); r.classList.remove('hidden'); r.classList.add('flex'); r.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
 function verPersonalAdmin() { const p = $('admin-personal-detalle-panel'); p.classList.remove('hidden'); p.classList.add('flex'); p.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
@@ -155,14 +175,31 @@ const alternarOrigenImagenAdmin = (k) => {
     if (url && file) { url.classList.toggle('hidden', archivo); file.classList.toggle('hidden', !archivo); }
 };
 const actualizarTipoPeliculaAdmin = () => {
-    const e = $('admin-pelicula-es-estreno'); if (!e) return;
-    $('admin-pelicula-tipo-mensaje').textContent = e.checked ? 'PRÓXIMO ESTRENO: aún sin funciones programadas.' : 'EN CARTELERA: cada sede podrá programarle funciones.';
-    $('admin-pelicula-lanzamiento-contenedor').classList.toggle('hidden', e.checked);
-};
-const alternarOrigenImagenBannerAdmin = () => { };
+    const e = $('admin-pelicula-es-estreno');
+    if (!e) return;
 
-/* ---------- Navegador de pantallas ---------- */
-function irAPantalla(js) { toggleNavegadorPantallas(); (new Function(js))(); }
+    // Texto explicativo
+    $('admin-pelicula-tipo-mensaje').textContent = e.checked
+        ? 'PRÓXIMO ESTRENO: aún sin funciones programadas.'
+        : 'EN CARTELERA: cada sede podrá programarle funciones.';
+
+    // Tipo de lanzamiento (Regular, Pre-Estreno, etc.) solo se muestra en Cartelera (!e.checked)
+    $('admin-pelicula-lanzamiento-contenedor')?.classList.toggle('hidden', e.checked);
+
+    // Fecha de estreno solo se muestra si es Próximo Estreno (e.checked)
+    $('admin-pelicula-fecha-estreno-contenedor')?.classList.toggle('hidden', !e.checked);
+};
+
+const alternarOrigenImagenBannerAdmin = (k) => {
+    const archivo = document.querySelector(`input[name="admin-${k}-banner-origen-img"]:checked`)?.value === 'archivo';
+    const url = document.getElementById(`admin-${k}-banner-url`);
+    const file = document.getElementById(`admin-${k}-banner-archivo`);
+    if (url && file) {
+        url.classList.toggle('hidden', archivo);
+        file.classList.toggle('hidden', !archivo);
+    }
+};
+
 
 let cuponSedeEnEdicion = null;
 function modalEdicionCuponSede() {
@@ -175,10 +212,11 @@ function modalEdicionCuponSede() {
         <button type="button" class="absolute top-4 right-4 text-slate-400 hover:text-white" aria-label="Cerrar" onclick="cerrarModal('modal-editar-cupon-sede')"><i class="fa-solid fa-xmark text-xl"></i></button>
         <h3 class="text-2xl font-bold text-white mb-5">Editar cupón de sede</h3>
         <form class="space-y-3" onsubmit="guardarEdicionCuponSede(event)">
-            <input id="editar-cupon-codigo" class="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-2.5 text-white uppercase" placeholder="Código" required>
+            <input id="editar-cupon-codigo" class="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-2.5 text-white uppercase" placeholder="Código" maxlength="50" required>
             <input id="editar-cupon-descuento" class="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-2.5 text-white" type="number" min="1" max="100" placeholder="Porcentaje" required>
             <input id="editar-cupon-descripcion" class="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-2.5 text-white" placeholder="Descripción">
-            <div class="grid grid-cols-2 gap-3"><label class="text-xs text-slate-400">Vigente desde<input id="editar-cupon-desde" class="mt-1 w-full bg-dark-900 border border-white/10 rounded-xl px-3 py-2 text-white" type="date"></label><label class="text-xs text-slate-400">Hasta<input id="editar-cupon-hasta" class="mt-1 w-full bg-dark-900 border border-white/10 rounded-xl px-3 py-2 text-white" type="date"></label></div>
+            <label class="block text-xs text-slate-400">Usos máximos<input id="editar-cupon-usos" class="mt-1 w-full bg-dark-900 border border-white/10 rounded-xl px-3 py-2 text-white" type="number" min="1" placeholder="Ej: 100" required></label>
+            <div class="grid grid-cols-2 gap-3"><label class="text-xs text-slate-400">Vigente desde<input id="editar-cupon-desde" class="mt-1 w-full bg-dark-900 border border-white/10 rounded-xl px-3 py-2 text-white" type="date" required></label><label class="text-xs text-slate-400">Hasta<input id="editar-cupon-hasta" class="mt-1 w-full bg-dark-900 border border-white/10 rounded-xl px-3 py-2 text-white" type="date" required></label></div>
             <button type="submit" class="w-full bg-brand-yellow hover:bg-yellow-400 text-black py-3 rounded-xl font-bold">Editar Cupón</button>
         </form>
     </div>`;
@@ -199,6 +237,7 @@ function editarCuponSede(button) {
     $('editar-cupon-descripcion').value = cuponSedeEnEdicion.querySelector('p.text-slate-500').textContent.trim();
     $('editar-cupon-desde').value = cuponSedeEnEdicion.dataset.desde || fechasDemo[0];
     $('editar-cupon-hasta').value = cuponSedeEnEdicion.dataset.hasta || fechasDemo[1];
+    $('editar-cupon-usos').value = cuponSedeEnEdicion.dataset.usos || 100;
     abrirModal(modal.id);
 }
 function guardarEdicionCuponSede(event) {
@@ -209,6 +248,7 @@ function guardarEdicionCuponSede(event) {
     const descripcion = $('editar-cupon-descripcion').value.trim();
     cuponSedeEnEdicion.dataset.desde = $('editar-cupon-desde').value;
     cuponSedeEnEdicion.dataset.hasta = $('editar-cupon-hasta').value;
+    cuponSedeEnEdicion.dataset.usos = $('editar-cupon-usos').value;
     cuponSedeEnEdicion.querySelector('p.text-brand-yellow').textContent = codigo;
     cuponSedeEnEdicion.querySelector('p.text-slate-500').textContent = descripcion;
     cuponSedeEnEdicion.querySelector('span.text-white.font-bold').textContent = `-${descuento}%`;
@@ -234,18 +274,76 @@ document.addEventListener('DOMContentLoaded', () => {
         tituloTransacciones?.closest('.bg-dark-800')?.remove();
         tituloTopPeliculas?.closest('.bg-dark-800')?.classList.add('xl:col-span-2');
     }
-    $$('[data-panel="sede:cartelera"] label').forEach(label => {
-        if (label.textContent.trim().startsWith('En sede')) label.remove();
-    });
     $$('[data-panel="sede:tarifas"]').forEach(panel => {
         const bloque = [...panel.querySelectorAll('.bg-dark-800')].find(el => el.querySelector('h3')?.textContent.toLowerCase().includes('tarifas especiales'));
         if (bloque) bloque.remove();
     });
     $$('[id="modal-tarifa-especial"]').forEach(modal => modal.remove());
-    $$('#navegador-pantallas button.nav-pant').filter(button => button.textContent.trim() === 'Tarifa especial').forEach(button => button.remove());
     $$('#grid-dulceria-sede .toggle-stock').forEach(input => input.addEventListener('change', () => {
         const label = input.closest('label');
         const texto = [...label.childNodes].find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
         if (texto) texto.textContent = input.checked ? 'Stock' : 'Agotado';
     }));
 });
+
+// Alterna entre campo de texto (URL) y botón de cargar archivo
+function alternarOrigenImgSede(tipo) {
+    const inputUrl = document.getElementById('sede-img-url');
+    const inputArchivo = document.getElementById('sede-img-archivo');
+    const previewImg = document.getElementById('preview-sede-img');
+    const previewIcono = document.getElementById('preview-sede-icono');
+
+    if (tipo === 'url') {
+        inputUrl.classList.remove('hidden');
+        inputArchivo.classList.add('hidden');
+        inputArchivo.value = ''; // resetea archivo
+        actualizarPreviewSedeUrl(inputUrl.value);
+    } else {
+        inputUrl.classList.add('hidden');
+        inputArchivo.classList.remove('hidden');
+        inputUrl.value = ''; // resetea url
+        previewImg.classList.add('hidden');
+        previewIcono.classList.remove('hidden');
+    }
+}
+
+// Vista previa cuando escribe o pega una URL
+function actualizarPreviewSedeUrl(url) {
+    const previewImg = document.getElementById('preview-sede-img');
+    const previewIcono = document.getElementById('preview-sede-icono');
+
+    if (url && url.trim().length > 5) {
+        previewImg.src = url;
+        previewImg.onload = () => {
+            previewImg.classList.remove('hidden');
+            previewIcono.classList.add('hidden');
+        };
+        previewImg.onerror = () => {
+            previewImg.classList.add('hidden');
+            previewIcono.classList.remove('hidden');
+        };
+    } else {
+        previewImg.classList.add('hidden');
+        previewIcono.classList.remove('hidden');
+    }
+}
+
+// Vista previa cuando selecciona un archivo desde su PC
+function actualizarPreviewSedeArchivo(input) {
+    const previewImg = document.getElementById('preview-sede-img');
+    const previewIcono = document.getElementById('preview-sede-icono');
+
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            previewImg.src = e.target.result;
+            previewImg.classList.remove('hidden');
+            previewIcono.classList.add('hidden');
+        };
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        previewImg.classList.add('hidden');
+        previewIcono.classList.remove('hidden');
+    }
+}
+

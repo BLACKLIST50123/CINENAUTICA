@@ -4,7 +4,7 @@
    ============================================================================ */
 const PELIS = {
     'spiderman': 'Spider-Man: Un Nuevo Día', 'endgame-bonus': 'Avengers: Endgame Encore', 're-noche-cero': 'Resident Evil: Noche Cero',
-    'coyote-acme': 'Coyote vs. Acme', 'sombra-exorcista': 'La Sombra del Exorcista', 'demonio': 'El Demonio Vuelve'
+    'coyote-acme': 'Coyote vs. Acme', 'sombra-exorcista': 'La Sombra del Exorcista', 'demonio': 'La Noche del Demonio'
 };
 const VISTAS = ['cv-inicio', 'cv-asientos', 'cv-dulceria', 'cv-pago', 'cv-ok'];
 const CTA = { 'cv-asientos': ['Continuar a dulcería', 'cv-dulceria'], 'cv-dulceria': ['Continuar al cobro', 'cv-pago'], 'cv-pago': ['Cobrar', 'cv-ok'] };

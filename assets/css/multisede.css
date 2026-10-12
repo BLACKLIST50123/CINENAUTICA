@@ -130,10 +130,6 @@
 .rol-opcion.activo b { color: #fff; }
 
 /* ---------- Navegador de pantallas (ayuda de revisión) ---------- */
-.nav-pant { background: #0D1627; border: 1px solid rgba(255,255,255,.1); color: #cbd5e1; padding: .55rem .6rem; border-radius: .6rem; font-weight: 600; font-size: .8rem; text-align: left; transition: all .15s; display: block; width: 100%; }
-.nav-pant:hover { border-color: #DC9E3F; color: #fff; }
-.nav-pant.pagina { border-color: rgba(10,126,177,.5); background: rgba(10,126,177,.1); }
-.nav-pant.actual { border-color: #DC9E3F; color: #DC9E3F; pointer-events: none; }
 
 /* utilidades */
 .fade-in { animation: fadeIn .35s ease both; }

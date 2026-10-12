@@ -118,21 +118,19 @@ function cambiarCantidad(btn, d) {
     btn.dispatchEvent(new CustomEvent('cantidad-producto-cambiada', { bubbles: true }));
 }
 
-/* ---------- Navegador de pantallas (ayuda de revisión de diseño) ---------- */
-function toggleNavegadorPantallas() { $('navegador-pantallas').classList.toggle('translate-x-full'); }
 
 /* ---------- Stubs: botones de "demostración" sin lógica detrás ---------- */
-['copiarCodigoSocio', 'aplicarCupon', 'aplicarPuntosSocio', 'aplicarCumpleanosSocio', 'guardarMetodoPago', 'descargarPDF',
+['copiarCodigoSocio', 'aplicarCupon', 'aplicarPuntosSocio', 'aplicarCumpleanosSocio', 'descargarPDF',
     'guardarProductoDulceriaAdmin', 'guardarFuncionAdmin', 'guardarEdicionPeliculaAdmin', 'guardarEdicionDulceAdmin',
     'guardarPersonalAdmin', 'crearCuponAdmin', 'crearPeliculaAdmin', 'crearCategoriaDulceriaAdmin', 'guardarCambiosSala', 'restablecerCambiosSala',
-    'generarMatriz', 'agregarFormatoAdmin', 'agregarTipoEntradaAdmin', 'eliminarFuncionAdminActual', 'buscarOrdenAtencionCliente',
-    'generarContrasenaPersonalAdmin', 'alternarVerContrasenaFicha', 'actualizarCategoriasDulceriaAdmin', 'abrirHorariosDesdeEdicion',
+    'generarMatriz', 'agregarFormatoAdmin', 'agregarTipoEntradaAdmin', 'buscarOrdenAtencionCliente',
+    'generarContrasenaPersonalAdmin', 'actualizarCategoriasDulceriaAdmin', 'abrirHorariosDesdeEdicion',
     'validarCumpleanosAdmin', 'guardarPrecioSede', 'guardarSede', 'guardarCuponSede', 'guardarTarifaEspecial', 'imprimirTicket'
 ].forEach(n => {
     if (typeof window[n] === 'undefined') {
         window[n] = (...a) => {
             const ev = a.find(x => x && x.preventDefault); if (ev) ev.preventDefault();
-            if (n === 'guardarFuncionAdmin' || n === 'eliminarFuncionAdminActual') cerrarModalFuncion();
+            if (n === 'guardarFuncionAdmin') cerrarModalFuncion();
             if (n === 'guardarPersonalAdmin') cerrarModalPersonal();
             if (n === 'guardarEdicionPeliculaAdmin') cerrarModalEditarPelicula();
             if (n === 'guardarEdicionDulceAdmin') cerrarModalEditarDulce();
@@ -147,7 +145,7 @@ function toggleNavegadorPantallas() { $('navegador-pantallas').classList.toggle(
 ['restringirSoloNumeros', 'formatearNumeroTarjetaEnVivo', 'formatearVencimientoTarjetaEnVivo', 'actualizarPreviewImagenAdmin',
     'actualizarPreviewImagenArchivo', 'filtrarListaSociosAdmin', 'renderizarAdminPersonal', 'renderizarAdminDulceria', 'renderizarAdminCartelera',
     'datepickerCambiarMes', 'clickMatrizEstructura', 'alCambiarDatosFuncion', 'alCambiarPeliculaFuncion', 'cambiarSalaMantenimiento',
-    'toggleEstadoSalaAdmin', 'actualizarLanzamientoVisibleEdicion', 'renderDashboardData'
+    'actualizarLanzamientoVisibleEdicion', 'renderDashboardData'
 ].forEach(n => { if (typeof window[n] === 'undefined') window[n] = () => { }; });
 
 /* ---------- Menú de usuario del personal ---------- */
