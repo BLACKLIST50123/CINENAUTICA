@@ -45,7 +45,16 @@ export async function registrarCliente(datos: DatosRegistro): Promise<ResultadoA
     },
   });
 
-  if (authError) return { ok: false, error: authError.message };
+  if (authError) {
+    // 429: límite de tasa de Supabase (máx. ~4 signups/hora en plan free)
+    if (authError.status === 429 || authError.message.toLowerCase().includes('rate')) {
+      return { ok: false, error: 'Demasiados intentos de registro. Espera unos minutos e intenta de nuevo.' };
+    }
+    if (authError.message.includes('already registered') || authError.message.includes('already been registered')) {
+      return { ok: false, error: 'Este correo ya tiene una cuenta. Usa "Ingresar" en su lugar.' };
+    }
+    return { ok: false, error: 'Error al crear la cuenta: ' + authError.message };
+  }
   if (!authData.user) return { ok: false, error: 'No se pudo crear el usuario.' };
 
   const idUsuario = authData.user.id;

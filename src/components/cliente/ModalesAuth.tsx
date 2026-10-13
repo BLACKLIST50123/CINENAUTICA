@@ -146,12 +146,7 @@ export function ModalRegistro() {
     setCargando(false);
 
     if (!resultado.ok) {
-      // Supabase devuelve "User already registered" si el correo ya existe
-      if (resultado.error?.includes('already registered') || resultado.error?.includes('already been registered')) {
-        setError('Este correo ya tiene una cuenta registrada.');
-      } else {
-        setError('Error al registrarse. Intenta nuevamente.');
-      }
+      setError(resultado.error ?? 'Error al registrarse. Intenta nuevamente.');
     } else {
       setExito(true);
       // Supabase envía email de confirmación — informar al usuario

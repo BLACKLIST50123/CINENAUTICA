@@ -329,15 +329,13 @@ export function abrirModalLegal(k?, ..._x: any[]) {
     abrirModal('modal-legal');
 }
 
-/* ---------- Sesión simulada ---------- */
-export function setSesion(activa?, ..._x: any[]) {
-    ['menu-invitado', 'menu-invitado-movil'].forEach(id => $(id).classList.toggle('hidden', activa));
-    ['menu-usuario', 'menu-usuario-movil'].forEach(id => { const e = $(id); e.classList.toggle('hidden', !activa); e.classList.toggle('flex', activa); });
-    $('panel-socio-beneficios').classList.toggle('hidden', !activa);
-    $('panel-historial-beneficios').classList.toggle('hidden', !activa);
-}
-export const manejarLogin = (e?, ..._x: any[]) => { e.preventDefault(); cerrarModalesAuth(); setSesion(true); mostrarToast('Sesión iniciada (demostración).', 'exito'); };
-export const manejarRegistro = (e?, ..._x: any[]) => { e.preventDefault(); cerrarModalesAuth(); setSesion(true); mostrarToast('Cuenta creada (demostración).', 'exito'); };
+/* ---------- Sesión — REEMPLAZADA POR useSesion() + ModalesAuth.tsx ---------- */
+// setSesion, manejarLogin y manejarRegistro ya no manipulan el DOM.
+// El estado de sesión lo maneja SesionContext (useSesion()) con Supabase Auth.
+// Se conservan como stubs vacíos para no romper llamadas pendientes de migrar.
+export function setSesion(_activa?: any, ..._x: any[]) { /* gestionado por SesionContext */ }
+export const manejarLogin = (_e?: any, ..._x: any[]) => { _e?.preventDefault?.(); };
+export const manejarRegistro = (_e?: any, ..._x: any[]) => { _e?.preventDefault?.(); };
 /* ---------- Mapa de sedes ---------- */
 export let mapa = null, marcador = null, sedeMapa = 's1';
 export function pintarInfoSede(id?, ..._x: any[]) {
