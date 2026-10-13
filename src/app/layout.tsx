@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { SesionProvider } from "@/src/context/SesionContext";
 
 export const metadata: Metadata = {
   title: "Cine Náutica",
@@ -16,7 +17,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
       </head>
-      <body className="antialiased overflow-x-hidden relative">{children}</body>
+      <body className="antialiased overflow-x-hidden relative">
+        {/* SesionProvider: provee el estado de autenticación en toda la app (Context Pattern) */}
+        <SesionProvider>
+          {children}
+        </SesionProvider>
+      </body>
     </html>
   );
 }

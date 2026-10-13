@@ -1,10 +1,11 @@
 # AGENTS.md — CineNáutica (MVP Plataforma Multisede)
 
-Sistema web de cine: compra de entradas, dulcería y panel de administración. 
+Sistema web de cine Multiswde: compra de entradas, dulcería y paneles de administración. Con Next.js y Supabase(PostgrestSQL). 
+
 ## Stack y estructura (MVP Universitario)
 
 
-**Tecnologías: (DEJALO COMO ESTA)**
+**Tecnologías:**
 - **Frontend:** Next.js, TypeScript estricto, Tailwind CSS.
 - **Backend:** Supabase (Auth, PostgreSQL, Storage, RLS).
 - **Machine Learning (AL FINAL DE TODO):** Script externo en Python (Pandas, Scikit-learn). El frontend solo lee resultados.
@@ -147,6 +148,7 @@ El costo final de cada entrada se calcula aplicando tres capas jerárquicas:
 - Cambios pequeños y revisables; una fase o módulo a la vez.
 - Cambios pequeños y enfocados; no reescribas lo que ya funciona.
 - Al terminar, explicar: qué cambió, por qué, cómo se verificó y qué queda pendiente.
+- Cualquier Cambio en la BD en Supabase que hagamos registralo en "supabase/migrations" comentado porfavor.
 - Consultar `MEMORY.md` al empezar y actualizarlo al terminar.
 
 ## Memoria 
