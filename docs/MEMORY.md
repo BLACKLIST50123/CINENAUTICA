@@ -4,45 +4,41 @@ Memoria del proyecto entre sesiones. Máximo ~50 líneas: resume o elimina lo qu
 ## Estado Actual del Proyecto
 - **Fase 0 — Infraestructura Base: ✅ COMPLETADA**
 - **Fase 1 — Autenticación Real: ✅ COMPLETADA** (2026-10-13)
-- **Próximo:** Fase 2 — Cartelera e Inicio (datos reales desde BD)
+- **Fase 2 — Cartelera e Inicio: ✅ COMPLETADA** (2026-10-13)
+- **Próximo:** Fase 3 — Detalle de Película y Selección de Función
 
-## Archivos creados / modificados en Fase 1
-- `src/components/cliente/ModalesAuth.tsx` — ModalLogin, ModalRegistro, ModalPerfil, ModalCarnetSocio (reales)
-- `src/components/cliente/ModalesGlobales.tsx` — Importa ModalesAuth; resto de modales intactos
-- `src/components/cliente/Navbar.tsx` — Usa useSesion(): menús condicionales React, iniciales avatar, puntos
-- `src/lib/ui/cliente.ts` — setSesion/manejarLogin/manejarRegistro → stubs vacíos (migrado a SesionContext)
+## Archivos creados / modificados en Fase 2
+- `src/dtos/cartelera.ts` — SedeDTO, PeliculaCarteleraDTO, FuncionResumenDTO, DiaCarteleraDTO
+- `src/daos/SedeDao.ts` — DAO para sedes con ciudad y región desde Supabase
+- `src/daos/PeliculaDao.ts` — DAO para cartelera, géneros, formatos y funciones
+- `src/services/carteleraService.ts` — Fechas reales (7 días), agrupación y filtrado en memoria
+- `src/services/__tests__/carteleraService.test.ts` — Tests unitarios e integración con Supabase (5 tests ok)
+- `src/components/cliente/vistas/Inicio.tsx` — Conectado a Supabase: carrusel hero, filtros y tarjetas reales
+- `src/components/cliente/ModalesGlobales.tsx` — `modal-sede` y `modal-dulceria-sede` dinámicos desde BD
+- `src/components/cliente/Navbar.tsx` — Chip de sede sincronizado y fondo con blur al scrollear
+- `src/lib/ui/cliente.ts` — Stubs de filtros para evitar mutación DOM; trailer soporta URLs de YouTube
+- `supabase/migrations/20261013_003_seed_funciones_cartelera.sql` — Seed de funciones semana actual
 
 ## Decisiones clave
-- **ROL cliente UUID:** `44444444-4444-4444-4444-444444444444`
-- **nivel_socio:** Bronce=1, Plata=2, Oro=3 (seeded en BD)
-- **Invitado permitido:** compra sin registro, sin beneficios de socio
-- **Pago simulado** (sin Culqi real aún)
-- **RLS:** se activa por flujo al terminar cada módulo; esquema `public` con grants a `anon` y `authenticated` (migración `20261013_002`)
-- **Cambios en BD → registrar en `supabase/migrations/` comentado**
-- **Vitest excluido del tsconfig** para evitar conflicto postcss/Vite vs Next
-- **Playwright no disponible** en el entorno → verificación manual en browser
-
-## UUIDs de Roles (fijos en BD)
-- admin_general: `11111111-1111-1111-1111-111111111111`
-- admin_sede:    `22222222-2222-2222-2222-222222222222`
-- counter:       `33333333-3333-3333-3333-333333333333`
-- cliente:       `44444444-4444-4444-4444-444444444444`
+- **UUID cliente:** `44444444-4444-4444-4444-444444444444` | Bronce=1, Plata=2, Oro=3
+- **Invitado permitido:** compra sin registro | Pago simulado provisional
+- **Migración 20261013_003:** funciones desplazadas al rango actual (2026-10-13+) y sedes 2 y 3 habilitadas
+- **Vitest:** carga `.env.local` nativamente sin dependencias ESM
+- **Detalle temporal:** `pelicula/[id]` acepta tanto UUIDs como slugs previos
 
 ## Aprendizajes y errores a evitar
-- `tsc --noEmit | Select-String "src/"` para ver solo errores propios
-- `fecha_nacimiento` en tabla `socio` (no `fecha_nac`)
-- Los errores de `.next/types/validator.ts` son inofensivos del generador de Next 16
-- `rol` tiene columna `codigo` (no `nombre`) y `nombre_rol` para el label
+- PostgREST joins: usar `sala(...)` y `formato_proyeccion(...)` sin alias de columna en FK
+- No mutar DOM con `innerHTML` en elementos gestionados por React (evita `removeChild` error)
+- `fecha_nacimiento` vive en tabla `socio`, no en `usuario`
 
-## Próximos Pasos — Fase 2
-1. Crear `src/daos/SedeDao.ts` → obtener sedes con ciudad desde BD
-2. Crear `src/daos/PeliculaDao.ts` → cartelera real filtrada por sede/fecha
-3. Actualizar `Inicio.tsx` para cargar datos reales (reemplazar SEDES hardcodeado)
-4. Actualizar `data.ts` → reemplazar SEDES por fetch a BD, o eliminar donde ya no sea necesario
+## Próximos Pasos — Fase 3
+1. Crear `src/daos/FuncionDao.ts` (funciones agrupadas por sede, formato y fecha)
+2. Crear `src/services/funcionService.ts` (lógica de selección de función y horarios)
+3. Crear componente dinámico `DetallePelicula.tsx` que reciba `id` (UUID o slug) y cargue de BD
+4. Reemplazar los 10 archivos estáticos en `src/components/cliente/detalle/`
 
 ## Patrones de diseño en uso
-- **Context Pattern** → SesionContext
-- **Observer Pattern** → onAuthStateChange de Supabase
-- **DAO Pattern** → (iniciando Fase 2)
-- **Service Layer** → (iniciando Fase 2)
-- **Strategy Pattern** → Motor de tarifas (Fase 4)
+- **Context + Observer** → SesionContext + onAuthStateChange
+- **DAO Pattern** → SedeDao, PeliculaDao
+- **Service Layer** → CarteleraService
+- **Singleton Pattern** → cliente Supabase

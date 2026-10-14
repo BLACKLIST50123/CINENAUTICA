@@ -5,6 +5,7 @@
 // - Muestra nombre real del socio en el avatar y el menú.
 // - Cierre de sesión real via Supabase.
 
+import { useEffect, useState } from "react";
 import { abrirModalLegal, toggleMenuMovil } from "@/src/lib/ui/cliente";
 import { abrirModal, abrirModalLogin, abrirModalRegistro } from "@/src/lib/ui/common";
 import { abrirMisCompras, abrirVistaPromociones, abrirVistaUbicacion, cambiarVista, intentarSalirDelFlujoDeCompra, irAVistaContacto, pedirSedeParaDulceria, vistaActual } from "@/src/lib/ui/nav";
@@ -12,6 +13,16 @@ import { useSesion } from "@/src/context/SesionContext";
 
 export default function Navbar() {
   const { usuario, socio, cargando, logout } = useSesion();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    function handleScroll() {
+      setScrolled(window.scrollY > 30);
+    }
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Determinar si hay sesión activa y si es un cliente (no personal)
   const haySesion = !!usuario && !cargando;
@@ -30,7 +41,14 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 bg-gradient-to-b from-black/80 to-transparent py-4 px-6 md:px-12 flex justify-between items-center" id="barra-navegacion">
+      <header
+        className={`fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 py-4 px-6 md:px-12 flex justify-between items-center ${
+          scrolled
+            ? "bg-dark-950/95 backdrop-blur-md shadow-xl border-b border-white/10"
+            : "bg-gradient-to-b from-black/80 to-transparent"
+        }`}
+        id="barra-navegacion"
+      >
         <a className="flex items-center gap-2 group" href="#" onClick={(event) => { intentarSalirDelFlujoDeCompra(() => cambiarVista(vistaActual(), 'vista-inicio')); event.preventDefault(); }}>
           <img alt="Logo" className="h-12 w-auto object-contain drop-shadow-md" src="/img/logo/logocinenautica.png" />
           {" "}

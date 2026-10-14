@@ -261,44 +261,14 @@ export function toggleMetodoPago(..._x: any[]) {
     $('formulario-tarjeta').classList.toggle('hidden', y); $('formulario-yape').classList.toggle('hidden', !y);
 }
 
-/* ---------- Filtros de la cartelera: Película -> Ciudad -> Sede -> Fecha (lógica de prueba) ---------- */
+/* ---------- Filtros de la cartelera — MIGRADO A ESTADO REACT EN Inicio.tsx ---------- */
+// El filtrado, selección de ciudad, sede y fechas ahora lo maneja Inicio.tsx de forma reactiva.
+// Se dejan como stubs para no romper llamadas externas pendientes.
 export let fechaInicio = 'd0';
-export function alCambiarCiudadInicio(..._x: any[]) {
-    const c = $('f-ciudad').value, sed = $('f-sede');
-    [...sed.options].forEach(o => { o.hidden = o.value && c && o.dataset.ciudad !== c; });
-    if (sed.selectedOptions[0] && sed.selectedOptions[0].hidden) sed.value = '';
-    aplicarFiltroInicio();
-}
-export function elegirFechaInicio(btn?, fecha?, ..._x: any[]) {
-    $$('#barra-filtros-inicio .chip-fecha').forEach(b => b.classList.toggle('activo', b === btn));
-    fechaInicio = fecha; aplicarFiltroInicio();
-}
-export function aplicarFiltroInicio(..._x: any[]) {
-    const peli = $('f-peli').value, ciudad = $('f-ciudad').value, sede = $('f-sede').value;
-    const sedesDeCiudad = ciudad ? Object.values(SEDES).filter(s => s.ciudad === ciudad).map(s => s.id) : null;
-    let n = 0;
-    $$('#grid-cartelera [data-peli]').forEach(c => {
-        const pares = c.dataset.sf.split(' ');
-        const ok = (!peli || c.dataset.peli === peli) && pares.some(p => {
-            const [s, d] = p.split(':');
-            return d === fechaInicio && (!sede || s === sede) && (!sedesDeCiudad || sedesDeCiudad.includes(s));
-        });
-        c.style.display = ok ? '' : 'none'; if (ok) n++;
-    });
-    $('cartelera-vacia').classList.toggle('hidden', n > 0);
-    $('rf-cant').innerHTML = `<i class="fa-solid fa-film"></i> ${n} película${n === 1 ? '' : 's'}`;
-    const rc = $('rf-ciudad'), rs = $('rf-sede');
-    rc.classList.toggle('hidden', !ciudad); rc.innerHTML = `<i class="fa-solid fa-city"></i> ${ciudad}`;
-    rs.classList.toggle('hidden', !sede); rs.innerHTML = sede ? `<i class="fa-solid fa-location-dot"></i> ${SEDES[sede].nombre}` : '';
-    $('rf-fecha').innerHTML = `<i class="fa-regular fa-calendar"></i> ${FECHA_CORTA[fechaInicio]}`;
-    const lbl = sede ? SEDES[sede].nombre : (ciudad || 'Todas las sedes');
-    $('sede-nav-label').textContent = lbl; $('sede-nav-label-movil').textContent = lbl;
-}
-export function limpiarFiltrosInicio(..._x: any[]) {
-    $('f-peli').value = ''; $('f-ciudad').value = ''; $('f-sede').value = '';
-    alCambiarCiudadInicio();
-    elegirFechaInicio($$('#barra-filtros-inicio .chip-fecha')[0], 'd0');
-}
+export function alCambiarCiudadInicio(..._x: any[]) {}
+export function elegirFechaInicio(btn?: any, fecha?: any, ..._x: any[]) {}
+export function aplicarFiltroInicio(..._x: any[]) {}
+export function limpiarFiltrosInicio(..._x: any[]) {}
 /* ---------- Carrusel ---------- */
 export let slideActivo = 0;
 export function moverCarrusel(dir?, ..._x: any[]) {
@@ -317,9 +287,29 @@ export function toggleMenuMovil(abrir?, ..._x: any[]) {
 /* ---------- Modales con contenido ---------- */
 export const toggleUserProfile = (..._x: any[]) => abrirModal('modal-perfil');
 export const cerrarModalTrailer = (..._x: any[]) => { cerrarModal('modal-trailer'); setTimeout(() => { $('trailer-iframe').src = ''; }, 200); };
-export function abrirModalTrailer(id?, ..._x: any[]) {
-    const t = TRAILERS[id] || TRAILERS.spiderman;
-    $('trailer-titulo').textContent = `Tráiler - ${t.titulo}`; $('trailer-iframe').src = t.url; abrirModal('modal-trailer');
+export function abrirModalTrailer(idOrUrl?: string, titulo?: string, ..._x: any[]) {
+    let url = "";
+    let title = titulo || "Tráiler";
+
+    if (idOrUrl && (idOrUrl.startsWith("http://") || idOrUrl.startsWith("https://"))) {
+        if (idOrUrl.includes("watch?v=")) {
+            url = idOrUrl.replace("watch?v=", "embed/") + (idOrUrl.includes("?") ? "&" : "?") + "autoplay=1";
+        } else if (idOrUrl.includes("youtu.be/")) {
+            url = idOrUrl.replace("youtu.be/", "www.youtube.com/embed/") + "?autoplay=1";
+        } else {
+            url = idOrUrl;
+        }
+    } else {
+        const t = TRAILERS[idOrUrl || ""] || TRAILERS.spiderman;
+        url = t.url;
+        title = t.titulo;
+    }
+
+    const elTit = $('trailer-titulo');
+    const elIfr = $('trailer-iframe') as HTMLIFrameElement | null;
+    if (elTit) elTit.textContent = `Tráiler - ${title}`;
+    if (elIfr) elIfr.src = url;
+    abrirModal('modal-trailer');
 }
 export function abrirModalLegal(k?, ..._x: any[]) {
     const i = LEGAL[k]; if (!i) return;
@@ -385,14 +375,7 @@ export function aplicarVistaActual() {
     const p = window.location.pathname;
     setSesion(S.sesion);
     if (p === '/') {
-        if (S.sedeNav !== undefined) {
-            const id = S.sedeNav;
-            if (id) { $('f-ciudad').value = SEDES[id].ciudad; alCambiarCiudadInicio(); $('f-sede').value = id; }
-            else { $('f-ciudad').value = ''; alCambiarCiudadInicio(); $('f-sede').value = ''; }
-            S.sedeNav = undefined;
-            aplicarFiltroInicio();
-            setTimeout(() => $('barra-filtros-inicio').scrollIntoView({ behavior: 'smooth', block: 'center' }), 450);
-        } else { $('f-ciudad').value = ''; aplicarFiltroInicio(); }
+        // La vista de inicio ahora se controla reactivamente por Inicio.tsx
     } else if (p.startsWith('/pelicula/')) {
         $$('#contenido-detalle iframe').forEach((f) => { if (f.dataset.src) f.src = f.dataset.src; });
     } else if (p === '/asientos') {

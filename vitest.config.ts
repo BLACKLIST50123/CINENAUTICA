@@ -1,19 +1,32 @@
 import { defineConfig } from 'vitest/config';
-import react from '@vitejs/plugin-react';
+import fs from 'fs';
 import path from 'path';
 
-// Configuración de Vitest para testear los services de negocio
-// (motor de tarifas, validaciones, cálculo de puntos, etc.)
+// Parsear .env.local de forma nativa sin dependencias ESM
+function cargarEnvLocal() {
+  const env: Record<string, string> = {};
+  const envPath = path.resolve(__dirname, '.env.local');
+  if (fs.existsSync(envPath)) {
+    const lines = fs.readFileSync(envPath, 'utf-8').split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      const idx = trimmed.indexOf('=');
+      if (idx !== -1) {
+        const key = trimmed.slice(0, idx).trim();
+        const val = trimmed.slice(idx + 1).trim();
+        env[key] = val;
+      }
+    }
+  }
+  return env;
+}
+
 export default defineConfig({
-  plugins: [react()],
   test: {
-    environment: 'node', // los services no dependen del DOM
+    environment: 'node',
     globals: true,
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'html'],
-      include: ['src/services/**', 'src/daos/**'],
-    },
+    env: cargarEnvLocal(),
   },
   resolve: {
     alias: {

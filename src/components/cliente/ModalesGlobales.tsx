@@ -5,12 +5,36 @@
 // React reales importados desde ModalesAuth.tsx, que usan useSesion() con Supabase.
 // El resto de modales (trailer, legal, sede, promo, dulcería) permanece igual por ahora.
 
+import { useEffect, useState } from "react";
 import { abrirModalLegal, alCambiarCiudadDulceria, cerrarModalTrailer, validarSedeDulceria } from "@/src/lib/ui/cliente";
 import { cerrarModal, cerrarModalLegal, cerrarModalPromoBanner } from "@/src/lib/ui/common";
 import { abrirDetallePelicula, confirmarSedeDulceria, elegirSedeNav } from "@/src/lib/ui/nav";
 import { ModalLogin, ModalRegistro, ModalPerfil, ModalCarnetSocio } from "./ModalesAuth";
+import { SedeDao } from "@/src/daos/SedeDao";
+import type { SedeDTO } from "@/src/dtos/cartelera";
 
 export default function ModalesGlobales() {
+  const [sedes, setSedes] = useState<SedeDTO[]>([]);
+
+  useEffect(() => {
+    SedeDao.obtenerSedes()
+      .then(setSedes)
+      .catch((err) => console.error("Error al cargar sedes para modales:", err));
+  }, []);
+
+  // Agrupar sedes por región y ciudad
+  const sedesPorGrupo = sedes.reduce((acc, s) => {
+    const grupo = `${s.region.nombre} · ${s.ciudad.nombre}`;
+    if (!acc[grupo]) acc[grupo] = [];
+    acc[grupo].push(s);
+    return acc;
+  }, {} as Record<string, SedeDTO[]>);
+
+  // Ciudades únicas para el selector de dulcería
+  const ciudadesUnicas = Array.from(
+    new Set(sedes.map((s) => s.ciudad.nombre))
+  ).sort();
+
   return (
     <>
       {/* ── Modales de Auth (lógica real con Supabase) ── */}
@@ -145,7 +169,7 @@ export default function ModalesGlobales() {
             Te mostraremos la cartelera y las funciones de esa sede.
           </p>
           <div className="overflow-y-auto hide-scrollbar pr-1 -mr-1 flex-grow">
-            <button className="w-full text-left bg-dark-900 hover:bg-dark-700 border border-white/5 hover:border-brand-yellow rounded-xl p-3 flex items-center gap-3 transition-colors" type="button" onClick={(event) => { elegirSedeNav(''); }}>
+            <button className="w-full text-left bg-dark-900 hover:bg-dark-700 border border-white/5 hover:border-brand-yellow rounded-xl p-3 flex items-center gap-3 transition-colors" type="button" onClick={() => { elegirSedeNav(''); }}>
               <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center">
                 <i className="fa-solid fa-globe text-slate-400 text-sm"></i>
               </div>
@@ -153,143 +177,43 @@ export default function ModalesGlobales() {
                 Ver todas las sedes
               </span>
             </button>
-            {" "}
-            <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mt-4 mb-2">
-              Áncash · Chimbote
-            </p>
-            <button className="w-full text-left bg-dark-900 hover:bg-dark-700 border border-white/5 hover:border-brand-yellow rounded-xl p-3 flex items-center gap-3 transition-colors mb-2" type="button" onClick={(event) => { elegirSedeNav('s1'); }}>
-              <div className="w-9 h-9 rounded-lg bg-brand-blue/10 border border-brand-blue/30 flex items-center justify-center flex-shrink-0">
-                <i className="fa-solid fa-location-dot text-brand-blue text-sm"></i>
-              </div>
-              <div className="min-w-0 flex-grow">
-                <p className="text-white font-semibold text-sm truncate">
-                  Náutica Megaplaza
+
+            {Object.entries(sedesPorGrupo).map(([grupo, sedesDelGrupo]) => (
+              <div key={grupo} className="mt-4">
+                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-2">
+                  {grupo}
                 </p>
-                <p className="text-slate-500 text-xs truncate">
-                  Av. Principal 123, Megaplaza Chimbote
-                </p>
+                {sedesDelGrupo.map((sede) => (
+                  <button
+                    key={sede.id_sede}
+                    className="w-full text-left bg-dark-900 hover:bg-dark-700 border border-white/5 hover:border-brand-yellow rounded-xl p-3 flex items-center gap-3 transition-colors mb-2"
+                    type="button"
+                    onClick={() => { elegirSedeNav(String(sede.id_sede)); }}
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-brand-blue/10 border border-brand-blue/30 flex items-center justify-center flex-shrink-0">
+                      <i className="fa-solid fa-location-dot text-brand-blue text-sm"></i>
+                    </div>
+                    <div className="min-w-0 flex-grow">
+                      <p className="text-white font-semibold text-sm truncate">
+                        {sede.nombre}
+                      </p>
+                      <p className="text-slate-500 text-xs truncate">
+                        {sede.direccion}
+                      </p>
+                    </div>
+                    <i className="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
+                  </button>
+                ))}
               </div>
-              <i className="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
-            </button>
-            <button className="w-full text-left bg-dark-900 hover:bg-dark-700 border border-white/5 hover:border-brand-yellow rounded-xl p-3 flex items-center gap-3 transition-colors mb-2" type="button" onClick={(event) => { elegirSedeNav('s2'); }}>
-              <div className="w-9 h-9 rounded-lg bg-brand-blue/10 border border-brand-blue/30 flex items-center justify-center flex-shrink-0">
-                <i className="fa-solid fa-location-dot text-brand-blue text-sm"></i>
-              </div>
-              <div className="min-w-0 flex-grow">
-                <p className="text-white font-semibold text-sm truncate">
-                  Náutica Costa Azul
-                </p>
-                <p className="text-slate-500 text-xs truncate">
-                  Av. Pardo 1450, Chimbote
-                </p>
-              </div>
-              <i className="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
-            </button>
-            {" "}
-            <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mt-4 mb-2">
-              Áncash · Nuevo Chimbote
-            </p>
-            <button className="w-full text-left bg-dark-900 hover:bg-dark-700 border border-white/5 hover:border-brand-yellow rounded-xl p-3 flex items-center gap-3 transition-colors mb-2" type="button" onClick={(event) => { elegirSedeNav('s3'); }}>
-              <div className="w-9 h-9 rounded-lg bg-brand-blue/10 border border-brand-blue/30 flex items-center justify-center flex-shrink-0">
-                <i className="fa-solid fa-location-dot text-brand-blue text-sm"></i>
-              </div>
-              <div className="min-w-0 flex-grow">
-                <p className="text-white font-semibold text-sm truncate">
-                  Náutica Nuevo Chimbote
-                </p>
-                <p className="text-slate-500 text-xs truncate">
-                  Av. Universitaria 880, Nuevo Chimbote
-                </p>
-              </div>
-              <i className="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
-            </button>
-            {" "}
-            <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mt-4 mb-2">
-              La Libertad · Trujillo
-            </p>
-            <button className="w-full text-left bg-dark-900 hover:bg-dark-700 border border-white/5 hover:border-brand-yellow rounded-xl p-3 flex items-center gap-3 transition-colors mb-2" type="button" onClick={(event) => { elegirSedeNav('s4'); }}>
-              <div className="w-9 h-9 rounded-lg bg-brand-blue/10 border border-brand-blue/30 flex items-center justify-center flex-shrink-0">
-                <i className="fa-solid fa-location-dot text-brand-blue text-sm"></i>
-              </div>
-              <div className="min-w-0 flex-grow">
-                <p className="text-white font-semibold text-sm truncate">
-                  Náutica Trujillo Centro
-                </p>
-                <p className="text-slate-500 text-xs truncate">
-                  Jr. Pizarro 540, Trujillo
-                </p>
-              </div>
-              <i className="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
-            </button>
-            <button className="w-full text-left bg-dark-900 hover:bg-dark-700 border border-white/5 hover:border-brand-yellow rounded-xl p-3 flex items-center gap-3 transition-colors mb-2" type="button" onClick={(event) => { elegirSedeNav('s5'); }}>
-              <div className="w-9 h-9 rounded-lg bg-brand-blue/10 border border-brand-blue/30 flex items-center justify-center flex-shrink-0">
-                <i className="fa-solid fa-location-dot text-brand-blue text-sm"></i>
-              </div>
-              <div className="min-w-0 flex-grow">
-                <p className="text-white font-semibold text-sm truncate">
-                  Náutica Mall Trujillo
-                </p>
-                <p className="text-slate-500 text-xs truncate">
-                  Av. Mansiche 2100, Trujillo
-                </p>
-              </div>
-              <i className="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
-            </button>
-            {" "}
-            <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mt-4 mb-2">
-              Lima · Lima Metropolitana
-            </p>
-            <button className="w-full text-left bg-dark-900 hover:bg-dark-700 border border-white/5 hover:border-brand-yellow rounded-xl p-3 flex items-center gap-3 transition-colors mb-2" type="button" onClick={(event) => { elegirSedeNav('s6'); }}>
-              <div className="w-9 h-9 rounded-lg bg-brand-blue/10 border border-brand-blue/30 flex items-center justify-center flex-shrink-0">
-                <i className="fa-solid fa-location-dot text-brand-blue text-sm"></i>
-              </div>
-              <div className="min-w-0 flex-grow">
-                <p className="text-white font-semibold text-sm truncate">
-                  Náutica Lima Norte
-                </p>
-                <p className="text-slate-500 text-xs truncate">
-                  Av. Alfredo Mendiola 3698, Los Olivos
-                </p>
-              </div>
-              <i className="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
-            </button>
-            <button className="w-full text-left bg-dark-900 hover:bg-dark-700 border border-white/5 hover:border-brand-yellow rounded-xl p-3 flex items-center gap-3 transition-colors mb-2" type="button" onClick={(event) => { elegirSedeNav('s7'); }}>
-              <div className="w-9 h-9 rounded-lg bg-brand-blue/10 border border-brand-blue/30 flex items-center justify-center flex-shrink-0">
-                <i className="fa-solid fa-location-dot text-brand-blue text-sm"></i>
-              </div>
-              <div className="min-w-0 flex-grow">
-                <p className="text-white font-semibold text-sm truncate">
-                  Náutica Miraflores
-                </p>
-                <p className="text-slate-500 text-xs truncate">
-                  Av. Larco 812, Miraflores
-                </p>
-              </div>
-              <i className="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
-            </button>
-            <button className="w-full text-left bg-dark-900 hover:bg-dark-700 border border-white/5 hover:border-brand-yellow rounded-xl p-3 flex items-center gap-3 transition-colors mb-2" type="button" onClick={(event) => { elegirSedeNav('s8'); }}>
-              <div className="w-9 h-9 rounded-lg bg-brand-blue/10 border border-brand-blue/30 flex items-center justify-center flex-shrink-0">
-                <i className="fa-solid fa-location-dot text-brand-blue text-sm"></i>
-              </div>
-              <div className="min-w-0 flex-grow">
-                <p className="text-white font-semibold text-sm truncate">
-                  Náutica San Miguel
-                </p>
-                <p className="text-slate-500 text-xs truncate">
-                  Av. La Marina 2355, San Miguel
-                </p>
-              </div>
-              <i className="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
-            </button>
+            ))}
           </div>
         </div>
       </div>
       <div className="hidden fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center opacity-0 transition-opacity duration-200 p-4" id="modal-dulceria-sede">
         <div className="bg-dark-800 p-6 md:p-8 rounded-2xl border border-white/10 shadow-2xl max-w-md w-full relative transform scale-95 transition-transform duration-200">
-          <button className="absolute top-4 right-4 text-slate-400 hover:text-white" onClick={(event) => { cerrarModal('modal-dulceria-sede'); }}>
+          <button className="absolute top-4 right-4 text-slate-400 hover:text-white" onClick={() => { cerrarModal('modal-dulceria-sede'); }}>
             <i className="fa-solid fa-xmark text-xl"></i>
           </button>
-          {" "}
           <div className="w-14 h-14 rounded-full bg-brand-yellow/10 border border-brand-yellow/30 flex items-center justify-center mb-4">
             <i className="fa-solid fa-bowl-food text-2xl text-brand-yellow"></i>
           </div>
@@ -301,68 +225,30 @@ export default function ModalesGlobales() {
           </p>
           <div className="space-y-5">
             <div className="filtro-campo">
-              <label>
-                Ciudad
-              </label>
+              <label>Ciudad</label>
               <i className="fa-solid fa-city"></i>
-              <select className="filtro-select" id="dulceria-ciudad" onChange={(event) => { alCambiarCiudadDulceria(); }}>
-                <option value="">
-                  Selecciona una ciudad
-                </option>
-                <option value="Chimbote">
-                  Chimbote
-                </option>
-                <option value="Nuevo Chimbote">
-                  Nuevo Chimbote
-                </option>
-                <option value="Trujillo">
-                  Trujillo
-                </option>
-                <option value="Lima Metropolitana">
-                  Lima Metropolitana
-                </option>
+              <select className="filtro-select" id="dulceria-ciudad" onChange={() => { alCambiarCiudadDulceria(); }}>
+                <option value="">Selecciona una ciudad</option>
+                {ciudadesUnicas.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
               </select>
             </div>
             <div className="filtro-campo">
-              <label>
-                Sede
-              </label>
+              <label>Sede</label>
               <i className="fa-solid fa-location-dot"></i>
-              <select className="filtro-select" disabled id="dulceria-sede" onChange={(event) => { validarSedeDulceria(); }}>
-                <option value="">
-                  Selecciona una sede
-                </option>
-                <option data-ciudad="Chimbote" value="s1">
-                  Náutica Megaplaza
-                </option>
-                <option data-ciudad="Chimbote" value="s2">
-                  Náutica Costa Azul
-                </option>
-                <option data-ciudad="Nuevo Chimbote" value="s3">
-                  Náutica Nuevo Chimbote
-                </option>
-                <option data-ciudad="Trujillo" value="s4">
-                  Náutica Trujillo Centro
-                </option>
-                <option data-ciudad="Trujillo" value="s5">
-                  Náutica Mall Trujillo
-                </option>
-                <option data-ciudad="Lima Metropolitana" value="s6">
-                  Náutica Lima Norte
-                </option>
-                <option data-ciudad="Lima Metropolitana" value="s7">
-                  Náutica Miraflores
-                </option>
-                <option data-ciudad="Lima Metropolitana" value="s8">
-                  Náutica San Miguel
-                </option>
+              <select className="filtro-select" disabled id="dulceria-sede" onChange={() => { validarSedeDulceria(); }}>
+                <option value="">Selecciona una sede</option>
+                {sedes.map((s) => (
+                  <option key={s.id_sede} data-ciudad={s.ciudad.nombre} value={String(s.id_sede)}>
+                    {s.nombre}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
-          {" "}
-          <button className="w-full mt-6 bg-brand-yellow hover:bg-yellow-400 disabled:bg-slate-700 disabled:text-slate-500 disabled:hover:bg-slate-700 text-black py-3.5 rounded-xl font-bold transition-colors flex items-center justify-center gap-2" disabled id="btn-confirmar-sede-dulceria" type="button" onClick={(event) => { confirmarSedeDulceria(); }}>
+          <button className="w-full mt-6 bg-brand-yellow hover:bg-yellow-400 disabled:bg-slate-700 disabled:text-slate-500 disabled:hover:bg-slate-700 text-black py-3.5 rounded-xl font-bold transition-colors flex items-center justify-center gap-2" disabled id="btn-confirmar-sede-dulceria" type="button" onClick={() => { confirmarSedeDulceria(); }}>
             Continuar a Dulcería
-            {" "}
             <i className="fa-solid fa-bowl-food"></i>
           </button>
         </div>
