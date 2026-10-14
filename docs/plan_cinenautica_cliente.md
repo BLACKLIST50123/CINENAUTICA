@@ -345,25 +345,25 @@ Body: { funcionId, asientosSeleccionados, productosSel, cupon?, usarPuntos?, com
 
 ---
 
-### FASE 9 — Historial de Compras
+### FASE 9 — Historial de Compras ✅ COMPLETADA (2026-10-14)
 
-**Archivos a tocar:**
-- `src/components/cliente/vistas/Historial.tsx`
-- `src/daos/OrdenDao.ts` (ampliar)
-
-**Lógica a implementar:**
-- Listar órdenes del socio desde BD (estado: Pagada, Cancelada, Contingencia).
-- Ver detalle de cada orden.
-- Re-descargar ticket de órdenes pasadas.
+**Archivos implementados:**
+- `src/components/cliente/vistas/Historial.tsx` — Vista dinámica con estados de carga, búsqueda de invitados por correo, listado de órdenes reales de Supabase, badges de estado (`Pagada`, `Cancelada`, `Pendiente`), posters, detalles expandibles y redirección directa al ticket.
+- `src/daos/OrdenDao.ts` — Ampliado con `obtenerOrdenesPorUsuario(idUsuario, correo)` que consulta órdenes, sedes, comprobantes, tickets y posters.
+- `src/services/historialService.ts` — Lógica de negocio, formateador de fechas peruanas, cálculo de badges visuales y resúmenes de entradas y dulcería.
+- `src/services/__tests__/historialService.test.ts` — 4 tests unitarios pasando al 100%.
 
 ---
 
-### FASE 10 — Vistas Estáticas con Datos Reales
+### FASE 10 — Vistas Estáticas con Datos Reales ✅ COMPLETADA (2026-10-14)
 
-**Archivos a tocar:**
-- `src/components/cliente/vistas/Ubicacion.tsx` → sedes desde BD + coords reales.
-- `src/components/cliente/vistas/Promociones.tsx` → cupones activos desde `cupon JOIN cupon_sede`.
-- `src/components/cliente/vistas/Contacto.tsx` → guardar mensaje en `caso_atencion_cliente`.
+**Archivos implementados:**
+- `src/components/cliente/vistas/Ubicacion.tsx` — Sedes reales cargadas desde `SedeDao.obtenerSedes()`, mapa interactivo por coordenadas, horarios, teléfonos y redirección a cartelera por sede seleccionada.
+- `src/components/cliente/vistas/Promociones.tsx` — Cupones activos cargados en tiempo real desde Supabase (`CuponDao.obtenerCuponesActivos()`), botón de copiado con feedback visual / toast y enlace a beneficios de Socio Náutica.
+- `src/components/cliente/vistas/Contacto.tsx` — Formulario controlado con validación, feedback en tiempo real, guardado en tabla `mensaje_contacto` en Supabase y auto-completado para usuarios logueados.
+- `src/daos/ContactoDao.ts` — DAO para persistencia de mensajes de atención al cliente.
+- `supabase/migrations/20261014_006_contacto.sql` — Migración SQL para tabla `mensaje_contacto` con RLS.
+- `src/daos/__tests__/contactoDao.test.ts` — Test de integración pasando.
 
 ---
 
