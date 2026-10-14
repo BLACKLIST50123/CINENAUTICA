@@ -51,6 +51,8 @@ let _accionSalirPendiente: (() => void) | null = null;
 
 export function tieneCompraActiva(): boolean {
     if (typeof window === "undefined") return false;
+    // Si la ruta es /ticket, la compra ya finalizó y no debe advertir de salida
+    if (window.location.pathname.startsWith("/ticket")) return false;
     if ((window as any).__tieneAsientosSeleccionados) return true;
     try {
         const raw = sessionStorage.getItem("cinenautica_asientos_seleccionados");
@@ -111,7 +113,16 @@ export function cancelarSalirDelFlujoDeCompra() {
 
 export const abrirVistaPromociones = () => go("/promociones");
 export const abrirVistaUbicacion = () => go("/ubicacion");
-export const abrirMisCompras = () => go("/historial");
+export const abrirMisCompras = () => {
+    let sesionActiva = false;
+    if (typeof window !== "undefined") {
+        try {
+            const raw = localStorage.getItem("cinenautica_usuario") || sessionStorage.getItem("cinenautica_usuario");
+            if (raw) sesionActiva = true;
+        } catch {}
+    }
+    go(sesionActiva ? "/socio?tab=compras" : "/historial");
+};
 export const irAVistaContacto = () => { S.contactoPrev = window.location.pathname; go("/contacto"); };
 export const manejarFormularioContacto = (e: any) => {
     e.preventDefault(); mostrarToast("Mensaje enviado (demostración).", "exito"); go(S.contactoPrev || "/");

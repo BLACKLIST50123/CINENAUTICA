@@ -287,19 +287,22 @@ export default function DetallePelicula({ idPelicula }: DetallePeliculaProps) {
         <div className="absolute inset-0 bg-gradient-to-t from-dark-900 via-dark-900/70 to-black/40"></div>
         <div className="absolute inset-0 bg-gradient-to-r from-dark-900/90 via-dark-900/40 to-transparent"></div>
 
-        {/* Botón Volver */}
-        <button
-          className="absolute top-24 left-6 md:left-12 z-30 text-white hover:text-brand-yellow bg-black/50 hover:bg-black/80 px-4 py-2.5 rounded-full backdrop-blur-md transition-all flex items-center gap-2 border border-white/10 shadow-lg"
-          onClick={() => router.push("/")}
-          aria-label="Volver al inicio"
-        >
-          <i className="fa-solid fa-arrow-left"></i>
-          <span className="text-sm font-semibold hidden sm:inline">Cartelera</span>
-        </button>
       </div>
 
       {/* ── Contenedor Principal de Información ── */}
       <div className="max-w-[1240px] mx-auto px-6 md:px-12 -mt-32 md:-mt-44 relative z-20">
+        {/* Botón Volver a Cartelera a la altura del póster */}
+        <div className="mb-4">
+          <button
+            className="text-white hover:text-brand-yellow bg-black/60 hover:bg-black/90 px-4 py-2 rounded-full backdrop-blur-md transition-all inline-flex items-center gap-2 border border-white/10 shadow-lg cursor-pointer text-sm font-semibold group"
+            onClick={() => router.push("/")}
+            aria-label="Volver a la cartelera"
+          >
+            <i className="fa-solid fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
+            <span>Volver a Cartelera</span>
+          </button>
+        </div>
+
         <div className="flex flex-col md:flex-row gap-8 items-start">
           {/* Poster */}
           <div className="w-52 md:w-64 flex-shrink-0 mx-auto md:mx-0">

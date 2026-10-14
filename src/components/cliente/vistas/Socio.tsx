@@ -1,19 +1,31 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import { QRCodeSVG } from "qrcode.react";
 import { useSesion } from "@/src/context/SesionContext";
 import { SocioService } from "@/src/services/socioService";
+import { HistorialService } from "@/src/services/historialService";
 import type { PerfilSocioCompletoDTO } from "@/src/dtos/socio";
+import type { OrdenCompletaDTO } from "@/src/dtos/orden";
 import { abrirModalLogin, abrirModalRegistro, mostrarToast } from "@/src/lib/ui/common";
 
 export default function Socio() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { usuario, esSocio, cargando: cargandoSesion } = useSesion();
 
   const [perfil, setPerfil] = useState<PerfilSocioCompletoDTO | null>(null);
   const [cargandoPerfil, setCargandoPerfil] = useState<boolean>(false);
   const [mostrarModalCarnet, setMostrarModalCarnet] = useState<boolean>(false);
 
+  // Subtabs horizontales
+  const [subtabActivo, setSubtabActivo] = useState<"compras" | "proximamente">("compras");
+  const [ordenes, setOrdenes] = useState<OrdenCompletaDTO[]>([]);
+  const [cargandoOrdenes, setCargandoOrdenes] = useState<boolean>(false);
+
+  // Cargar perfil del socio
   useEffect(() => {
     if (usuario && esSocio) {
       setCargandoPerfil(true);
@@ -27,15 +39,43 @@ export default function Socio() {
         .finally(() => {
           setCargandoPerfil(false);
         });
+
+      // Cargar historial de compras del socio
+      setCargandoOrdenes(true);
+      HistorialService.obtenerHistorial(usuario.id_usuario, usuario.correo)
+        .then((res) => {
+          setOrdenes(res);
+        })
+        .catch((err) => {
+          console.error("Error al cargar compras del socio:", err);
+        })
+        .finally(() => {
+          setCargandoOrdenes(false);
+        });
     } else {
       setPerfil(null);
+      setOrdenes([]);
     }
   }, [usuario, esSocio]);
+
+  // Si viene con parámetro ?tab=compras, activar y bajar al subtab
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "compras") {
+      setSubtabActivo("compras");
+      setTimeout(() => {
+        const el = document.getElementById("seccion-subtabs");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 300);
+    }
+  }, [searchParams]);
 
   const copiarCodigo = () => {
     if (!perfil?.codigo_socio) return;
     navigator.clipboard.writeText(perfil.codigo_socio);
-    mostrarToast("¡Código de socio copiado al portapapeles!", "success");
+    mostrarToast("¡Código de socio copiado al portapapeles!", "exito");
   };
 
   return (
@@ -207,6 +247,198 @@ export default function Socio() {
         </section>
       )}
 
+      {/* ── SUBTABS HORIZONTALES: MIS COMPRAS & PRÓXIMAMENTE ── */}
+      {usuario && esSocio && (
+        <section id="seccion-subtabs" className="max-w-[1200px] mx-auto px-4 md:px-8 mb-16 scroll-mt-28">
+          {/* Header de Tabs */}
+          <div className="flex items-center gap-3 border-b border-white/10 pb-4 mb-8">
+            <button
+              type="button"
+              onClick={() => setSubtabActivo("compras")}
+              className={`flex items-center gap-2.5 px-6 py-3 rounded-xl font-bold text-sm transition-all cursor-pointer ${
+                subtabActivo === "compras"
+                  ? "bg-brand-blue text-white shadow-lg shadow-blue-500/20"
+                  : "bg-dark-800 text-slate-400 hover:text-white hover:bg-dark-700"
+              }`}
+            >
+              <i className="fa-solid fa-receipt"></i>
+              Mis Compras
+              {ordenes.length > 0 && (
+                <span className="ml-1.5 px-2 py-0.5 text-xs bg-white/20 rounded-full font-mono">
+                  {ordenes.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSubtabActivo("proximamente")}
+              className={`flex items-center gap-2.5 px-6 py-3 rounded-xl font-bold text-sm transition-all cursor-pointer ${
+                subtabActivo === "proximamente"
+                  ? "bg-brand-blue text-white shadow-lg shadow-blue-500/20"
+                  : "bg-dark-800 text-slate-400 hover:text-white hover:bg-dark-700"
+              }`}
+            >
+              <i className="fa-solid fa-sparkles text-brand-yellow"></i>
+              Próximamente
+            </button>
+          </div>
+
+          {/* Contenido según Tab */}
+          {subtabActivo === "compras" ? (
+            cargandoOrdenes ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map((n) => (
+                  <div key={n} className="bg-dark-800/60 rounded-2xl border border-white/5 p-5 animate-pulse h-64"></div>
+                ))}
+              </div>
+            ) : ordenes.length === 0 ? (
+              <div className="bg-dark-800/40 rounded-3xl border border-white/5 p-12 text-center max-w-lg mx-auto shadow-2xl">
+                <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 mx-auto flex items-center justify-center text-slate-500 text-2xl mb-4">
+                  <i className="fa-solid fa-ticket-simple"></i>
+                </div>
+                <h4 className="text-lg font-bold text-white mb-2">Aún no tienes compras registradas</h4>
+                <p className="text-slate-400 text-xs mb-6">
+                  Tus entradas de cine y pedidos de dulcería aparecerán listados aquí con sus comprobantes y códigos QR.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => router.push("/")}
+                  className="bg-brand-blue hover:bg-blue-600 text-white font-bold px-6 py-2.5 rounded-xl transition-all text-xs cursor-pointer inline-flex items-center gap-2 shadow-md"
+                >
+                  <i className="fa-solid fa-film"></i>
+                  Explorar Cartelera
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {ordenes.map((ord) => {
+                  const estadoVis = HistorialService.formatearEstado(ord.estado);
+                  const fechaFmt = HistorialService.formatearFecha(ord.fecha_creacion);
+                  const resumenAsientos = HistorialService.obtenerResumenAsientos(ord.entradas);
+                  const resumenProductos = HistorialService.obtenerResumenProductos(ord.productos);
+
+                  return (
+                    <div
+                      key={ord.id_orden}
+                      className="bg-dark-800/90 rounded-2xl border border-white/10 p-5 shadow-xl hover:border-brand-blue/50 transition-all flex flex-col justify-between backdrop-blur-sm"
+                    >
+                      <div>
+                        <div className="flex justify-between items-start mb-3 gap-2">
+                          <span className="bg-brand-blue/10 text-brand-blue text-xs font-bold px-2.5 py-1 rounded-lg border border-brand-blue/30 font-mono">
+                            {ord.codigo_orden}
+                          </span>
+                          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 ${estadoVis.badgeClase}`}>
+                            <i className={estadoVis.icono}></i>
+                            {estadoVis.label}
+                          </span>
+                        </div>
+
+                        <p className="text-slate-500 text-xs mb-3 flex items-center gap-1.5">
+                          <i className="fa-regular fa-clock"></i>
+                          {fechaFmt}
+                        </p>
+
+                        {ord.pelicula ? (
+                          <div className="flex gap-3 mb-3">
+                            {ord.pelicula.poster_url ? (
+                              <div className="w-12 h-16 rounded-lg overflow-hidden shrink-0 relative bg-dark-900 border border-white/10">
+                                <Image
+                                  src={ord.pelicula.poster_url}
+                                  alt={ord.pelicula.titulo}
+                                  fill
+                                  className="object-cover"
+                                  sizes="48px"
+                                  unoptimized
+                                />
+                              </div>
+                            ) : (
+                              <div className="w-12 h-16 rounded-lg bg-dark-900 border border-white/10 flex items-center justify-center shrink-0 text-slate-500 text-lg">
+                                <i className="fa-solid fa-film"></i>
+                              </div>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <h4 className="text-white font-bold text-sm leading-tight truncate">
+                                {ord.pelicula.titulo}
+                              </h4>
+                              <p className="text-slate-400 text-xs mt-1">
+                                {ord.pelicula.fecha} • {ord.pelicula.hora} •{" "}
+                                <span className="text-brand-blue font-semibold">{ord.pelicula.formato}</span>
+                              </p>
+                              <p className="text-slate-500 text-[11px] truncate">
+                                {ord.pelicula.sala} • {ord.nombre_sede}
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mb-3">
+                            <h4 className="text-white font-bold text-sm flex items-center gap-2">
+                              <i className="fa-solid fa-popcorn text-brand-yellow"></i>
+                              Compra de Dulcería
+                            </h4>
+                            <p className="text-slate-500 text-xs mt-1">{ord.nombre_sede}</p>
+                          </div>
+                        )}
+
+                        {ord.entradas && ord.entradas.length > 0 && (
+                          <p className="text-xs text-slate-300 mb-2 flex items-center gap-2 bg-dark-900/60 p-2 rounded-lg border border-white/5">
+                            <i className="fa-solid fa-chair text-brand-red"></i>
+                            <span className="font-semibold text-white truncate">{resumenAsientos}</span>
+                          </p>
+                        )}
+
+                        {resumenProductos && (
+                          <p className="text-xs text-slate-300 mb-3 flex items-start gap-2 bg-dark-900/60 p-2 rounded-lg border border-white/5">
+                            <i className="fa-solid fa-bowl-food text-brand-yellow mt-0.5"></i>
+                            <span className="truncate">{resumenProductos}</span>
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <div className="border-t border-white/10 pt-3 flex justify-between items-center mb-3">
+                          <span className="text-slate-400 text-xs">Total pagado</span>
+                          <span className="text-brand-yellow font-bold text-lg">
+                            S/ {ord.total.toFixed(2)}
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => router.push(`/ticket?orden=${ord.id_orden}`)}
+                          className="w-full bg-brand-blue/15 hover:bg-brand-blue text-brand-blue hover:text-white font-bold text-xs py-2.5 rounded-xl border border-brand-blue/30 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                        >
+                          <i className="fa-solid fa-qrcode"></i>
+                          Ver Ticket y Boleta
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )
+          ) : (
+            /* Subtab Próximamente */
+            <div className="bg-dark-800/60 border border-white/10 rounded-3xl p-10 text-center max-w-xl mx-auto shadow-2xl backdrop-blur-md">
+              <div className="w-16 h-16 rounded-2xl bg-brand-yellow/15 border border-brand-yellow/30 mx-auto flex items-center justify-center text-brand-yellow text-3xl mb-4 shadow-lg">
+                <i className="fa-solid fa-sparkles"></i>
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-3">
+                Próximamente en Socio Náutica
+              </h3>
+              <p className="text-slate-300 text-sm leading-relaxed mb-6">
+                Estamos preparando nuevas funciones y beneficios exclusivos para nuestros socios:
+                canje de combos y productos de dulcería directamente con tus puntos acumulados, cupones sorpresa y preventas con mejores butacas reservadas.
+              </p>
+              <div className="inline-flex items-center gap-2 text-xs font-semibold text-brand-yellow bg-brand-yellow/10 border border-brand-yellow/20 px-4 py-2 rounded-full">
+                <i className="fa-regular fa-clock"></i>
+                Nuevas ventajas muy pronto
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
       {/* ── MODAL CARNET DIGITAL ── */}
       {mostrarModalCarnet && perfil && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
@@ -224,7 +456,6 @@ export default function Socio() {
                     : "linear-gradient(135deg, #451a03 0%, #1c0a00 100%)",
               }}
             >
-              {/* Marca de agua */}
               <div className="absolute right-4 top-4 text-white/5 text-8xl font-black pointer-events-none select-none">
                 <i className="fa-solid fa-film"></i>
               </div>

@@ -1013,7 +1013,7 @@ export default function Asientos({ idFuncionParam }: { idFuncionParam?: string }
                 return (
                   <button
                     key={t.id_tipo_entrada}
-                    className="w-full bg-[#111A2E]/80 hover:bg-[#1A2642] border border-white/5 hover:border-brand-blue/50 p-4 rounded-xl flex justify-between items-center transition-all text-left group"
+                    className="w-full bg-[#050B14] hover:bg-black border border-white/10 hover:border-brand-blue/60 p-4 rounded-xl flex justify-between items-center transition-all text-left group shadow-inner cursor-pointer"
                     type="button"
                     onClick={() => {
                       if (t.codigo === "conadis") {

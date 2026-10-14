@@ -13,6 +13,7 @@
   --font-mono: var(--font-geist-mono);
 
   /* --- COLORES PERSONALIZADOS DE P-NATIVO --- */
+  --color-dark-950: #030712;
   --color-dark-900: #050B14;
   --color-dark-800: #0D1627;
   --color-dark-700: #1A2845;
@@ -1649,8 +1650,27 @@ body {
 }
 
 #stepper-compra {
-  background-color: transparent;
-  backdrop-filter: none;
+  transition: background-color 0.3s ease, backdrop-filter 0.3s ease, -webkit-backdrop-filter 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+#stepper-compra.stepper-scrolled {
+  background-color: rgba(5, 11, 20, 0.92) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+}
+
+#barra-navegacion {
+  transition: background-color 0.3s ease, backdrop-filter 0.3s ease, -webkit-backdrop-filter 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+#barra-navegacion.navbar-scrolled {
+  background-color: rgba(5, 11, 20, 0.92) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
 }
 
 #stepper-compra .bg-brand-yellow {

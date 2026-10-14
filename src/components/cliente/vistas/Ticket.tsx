@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
 import { TicketService } from "@/src/services/ticketService";
 import type { OrdenCompletaDTO } from "@/src/dtos/orden";
+import { limpiarEstadoCompraGlobal } from "@/src/lib/ui/nav";
 
 export default function Ticket() {
   const router = useRouter();
@@ -15,6 +16,9 @@ export default function Ticket() {
   const [puntosGanados, setPuntosGanados] = useState<number>(0);
 
   useEffect(() => {
+    // La compra ya finalizó con éxito: limpiar residuos de asientos o bloqueos temporales
+    limpiarEstadoCompraGlobal();
+
     let idOrden = searchParams.get("orden");
 
     // Si no viene en searchParams, buscar en sessionStorage
@@ -149,7 +153,7 @@ export default function Ticket() {
           {orden.entradas && orden.entradas.length > 0 && (
             <div className="flex flex-col items-center w-full max-w-[360px]">
               <div
-                className="bg-[#fdfcfa] w-full rounded-2xl shadow-2xl overflow-hidden border border-slate-200 text-black flex flex-col"
+                className="bg-[#fdfcfa] w-full shadow-2xl overflow-hidden border border-slate-200 text-black flex flex-col rounded-none"
                 id="ticket-imprimible"
               >
                 {/* Cabecera Ticket */}
@@ -162,7 +166,7 @@ export default function Ticket() {
                       ENTRADA OFICIAL
                     </span>
                   </div>
-                  <i className="fa-solid fa-film text-2xl text-brand-yellow"></i>
+                  <i className="fa-solid fa-film text-2xl text-white"></i>
                 </div>
 
                 <div className="p-6 pb-4 flex-1">
@@ -282,7 +286,7 @@ export default function Ticket() {
           {/* ── 2. COMPROBANTE FISCAL ELECTRÓNICO (BOLETA / FACTURA) ── */}
           <div className="flex flex-col items-center w-full max-w-[360px]">
             <div
-              className="bg-white w-full shadow-2xl p-6 border-t-8 border-slate-800 text-black font-mono text-xs rounded-b-2xl relative"
+              className="bg-white w-full shadow-2xl p-6 border-t-8 border-slate-800 text-black font-mono text-xs rounded-none relative"
               id="comprobante-imprimible"
             >
               {/* Encabezado Fiscal */}

@@ -220,9 +220,27 @@ export default function Pago() {
   };
 
   const formatearVencimiento = (valor: string) => {
-    const soloNumeros = valor.replace(/\D/g, "").slice(0, 4);
-    if (soloNumeros.length >= 3) {
-      setVencimientoTarjeta(`${soloNumeros.slice(0, 2)}/${soloNumeros.slice(2)}`);
+    let soloNumeros = valor.replace(/\D/g, "").slice(0, 4);
+    if (soloNumeros.length === 1 && parseInt(soloNumeros, 10) > 1) {
+      soloNumeros = `0${soloNumeros}`;
+    }
+    if (soloNumeros.length >= 2) {
+      const mes = parseInt(soloNumeros.slice(0, 2), 10);
+      if (mes === 0) {
+        mostrarToast("El mes de expiración no puede ser 00.", "error");
+        setVencimientoTarjeta("");
+        return;
+      }
+      if (mes > 12) {
+        mostrarToast("El mes de expiración debe estar entre 01 y 12.", "error");
+        setVencimientoTarjeta("12/");
+        return;
+      }
+      if (soloNumeros.length >= 3) {
+        setVencimientoTarjeta(`${soloNumeros.slice(0, 2)}/${soloNumeros.slice(2)}`);
+      } else {
+        setVencimientoTarjeta(`${soloNumeros.slice(0, 2)}/`);
+      }
     } else {
       setVencimientoTarjeta(soloNumeros);
     }
@@ -243,33 +261,56 @@ export default function Pago() {
     }
 
     // 2. Validar Datos de Contacto
-    if (!PagoService.validarNombre(nombreContacto)) {
+    if (!nombreContacto.trim() || nombreContacto.trim().length < 3) {
       mostrarToast("Ingresa tu nombre y apellido completos.", "error");
       return;
     }
+    if (tipoComprobante === "Boleta" && /[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/.test(nombreContacto)) {
+      mostrarToast("El nombre y apellido solo debe contener letras.", "error");
+      return;
+    }
     if (!PagoService.validarCorreo(correoContacto)) {
-      mostrarToast("Ingresa un correo electrónico válido.", "error");
+      mostrarToast("Ingresa un correo electrónico válido (ej: tu-correo@ejemplo.com).", "error");
       return;
     }
 
     // 3. Validar Pasarela según método
     if (metodoPago === "Tarjeta") {
       const rawCard = numeroTarjeta.replace(/\s/g, "");
-      if (rawCard.length < 15) {
-        mostrarToast("Ingresa un número de tarjeta válido (16 dígitos).", "error");
+      if (rawCard.length !== 16) {
+        mostrarToast("Ingresa un número de tarjeta válido de 16 dígitos.", "error");
         return;
       }
       if (vencimientoTarjeta.length < 5) {
-        mostrarToast("Ingresa una fecha de vencimiento válida (MM/AA).", "error");
+        mostrarToast("Ingresa una fecha de vencimiento completa (MM/AA).", "error");
         return;
       }
-      if (cvvTarjeta.length < 3) {
-        mostrarToast("Ingresa el código CVV (3 dígitos).", "error");
+      const [mesStr, anioStr] = vencimientoTarjeta.split("/");
+      const mesNum = parseInt(mesStr, 10);
+      const anioNum = parseInt(`20${anioStr}`, 10);
+      const hoy = new Date();
+      const anioActual = hoy.getFullYear();
+      const mesActual = hoy.getMonth() + 1;
+
+      if (isNaN(mesNum) || mesNum < 1 || mesNum > 12) {
+        mostrarToast("El mes de vencimiento debe estar entre 01 y 12.", "error");
+        return;
+      }
+      if (isNaN(anioNum) || anioNum < anioActual || (anioNum === anioActual && mesNum < mesActual)) {
+        mostrarToast("La tarjeta ingresada se encuentra vencida.", "error");
+        return;
+      }
+      if (cvvTarjeta.length !== 3) {
+        mostrarToast("El código CVV debe tener exactamente 3 dígitos.", "error");
+        return;
+      }
+      if (!titularTarjeta.trim() || titularTarjeta.trim().length < 3) {
+        mostrarToast("Ingresa el nombre del titular como figura en la tarjeta.", "error");
         return;
       }
     } else if (metodoPago === "Yape") {
       if (codigoYape.length < 6) {
-        mostrarToast("Ingresa el código de confirmación o de aprobación de Yape (6 dígitos).", "error");
+        mostrarToast("Ingresa el código de aprobación de Yape (6 dígitos).", "error");
         return;
       }
     }
@@ -474,7 +515,18 @@ export default function Pago() {
                     placeholder={tipoComprobante === "Boleta" ? "Ej: Juan Pérez Morales" : "Ej: Cine Inversiones SAC"}
                     type="text"
                     value={nombreContacto}
-                    onChange={(e) => setNombreContacto(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (tipoComprobante === "Boleta") {
+                        const soloLetras = val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
+                        if (val !== soloLetras) {
+                          mostrarToast("El nombre y apellido solo debe contener letras.", "error");
+                        }
+                        setNombreContacto(soloLetras);
+                      } else {
+                        setNombreContacto(val);
+                      }
+                    }}
                   />
                 </div>
 
@@ -735,11 +787,14 @@ export default function Pago() {
                       <input
                         className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-yellow font-mono text-sm tracking-widest text-center"
                         inputMode="numeric"
-                        maxLength={4}
+                        maxLength={3}
                         placeholder="123"
                         type="password"
                         value={cvvTarjeta}
-                        onChange={(e) => setCvvTarjeta(e.target.value.replace(/\D/g, ""))}
+                        onChange={(e) => {
+                          const soloNums = e.target.value.replace(/\D/g, "").slice(0, 3);
+                          setCvvTarjeta(soloNums);
+                        }}
                       />
                     </div>
                   </div>
@@ -753,7 +808,14 @@ export default function Pago() {
                       placeholder="COMO APARECE EN LA TARJETA"
                       type="text"
                       value={titularTarjeta}
-                      onChange={(e) => setTitularTarjeta(e.target.value.toUpperCase())}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const soloLetras = val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
+                        if (val !== soloLetras) {
+                          mostrarToast("El nombre del titular solo debe contener letras.", "error");
+                        }
+                        setTitularTarjeta(soloLetras.toUpperCase());
+                      }}
                     />
                   </div>
                 </div>
