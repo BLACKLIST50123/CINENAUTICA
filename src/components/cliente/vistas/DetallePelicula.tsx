@@ -9,6 +9,7 @@ import type {
   SedeFuncionesGrupoDTO,
 } from "@/src/dtos/funcion";
 import { SEL, S, go } from "@/src/lib/ui/nav";
+import { AsientoService } from "@/src/services/asientoService";
 
 interface DetallePeliculaProps {
   idPelicula: string;
@@ -48,6 +49,22 @@ export default function DetallePelicula({ idPelicula }: DetallePeliculaProps) {
         }
 
         setDatos(res);
+
+        // Limpiar residuos de funciones anteriores si no corresponden a esta película
+        try {
+          const raw = sessionStorage.getItem("cinenautica_seleccion_funcion");
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed.id_pelicula && parsed.id_pelicula !== res.pelicula.id_pelicula) {
+              sessionStorage.removeItem("cinenautica_seleccion_funcion");
+              sessionStorage.removeItem("cinenautica_asientos_seleccionados");
+              delete SEL.id_funcion;
+              delete SEL.id_sala;
+              SEL.asientos = [];
+              SEL.total_asientos = 0;
+            }
+          }
+        } catch {}
 
         // Preseleccionar la fecha de hoy
         if (res.dias.length > 0) {
@@ -200,9 +217,16 @@ export default function DetallePelicula({ idPelicula }: DetallePeliculaProps) {
       SEL.hora = f.hora_inicio;
       SEL.formato = f.formato_completo;
       SEL.idioma_audio = f.idioma_audio;
+      SEL.asientos = [];
+      SEL.total_asientos = 0;
 
-      // Persistir en sessionStorage para sobrevivir a recargas de página
+      // Limpiar selección de asientos previa de otra función y liberar en BD
       try {
+        const sid = sessionStorage.getItem("cinenautica_session_id");
+        if (sid) {
+          AsientoService.liberarTodosLosAsientos(sid).catch(() => {});
+        }
+        sessionStorage.removeItem("cinenautica_asientos_seleccionados");
         sessionStorage.setItem("cinenautica_seleccion_funcion", JSON.stringify(SEL));
       } catch {}
     }
@@ -211,7 +235,7 @@ export default function DetallePelicula({ idPelicula }: DetallePeliculaProps) {
   // Confirmar y avanzar al paso de selección de asientos
   function continuarAAsientos() {
     if (!funcionSeleccionada) return;
-    router.push("/asientos");
+    router.push(`/asientos?funcion=${funcionSeleccionada.id_funcion}`);
   }
 
   if (cargando) {

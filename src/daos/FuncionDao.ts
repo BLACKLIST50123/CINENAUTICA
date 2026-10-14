@@ -197,4 +197,72 @@ export class FuncionDao {
 
     return null;
   }
+
+  /**
+   * Obtiene la información completa de una función específica para la compra de asientos.
+   */
+  static async obtenerFuncionCompraPorId(idFuncion: string) {
+    const { data, error } = await supabase
+      .from("funcion")
+      .select(`
+        id_funcion,
+        id_pelicula,
+        id_sede,
+        id_sala,
+        id_formato,
+        fecha,
+        hora_inicio,
+        hora_fin,
+        idioma_audio,
+        sala (
+          id_sala,
+          numero_sala,
+          nombre_sala
+        ),
+        sede (
+          id_sede,
+          nombre,
+          direccion
+        ),
+        formato_proyeccion (
+          id_formato,
+          codigo,
+          nombre
+        )
+      `)
+      .eq("id_funcion", idFuncion)
+      .maybeSingle();
+
+    if (error || !data) return null;
+
+    // Consultar datos de la película directamente por id_pelicula
+    const { data: peliData } = await supabase
+      .from("pelicula")
+      .select("id_pelicula, titulo, url_poster, clasificacion, tipo_lanzamiento")
+      .eq("id_pelicula", data.id_pelicula)
+      .maybeSingle();
+
+    const nombreFormato = (data as any).formato_proyeccion?.nombre || (data as any).formato_proyeccion?.codigo || "2D";
+    const idioma = (data as any).idioma_audio || "Doblada";
+    const hora = ((data as any).hora_inicio || "").substring(0, 5);
+
+    return {
+      id_funcion: data.id_funcion,
+      id_pelicula: data.id_pelicula,
+      titulo: peliData?.titulo || "Película",
+      url_poster: peliData?.url_poster || "",
+      clasificacion: peliData?.clasificacion || "APT",
+      es_prestreno: peliData?.tipo_lanzamiento === "Pre_Estreno",
+      id_sede: data.id_sede,
+      nombre_sede: (data as any).sede?.nombre || "CineNáutica",
+      id_sala: data.id_sala,
+      sala: (data as any).sala?.numero_sala || 1,
+      nombre_sala: (data as any).sala?.nombre_sala || `Sala ${(data as any).sala?.numero_sala || 1}`,
+      fecha: data.fecha,
+      hora,
+      formato: `${nombreFormato} ${idioma}`.trim(),
+      nombre_formato: nombreFormato,
+      idioma_audio: idioma,
+    };
+  }
 }

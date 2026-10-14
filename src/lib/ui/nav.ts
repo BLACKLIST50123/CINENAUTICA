@@ -46,7 +46,69 @@ export function vistaActual(): string {
 }
 
 export function cambiarVista(_desde: string | null, hacia: string) { go(rutaDe(hacia)); }
-export const intentarSalirDelFlujoDeCompra = (a: () => void) => a();
+
+let _accionSalirPendiente: (() => void) | null = null;
+
+export function tieneCompraActiva(): boolean {
+    if (typeof window === "undefined") return false;
+    if ((window as any).__tieneAsientosSeleccionados) return true;
+    try {
+        const raw = sessionStorage.getItem("cinenautica_asientos_seleccionados");
+        if (raw) {
+            const data = JSON.parse(raw);
+            if (data.asientos && data.asientos.length > 0) return true;
+        }
+        if (SEL.asientos && SEL.asientos.length > 0) return true;
+    } catch {}
+    return false;
+}
+
+export function intentarSalirDelFlujoDeCompra(accion: () => void) {
+    if (tieneCompraActiva()) {
+        _accionSalirPendiente = accion;
+        if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("solicitar-confirmacion-salir-compra"));
+        }
+    } else {
+        accion();
+    }
+}
+
+export function ejecutarSalirDelFlujoDeCompra() {
+    const cb = _accionSalirPendiente;
+    _accionSalirPendiente = null;
+    if (cb) cb();
+    else go("/");
+}
+
+export function limpiarEstadoCompraGlobal() {
+    if (typeof window !== "undefined") {
+        try {
+            sessionStorage.removeItem("cinenautica_asientos_seleccionados");
+            sessionStorage.removeItem("cinenautica_seleccion_funcion");
+            sessionStorage.removeItem("cinenautica_dulceria_seleccion");
+        } catch {}
+        (window as any).__tieneAsientosSeleccionados = false;
+        window.dispatchEvent(new CustomEvent("asientos-liberados-sesion"));
+    }
+    SEL.asientos = [];
+    SEL.total_asientos = 0;
+    delete SEL.id_funcion;
+    delete SEL.id_sala;
+    delete SEL.sala;
+    delete SEL.nombre_sala;
+    delete SEL.hora;
+    delete SEL.formato;
+    delete SEL.dia_label;
+}
+
+export function cancelarSalirDelFlujoDeCompra() {
+    _accionSalirPendiente = null;
+    if (typeof window !== "undefined" && tieneCompraActiva()) {
+        window.history.pushState({ cinenauticaAsientos: true }, "", window.location.href);
+    }
+}
+
 export const abrirVistaPromociones = () => go("/promociones");
 export const abrirVistaUbicacion = () => go("/ubicacion");
 export const abrirMisCompras = () => go("/historial");
@@ -56,7 +118,7 @@ export const manejarFormularioContacto = (e: any) => {
 };
 
 export function abrirDetallePelicula(id: string, _origen?: string) { S.dulceria = false; SEL.peli = id; go(`/pelicula/${id}`); }
-export const irAAsientos = () => go("/asientos");
+export const irAAsientos = (id?: string) => go(id ? `/asientos?funcion=${id}` : (SEL.id_funcion ? `/asientos?funcion=${SEL.id_funcion}` : "/asientos"));
 export const irADulceria = () => { S.dulceria = false; go("/dulceria"); };
 export const irAPago = () => go("/pago");
 export const procesarPago = () => go("/ticket");

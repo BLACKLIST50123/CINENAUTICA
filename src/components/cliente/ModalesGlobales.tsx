@@ -8,9 +8,10 @@
 import { useEffect, useState } from "react";
 import { abrirModalLegal, alCambiarCiudadDulceria, cerrarModalTrailer, validarSedeDulceria } from "@/src/lib/ui/cliente";
 import { cerrarModal, cerrarModalLegal, cerrarModalPromoBanner } from "@/src/lib/ui/common";
-import { abrirDetallePelicula, confirmarSedeDulceria, elegirSedeNav } from "@/src/lib/ui/nav";
+import { abrirDetallePelicula, confirmarSedeDulceria, elegirSedeNav, ejecutarSalirDelFlujoDeCompra, cancelarSalirDelFlujoDeCompra, limpiarEstadoCompraGlobal, SEL } from "@/src/lib/ui/nav";
 import { ModalLogin, ModalRegistro, ModalPerfil, ModalCarnetSocio } from "./ModalesAuth";
 import { SedeDao } from "@/src/daos/SedeDao";
+import { AsientoService } from "@/src/services/asientoService";
 import type { SedeDTO } from "@/src/dtos/cartelera";
 
 export default function ModalesGlobales() {
@@ -253,6 +254,7 @@ export default function ModalesGlobales() {
           </button>
         </div>
       </div>
+      <ModalConfirmarSalirCompra />
       <div id="overlay-carga-vista">
         <div className="spinner-Cine Náutica"></div>
       </div>
@@ -260,3 +262,69 @@ export default function ModalesGlobales() {
     </>
   );
 }
+
+function ModalConfirmarSalirCompra() {
+  const [abierto, setAbierto] = useState(false);
+
+  useEffect(() => {
+    function abrir() {
+      setAbierto(true);
+    }
+    window.addEventListener("solicitar-confirmacion-salir-compra", abrir);
+    return () => window.removeEventListener("solicitar-confirmacion-salir-compra", abrir);
+  }, []);
+
+  if (!abierto) return null;
+
+  async function manejarSalir() {
+    try {
+      const sid = sessionStorage.getItem("cinenautica_session_id");
+      if (sid) {
+        await AsientoService.liberarTodosLosAsientos(sid);
+      }
+    } catch (e) {
+      console.warn("Error liberando asientos en BD:", e);
+    }
+    limpiarEstadoCompraGlobal();
+    setAbierto(false);
+    ejecutarSalirDelFlujoDeCompra();
+  }
+
+  function manejarCancelar() {
+    cancelarSalirDelFlujoDeCompra();
+    setAbierto(false);
+  }
+
+  return (
+    <div className="fixed inset-0 z-[150] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+      <div className="bg-[#0B132B] border border-white/10 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
+        <div className="w-14 h-14 rounded-full bg-amber-500/20 text-brand-yellow border border-amber-500/30 flex items-center justify-center mx-auto mb-4">
+          <i className="fa-solid fa-exclamation text-2xl text-brand-yellow"></i>
+        </div>
+        <h3 className="text-xl font-bold text-white mb-2">
+          ¿Salir de la compra?
+        </h3>
+        <p className="text-slate-300 text-sm mb-6 leading-relaxed">
+          Tienes una compra en curso. Si sales ahora, perderás los asientos y/o productos que seleccionaste.
+        </p>
+        <div className="flex gap-3">
+          <button
+            className="flex-1 bg-dark-800 hover:bg-dark-700 text-white py-3.5 px-4 rounded-xl font-bold text-sm transition-colors border border-white/5"
+            type="button"
+            onClick={manejarCancelar}
+          >
+            Seguir comprando
+          </button>
+          <button
+            className="flex-1 bg-brand-yellow hover:bg-yellow-400 text-black py-3.5 px-4 rounded-xl font-black text-sm transition-all shadow-lg shadow-brand-yellow/30"
+            type="button"
+            onClick={manejarSalir}
+          >
+            Sí, salir
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
