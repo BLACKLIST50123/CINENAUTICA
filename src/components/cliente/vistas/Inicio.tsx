@@ -176,10 +176,14 @@ export default function Inicio() {
         onMouseEnter={() => { carruselPausado.current = true; }}
         onMouseLeave={() => { carruselPausado.current = false; }}
       >
-        <div className="relative w-full h-full" id="carrusel-principal">
-          <div className="relative w-full h-full" id="carrusel-slides">
+        <div className="relative w-full h-full overflow-hidden" id="carrusel-principal">
+          <div
+            className="flex w-full h-full transition-transform duration-700 ease-in-out"
+            id="carrusel-slides"
+            style={{ transform: `translateX(-${slideActivo * 100}%)` }}
+          >
             {cargando ? (
-              <div className="absolute inset-0 bg-dark-950 flex flex-col justify-center px-6 md:px-20 max-w-4xl z-20 animate-pulse">
+              <div className="w-full h-full flex-shrink-0 bg-dark-950 flex flex-col justify-center px-6 md:px-20 max-w-4xl z-20 animate-pulse">
                 <div className="h-6 w-32 bg-white/10 rounded-full mb-4"></div>
                 <div className="h-14 w-3/4 bg-white/20 rounded-2xl mb-4"></div>
                 <div className="h-6 w-full max-w-xl bg-white/10 rounded mb-6"></div>
@@ -189,15 +193,15 @@ export default function Inicio() {
                 </div>
               </div>
             ) : datos?.peliculasBanner && datos.peliculasBanner.length > 0 ? (
-              datos.peliculasBanner.map((peli, idx) => {
-                const activo = idx === slideActivo;
+              datos.peliculasBanner.map((peli) => {
                 return (
                   <div
                     key={peli.id_pelicula}
-                    className={`carousel-item ${activo ? "active opacity-100 scale-100 z-10" : "opacity-0 scale-98 pointer-events-none z-0"} transition-all duration-700 ease-out`}
+                    className="w-full h-full flex-shrink-0 relative overflow-hidden select-none"
+                    style={{ minWidth: "100%", width: "100%", height: "100%", position: "relative" }}
                   >
                     <div
-                      className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 scale-105"
+                      className="absolute inset-0 bg-cover bg-center"
                       style={{ backgroundImage: `url('${peli.url_banner || peli.url_poster}')` }}
                     ></div>
                     <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/60 to-transparent"></div>
@@ -255,7 +259,7 @@ export default function Inicio() {
           {datos?.peliculasBanner && datos.peliculasBanner.length > 1 && (
             <>
               <button
-                className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 flex items-center justify-center rounded-full bg-black/40 hover:bg-brand-blue text-white backdrop-blur-sm border border-white/10 transition-colors shadow-lg"
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 flex items-center justify-center rounded-full bg-black/50 hover:bg-brand-blue text-white backdrop-blur-md border border-white/15 transition-all shadow-lg hover:scale-110 active:scale-95"
                 id="slide-anterior"
                 aria-label="Película anterior"
                 onClick={() => {
@@ -264,18 +268,34 @@ export default function Inicio() {
                   );
                 }}
               >
-                <i className="fa-solid fa-chevron-left"></i>
+                <i className="fa-solid fa-chevron-left text-lg"></i>
               </button>
               <button
-                className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 flex items-center justify-center rounded-full bg-black/40 hover:bg-brand-blue text-white backdrop-blur-sm border border-white/10 transition-colors shadow-lg"
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 flex items-center justify-center rounded-full bg-black/50 hover:bg-brand-blue text-white backdrop-blur-md border border-white/15 transition-all shadow-lg hover:scale-110 active:scale-95"
                 id="slide-siguiente"
                 aria-label="Película siguiente"
                 onClick={() => {
                   setSlideActivo((prev) => (prev + 1) % datos.peliculasBanner.length);
                 }}
               >
-                <i className="fa-solid fa-chevron-right"></i>
+                <i className="fa-solid fa-chevron-right text-lg"></i>
               </button>
+
+              {/* Indicadores / Dots de posición */}
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2.5 bg-black/40 px-3.5 py-1.5 rounded-full backdrop-blur-md border border-white/10">
+                {datos.peliculasBanner.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSlideActivo(idx)}
+                    className={`transition-all duration-300 rounded-full ${
+                      idx === slideActivo
+                        ? "w-8 h-2.5 bg-brand-blue shadow-lg shadow-blue-500/50"
+                        : "w-2.5 h-2.5 bg-white/40 hover:bg-white/75"
+                    }`}
+                    aria-label={`Ir al slide ${idx + 1}`}
+                  />
+                ))}
+              </div>
             </>
           )}
         </div>

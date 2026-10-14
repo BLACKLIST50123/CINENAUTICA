@@ -177,7 +177,7 @@ export async function obtenerSedes() {
 
 ---
 
-### FASE 3 — Detalle de Película y Selección de Función
+### FASE 3 — Detalle de Película y Selección de Función ✅ COMPLETADA (2026-10-14)
 
 **Archivos a tocar:**
 - `src/app/(cliente)/pelicula/[id]/page.tsx` *(nueva ruta dinámica real)*

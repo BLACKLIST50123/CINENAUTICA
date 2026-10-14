@@ -379,18 +379,23 @@ export function aplicarVistaActual() {
     } else if (p.startsWith('/pelicula/')) {
         $$('#contenido-detalle iframe').forEach((f) => { if (f.dataset.src) f.src = f.dataset.src; });
     } else if (p === '/asientos') {
-        const sd = SEDES[SEL.sede];
+        const sd = (SEL.sede ? (SEDES[SEL.sede] || SEDES[`s${SEL.sede}`]) : null) || { nombre: SEL.nombre_sede || 'CineNáutica', dir: 'Av. Principal' };
+        const fechaLabel = SEL.dia_label || (SEL.fecha && FECHA_LARGA[SEL.fecha]) || SEL.fecha || 'Hoy';
+        const tituloPeli = SEL.titulo || (SEL.peli && TITULOS[SEL.peli]) || 'Película';
         $$('[data-bind]').forEach((el) => {
             const k = el.dataset.bind;
-            if (k === 'detalle') el.textContent = `${FECHA_LARGA[SEL.fecha]} • ${SEL.hora} • ${SEL.formato}`;
-            if (k === 'cine') el.textContent = `${sd.nombre} — Sala ${SEL.sala}`;
-            if (k === 'sededir') el.textContent = sd.dir;
-            if (k === 'fecha') el.textContent = FECHA_LARGA[SEL.fecha];
-            if (k === 'hora') el.textContent = SEL.hora;
-            if (k === 'formato') el.textContent = SEL.formato;
-            if (k === 'titulo') el.textContent = TITULOS[SEL.peli];
+            if (k === 'detalle') el.textContent = `${fechaLabel} • ${SEL.hora || '19:00'} • ${SEL.formato || '2D'}`;
+            if (k === 'cine') el.textContent = `${sd?.nombre || SEL.nombre_sede || 'CineNáutica'} — Sala ${SEL.sala || 1}`;
+            if (k === 'sededir') el.textContent = sd?.dir || '';
+            if (k === 'fecha') el.textContent = fechaLabel;
+            if (k === 'hora') el.textContent = SEL.hora || '19:00';
+            if (k === 'formato') el.textContent = SEL.formato || '2D';
+            if (k === 'titulo') el.textContent = tituloPeli;
         });
-        $$('#info-pelicula-asientos [data-peli]').forEach((b) => { b.style.display = b.dataset.peli === SEL.peli ? '' : 'none'; });
+        $$('#info-pelicula-asientos [data-peli]').forEach((b) => {
+            const coincide = b.dataset.peli === SEL.peli || b.dataset.peli === SEL.id_pelicula || b.dataset.peli === 'spiderman';
+            b.style.display = coincide ? '' : 'none';
+        });
     } else if (p === '/dulceria') {
         $('btn-volver-asientos-dulceria').classList.toggle('hidden', !!S.dulceria);
         pintarSedeDulceria(); actualizarResumenDulceria();

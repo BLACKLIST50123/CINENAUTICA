@@ -20,7 +20,7 @@ export default function StepperCompra() {
     if (actual === -1) return null;
 
     return (
-        <div className="fixed top-20 left-0 w-full z-40 bg-dark-900/95 backdrop-blur-sm border-b border-white/5 py-3 px-4" id="stepper-compra">
+        <div className="fixed top-20 left-0 w-full z-40 bg-dark-900/98 backdrop-blur-md border-b border-white/10 py-3 px-4 shadow-lg shadow-black/50" id="stepper-compra">
             <div className="max-w-xl mx-auto flex items-center" id="stepper-compra-pasos">
                 {pasos.map((p, i) => {
                     const hecho = i < actual, ahora = i === actual;

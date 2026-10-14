@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Navbar from "@/src/components/cliente/Navbar";
 import Footer from "@/src/components/cliente/Footer";
 import ModalesGlobales from "@/src/components/cliente/ModalesGlobales";
@@ -11,8 +12,12 @@ export default function ClienteLayout({ children }: { children: React.ReactNode 
   return (
     <>
       <Navbar />
-      <BadgeTemporizador />
-      <StepperCompra />
+      <Suspense fallback={null}>
+        <BadgeTemporizador />
+      </Suspense>
+      <Suspense fallback={null}>
+        <StepperCompra />
+      </Suspense>
       <div className="relative w-full" id="contenedor-vistas">
         {children}
       </div>
