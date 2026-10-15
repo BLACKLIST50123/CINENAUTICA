@@ -7,6 +7,8 @@ import ModalVincularSocio from "../comun/ModalVincularSocio";
 import ModalBuscarOrden from "../comun/ModalBuscarOrden";
 import ModalConfirmarSalidaCounter from "../comun/ModalConfirmarSalidaCounter";
 import TicketTermicoPOS from "../comun/TicketTermicoPOS";
+import CarteleraFuncionesPOS from "../comun/CarteleraFuncionesPOS";
+import ModalElegirTipoEntradaPOS from "../comun/ModalElegirTipoEntradaPOS";
 import { CounterService } from "@/src/services/counterService";
 import type {
   SocioCounterDTO,
@@ -30,7 +32,17 @@ export default function MixtoView() {
   // ── 2. Estados de Venta y Subvistas ──
   const [subvista, setSubvista] = useState<"cartelera" | "asientos" | "dulceria" | "cobro" | "exito">("cartelera");
   const [ventaSoloDulceria, setVentaSoloDulceria] = useState<boolean>(false);
-  const [sesionId] = useState<string>(() => `pos_mix_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`);
+  // Sesion ID debe ser un UUID válido para PostgreSQL
+  const [sesionId] = useState<string>(() => {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === "x" ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  });
 
   // Socio Activo
   const [socioActivo, setSocioActivo] = useState<SocioCounterDTO | null>(null);
@@ -39,27 +51,26 @@ export default function MixtoView() {
   const [cargandoFunciones, setCargandoFunciones] = useState<boolean>(true);
   const [funciones, setFunciones] = useState<any[]>([]);
   const [filtroDia, setFiltroDia] = useState<"hoy" | "manana">("hoy");
-  const [filtroFormato, setFiltroFormato] = useState<string>("Todos");
-  const [busquedaPeli, setBusquedaPeli] = useState<string>("");
-  const [modoAgrupacion, setModoAgrupacion] = useState<"peli" | "hora">("peli");
 
   // Función y Sala Seleccionada
   const [funcionSeleccionada, setFuncionSeleccionada] = useState<any | null>(null);
   const [salaInfo, setSalaInfo] = useState<any | null>(null);
   const [asientosSala, setAsientosSala] = useState<any[]>([]);
   const [tarifasDisponibles, setTarifasDisponibles] = useState<any[]>([]);
-  const [tarifaSeleccionadaId, setTarifaSeleccionadaId] = useState<string>("");
   const [cargandoSala, setCargandoSala] = useState<boolean>(false);
 
   // Entradas Seleccionadas
   const [entradasSeleccionadas, setEntradasSeleccionadas] = useState<ItemEntradaCounter[]>([]);
 
+  // Modal para Elegir Tipo de Entrada al seleccionar un asiento
+  const [asientoParaModalTipo, setAsientoParaModalTipo] = useState<any | null>(null);
+
   // Dulcería
   const [cargandoProductos, setCargandoProductos] = useState<boolean>(true);
   const [productos, setProductos] = useState<any[]>([]);
   const [categorias, setCategorias] = useState<any[]>([]);
-  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<string>("all");
-  const [busquedaDulceria, setBusquedaDulceria] = useState<string>("");
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<string>("todos");
+  const [busquedaProducto, setBusquedaProducto] = useState<string>("");
   const [carritoDulceria, setCarritoDulceria] = useState<Map<string, ItemProductoCounter>>(new Map());
 
   // Venta Finalizada y Reimpresión
@@ -79,7 +90,7 @@ export default function MixtoView() {
     setTimeout(() => setToastMensaje(null), 4000);
   };
 
-  // ── 3. Carga Inicial ──
+  // ── 3. Cargar Sedes ──
   useEffect(() => {
     CounterService.obtenerSedesActivas()
       .then((res) => {
@@ -88,39 +99,53 @@ export default function MixtoView() {
       .catch((e) => console.warn("Error al cargar sedes:", e));
   }, []);
 
-  const cargarDatosSede = useCallback(async (sedeId: number, dia: "hoy" | "manana") => {
+  // ── 4. Cargar Funciones ──
+  const cargarFuncionesSede = useCallback(async (sedeId: number, dia: "hoy" | "manana") => {
     setCargandoFunciones(true);
-    setCargandoProductos(true);
-
     try {
       const hoy = new Date();
-      if (dia === "manana") hoy.setDate(hoy.getDate() + 1);
+      if (dia === "manana") {
+        hoy.setDate(hoy.getDate() + 1);
+      }
       const fechaIso = hoy.toISOString().split("T")[0];
-
-      const [fnData, dulcData] = await Promise.all([
-        CounterService.obtenerFuncionesPorSedeYFecha(sedeId, fechaIso),
-        CounterService.obtenerProductosPorSede(sedeId),
-      ]);
-
-      setFunciones(fnData || []);
-      setCategorias(dulcData.categorias || []);
-      setProductos(dulcData.productos || []);
+      const data = await CounterService.obtenerFuncionesPorSedeYFecha(sedeId, fechaIso);
+      setFunciones(data || []);
     } catch (err) {
-      console.error("Error al cargar datos sede:", err);
+      console.error("Error al cargar funciones:", err);
+      setFunciones([]);
     } finally {
       setCargandoFunciones(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    cargarFuncionesSede(idSede, filtroDia);
+  }, [idSede, filtroDia, cargarFuncionesSede]);
+
+  // ── 5. Cargar Dulcería ──
+  const cargarDulceriaSede = useCallback(async (sedeId: number) => {
+    setCargandoProductos(true);
+    try {
+      const res = await CounterService.obtenerProductosPorSede(sedeId);
+      setProductos(res.productos || []);
+      setCategorias(res.categorias || []);
+    } catch (e) {
+      console.error("Error al cargar catálogo de dulcería:", e);
+      setProductos([]);
+      setCategorias([]);
+    } finally {
       setCargandoProductos(false);
     }
   }, []);
 
   useEffect(() => {
-    cargarDatosSede(idSede, filtroDia);
-  }, [idSede, filtroDia, cargarDatosSede]);
+    cargarDulceriaSede(idSede);
+  }, [idSede, cargarDulceriaSede]);
 
-  // ── 4. Cambio de Sede para Pruebas (con confirmación) ──
+  // ── 6. Cambio de Sede para Pruebas (con confirmación de salida) ──
   const handleCambiarSede = (nuevaSedeId: number) => {
-    const hayItems = entradasSeleccionadas.length > 0 || carritoDulceria.size > 0;
-    if (hayItems) {
+    const tieneItems = entradasSeleccionadas.length > 0 || carritoDulceria.size > 0;
+    if (tieneItems) {
       setAccionSalidaPendiente(() => () => {
         liberarYLimpiarVenta();
         setIdSede(nuevaSedeId);
@@ -131,15 +156,7 @@ export default function MixtoView() {
     }
   };
 
-  // ── 5. Atajo Rápido "Solo Dulcería" ──
-  const handleIniciarSoloDulceria = () => {
-    setVentaSoloDulceria(true);
-    setFuncionSeleccionada(null);
-    setEntradasSeleccionadas([]);
-    setSubvista("dulceria");
-  };
-
-  // ── 6. Selección de Función e Ingreso a Sala ──
+  // ── 7. Selección de Función e Ingreso a Sala ──
   const handleSeleccionarFuncion = async (fn: any) => {
     setVentaSoloDulceria(false);
     setFuncionSeleccionada(fn);
@@ -152,9 +169,6 @@ export default function MixtoView() {
       setSalaInfo(mapa.sala);
       setAsientosSala(mapa.asientos || []);
       setTarifasDisponibles(mapa.tarifas || []);
-      if (mapa.tarifas && mapa.tarifas.length > 0) {
-        setTarifaSeleccionadaId(mapa.tarifas[0].id_tipo_entrada || "");
-      }
     } catch (e: any) {
       mostrarToast(`Error al cargar la sala: ${e.message}`);
       setSubvista("cartelera");
@@ -163,26 +177,22 @@ export default function MixtoView() {
     }
   };
 
-  // ── 7. Selección de Butacas ──
-  const tarifaActual = useMemo(() => {
-    return (
-      tarifasDisponibles.find((t) => t.id_tipo_entrada === tarifaSeleccionadaId) ||
-      tarifasDisponibles[0] || {
-        id_tipo_entrada: "1",
-        nombre: "General",
-        precio: 18.0,
-      }
-    );
-  }, [tarifasDisponibles, tarifaSeleccionadaId]);
-
+  // Selección y Bloqueo en Tiempo Real de Butacas
   const handleToggleAsiento = async (asiento: any) => {
     if (asiento.estado === "Ocupado" || asiento.en_mantenimiento) return;
+
+    const estaOcupadoOtro =
+      asiento.estado === "Bloqueado" && asiento.id_sesion_bloqueo !== sesionId;
+    if (estaOcupadoOtro) {
+      mostrarToast("El asiento se encuentra en selección por otro cliente.");
+      return;
+    }
 
     const yaSeleccionado = entradasSeleccionadas.some((e) => e.codigo_asiento === asiento.codigo);
 
     if (yaSeleccionado) {
       const item = entradasSeleccionadas.find((e) => e.codigo_asiento === asiento.codigo);
-      if (item) {
+      if (item && item.id_asiento_funcion) {
         CounterService.liberarAsientoCounter(item.id_asiento_funcion, sesionId).catch(console.warn);
       }
       setEntradasSeleccionadas((prev) => prev.filter((e) => e.codigo_asiento !== asiento.codigo));
@@ -190,32 +200,38 @@ export default function MixtoView() {
         prev.map((a) => (a.codigo === asiento.codigo ? { ...a, estado: "Disponible", id_sesion_bloqueo: null } : a))
       );
     } else {
-      try {
-        const idBloqueo = await CounterService.bloquearAsientoCounter(
-          funcionSeleccionada.id_funcion,
-          asiento.id_asiento,
-          sesionId
-        );
+      // Abrir modal de selección de tipo de entrada (General, Niño, etc.)
+      setAsientoParaModalTipo(asiento);
+    }
+  };
 
-        const nuevaEntrada: ItemEntradaCounter = {
-          id_asiento_funcion: asiento.id_asiento_funcion || idBloqueo,
-          codigo_asiento: asiento.codigo,
-          fila: asiento.fila,
-          numero: asiento.columna,
-          id_tipo_entrada: tarifaActual.id_tipo_entrada || tarifaActual.id_tarifa || "1",
-          tipo_nombre: tarifaActual.nombre || "General",
-          precio: Number(tarifaActual.precio || 18.0),
-        };
+  const handleConfirmarAsientoConTipo = async (asiento: any, tipo: any) => {
+    setAsientoParaModalTipo(null);
+    try {
+      const idBloqueo = await CounterService.bloquearAsientoCounter(
+        funcionSeleccionada.id_funcion,
+        asiento.id_asiento,
+        sesionId
+      );
 
-        setEntradasSeleccionadas((prev) => [...prev, nuevaEntrada]);
-        setAsientosSala((prev) =>
-          prev.map((a) =>
-            a.codigo === asiento.codigo ? { ...a, estado: "Bloqueado", id_sesion_bloqueo: sesionId } : a
-          )
-        );
-      } catch (err: any) {
-        mostrarToast(err.message || "No se pudo seleccionar el asiento.");
-      }
+      const nuevaEntrada: ItemEntradaCounter = {
+        id_asiento_funcion: asiento.id_asiento_funcion || idBloqueo,
+        codigo_asiento: asiento.codigo,
+        fila: asiento.fila,
+        numero: asiento.columna,
+        id_tipo_entrada: tipo.id_tipo_entrada || "1",
+        tipo_nombre: tipo.nombre || "General",
+        precio: Number(tipo.precio || 18.0),
+      };
+
+      setEntradasSeleccionadas((prev) => [...prev, nuevaEntrada]);
+      setAsientosSala((prev) =>
+        prev.map((a) =>
+          a.codigo === asiento.codigo ? { ...a, estado: "Bloqueado", id_sesion_bloqueo: sesionId } : a
+        )
+      );
+    } catch (err: any) {
+      mostrarToast(err.message || "No se pudo seleccionar el asiento.");
     }
   };
 
@@ -233,8 +249,6 @@ export default function MixtoView() {
           precio_unitario: precio,
           cantidad: 1,
           subtotal: precio,
-          url_imagen: prod.url_imagen,
-          categoria: prod.nombre_categoria,
         });
       } else if (actual) {
         const nuevaCant = actual.cantidad + delta;
@@ -244,7 +258,7 @@ export default function MixtoView() {
           nuevo.set(prod.id_producto, {
             ...actual,
             cantidad: nuevaCant,
-            subtotal: Number((nuevaCant * actual.precio_unitario).toFixed(2)),
+            subtotal: nuevaCant * precio,
           });
         }
       }
@@ -252,25 +266,30 @@ export default function MixtoView() {
     });
   };
 
-  const listaProductosCarrito = useMemo(
-    () => Array.from(carritoDulceria.values()),
-    [carritoDulceria]
-  );
+  const productosFiltrados = useMemo(() => {
+    return productos.filter((p) => {
+      const cumpleCat =
+        categoriaSeleccionada === "todos" ||
+        p.id_categoria === categoriaSeleccionada ||
+        p.categoria_nombre?.toLowerCase() === categoriaSeleccionada.toLowerCase();
 
-  // ── 9. Subtotales ──
-  const subtotalEntradas = useMemo(() => {
-    return entradasSeleccionadas.reduce((sum, e) => sum + Number(e.precio || 0), 0);
-  }, [entradasSeleccionadas]);
+      const cumpleBusq =
+        !busquedaProducto.trim() ||
+        p.nombre?.toLowerCase().includes(busquedaProducto.toLowerCase());
 
-  const subtotalDulceria = useMemo(() => {
-    return listaProductosCarrito.reduce((sum, p) => sum + p.subtotal, 0);
-  }, [listaProductosCarrito]);
+      return cumpleCat && cumpleBusq;
+    });
+  }, [productos, categoriaSeleccionada, busquedaProducto]);
 
-  const totalGeneral = useMemo(() => {
-    return subtotalEntradas + subtotalDulceria;
-  }, [subtotalEntradas, subtotalDulceria]);
+  // ── 9. Flujo Especial: "Solo Dulcería" ──
+  const handleIniciarSoloDulceria = () => {
+    setVentaSoloDulceria(true);
+    setFuncionSeleccionada(null);
+    setEntradasSeleccionadas([]);
+    setSubvista("dulceria");
+  };
 
-  // ── 10. Cancelación y Liberación ──
+  // ── 10. Cancelación y Limpieza Segura ──
   const liberarYLimpiarVenta = async () => {
     try {
       await CounterService.liberarTodosLosBloqueosCounter(sesionId);
@@ -285,8 +304,8 @@ export default function MixtoView() {
   };
 
   const handleSolicitarCancelarVenta = () => {
-    const hayItems = entradasSeleccionadas.length > 0 || carritoDulceria.size > 0;
-    if (hayItems) {
+    const tieneItems = entradasSeleccionadas.length > 0 || carritoDulceria.size > 0;
+    if (tieneItems) {
       setAccionSalidaPendiente(() => () => liberarYLimpiarVenta());
       setModalSalidaAbierto(true);
     } else {
@@ -294,77 +313,75 @@ export default function MixtoView() {
     }
   };
 
-  // ── 11. Cobro POS ──
-  const handleConfirmarCobro = async (datosCobro: any) => {
-    if (entradasSeleccionadas.length === 0 && listaProductosCarrito.length === 0) return;
+  // ── 11. Cálculos de Totales ──
+  const subtotalEntradas = useMemo(() => {
+    return entradasSeleccionadas.reduce((sum, e) => sum + Number(e.precio || 0), 0);
+  }, [entradasSeleccionadas]);
 
+  const itemsDulceriaArray = useMemo(() => {
+    return Array.from(carritoDulceria.values());
+  }, [carritoDulceria]);
+
+  const subtotalDulceria = useMemo(() => {
+    return itemsDulceriaArray.reduce((sum, p) => sum + Number(p.subtotal || 0), 0);
+  }, [itemsDulceriaArray]);
+
+  const totalVenta = subtotalEntradas + subtotalDulceria;
+
+  // ── 12. Procesamiento del Cobro POS ──
+  const handleProcesarCobro = async (datosPago: any) => {
     setProcesandoCobro(true);
     try {
-      const res = await CounterService.procesarVentaCounter({
-        modo: "mixto",
+      const resultado = await CounterService.procesarVentaCounter({
+        modo: ventaSoloDulceria ? "dulceria" : "mixto",
         id_sede: idSede,
-        id_vendedor: "33333333-3333-4444-3333-333333333333", // Marcos Caja Mixta
         socio: socioActivo,
-        tipo_comprobante: datosCobro.tipo_comprobante,
-        numero_documento: datosCobro.numero_documento,
-        nombre_cliente: datosCobro.nombre_cliente,
-        metodo_pago: datosCobro.metodo_pago,
-        monto_recibido: datosCobro.monto_recibido,
+        tipo_comprobante: datosPago.tipo_comprobante,
+        numero_documento: datosPago.numero_documento,
+        nombre_cliente: datosPago.nombre_cliente,
+        metodo_pago: datosPago.metodo_pago,
+        monto_recibido: datosPago.monto_recibido,
         id_funcion: funcionSeleccionada?.id_funcion,
         pelicula_titulo: funcionSeleccionada?.pelicula?.titulo,
         formato: funcionSeleccionada?.formato_proyeccion?.nombre,
         sala: funcionSeleccionada?.sala?.nombre_sala,
         hora: funcionSeleccionada?.hora_inicio,
         entradas: entradasSeleccionadas,
-        productos: listaProductosCarrito,
-        descuento_puntos: datosCobro.descuento_puntos,
-        puntos_canjeados: datosCobro.puntos_canjeados,
+        productos: itemsDulceriaArray,
       });
 
-      setResultadoVenta(res);
+      setResultadoVenta(resultado);
       setSubvista("exito");
-      mostrarToast(`¡Cobro exitoso! Vuelto: S/ ${res.vuelto.toFixed(2)}`);
-    } catch (e: any) {
-      throw e;
+      setEntradasSeleccionadas([]);
+      setCarritoDulceria(new Map());
+    } catch (err: any) {
+      mostrarToast(err.message || "Error al procesar la venta en caja mixta.");
     } finally {
       setProcesandoCobro(false);
     }
   };
 
-  // ── 12. Filtros ──
-  const funcionesFiltradas = useMemo(() => {
-    return funciones.filter((fn) => {
-      const peliTitulo = fn.pelicula?.titulo?.toLowerCase() || "";
-      const cumpleBusqueda = !busquedaPeli.trim() || peliTitulo.includes(busquedaPeli.toLowerCase());
-      const formatoNombre = fn.formato_proyeccion?.nombre || "";
-      const cumpleFormato = filtroFormato === "Todos" || formatoNombre.toLowerCase().includes(filtroFormato.toLowerCase());
-      return cumpleBusqueda && cumpleFormato;
-    });
-  }, [funciones, busquedaPeli, filtroFormato]);
-
-  const productosFiltrados = useMemo(() => {
-    return productos.filter((p) => {
-      const coincideBusqueda =
-        !busquedaDulceria.trim() || p.nombre.toLowerCase().includes(busquedaDulceria.toLowerCase());
-      const coincideCat =
-        categoriaSeleccionada === "all" ||
-        p.id_categoria === categoriaSeleccionada ||
-        p.nombre_categoria?.toLowerCase().includes(categoriaSeleccionada.toLowerCase());
-      return coincideBusqueda && coincideCat;
-    });
-  }, [productos, busquedaDulceria, categoriaSeleccionada]);
+  const iniciarNuevaVenta = () => {
+    setResultadoVenta(null);
+    setFuncionSeleccionada(null);
+    setEntradasSeleccionadas([]);
+    setCarritoDulceria(new Map());
+    setVentaSoloDulceria(false);
+    setSubvista("cartelera");
+    setSocioActivo(null);
+  };
 
   return (
-    <div className="bg-dark-900 text-white min-h-screen pt-16 antialiased flex flex-col justify-between">
+    <div className="min-h-screen bg-dark-900 text-white flex flex-col select-none">
       {/* Toast Notificación */}
       {toastMensaje && (
-        <div className="fixed top-20 right-6 z-[150] bg-dark-800 border border-brand-yellow/50 text-brand-yellow px-4 py-2.5 rounded-xl shadow-2xl text-xs font-bold flex items-center gap-2 animate-fade-in">
-          <i className="fa-solid fa-circle-check"></i>
-          <span>{toastMensaje}</span>
+        <div className="fixed top-5 right-5 z-[150] bg-brand-red text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
+          <i className="fa-solid fa-circle-exclamation text-lg"></i>
+          <span className="text-sm font-semibold">{toastMensaje}</span>
         </div>
       )}
 
-      {/* Header Compartido POS */}
+      {/* Cabecera Unificada Counter */}
       <CounterHeader
         modo="mixto"
         sedeActual={sedeActual}
@@ -378,225 +395,71 @@ export default function MixtoView() {
       />
 
       {/* Layout Principal: Contenido (1fr) + Panel lateral combinado (380px) */}
-      <div className="flex-1 lg:grid lg:grid-cols-[1fr_380px]">
+      <div className="flex-1 lg:grid lg:grid-cols-[1fr_380px] pt-16">
         <main className="min-w-0">
           {/* SUBVISTA 1: CARTELERA DE FUNCIONES */}
           {subvista === "cartelera" && (
             <div id="cv-inicio" className="p-4 md:p-6 fade-in">
-              <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
-                <div>
-                  <h1 className="text-2xl md:text-3xl font-bold">Caja Mixta — Cartelera</h1>
-                  <p className="text-slate-400 text-xs md:text-sm">
-                    {sedeActual.nombre} · Venta combinada de cine y dulcería
-                  </p>
-                </div>
-
-                <div className="flex bg-dark-800 border border-white/5 rounded-xl p-1 text-xs font-bold">
-                  <button
-                    type="button"
-                    onClick={() => setModoAgrupacion("peli")}
-                    className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
-                      modoAgrupacion === "peli" ? "bg-brand-blue text-white" : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    <i className="fa-solid fa-film"></i>
-                    <span>Por película</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setModoAgrupacion("hora")}
-                    className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
-                      modoAgrupacion === "hora" ? "bg-brand-blue text-white" : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    <i className="fa-regular fa-clock"></i>
-                    <span>Por hora</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Filtros */}
-              <div className="flex flex-wrap items-center gap-3 mb-6">
-                <div className="flex bg-dark-800 border border-white/5 rounded-xl p-1 text-xs font-bold">
-                  <button
-                    type="button"
-                    onClick={() => setFiltroDia("hoy")}
-                    className={`px-3.5 py-1.5 rounded-lg transition-colors ${
-                      filtroDia === "hoy" ? "bg-brand-blue text-white" : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    Hoy
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFiltroDia("manana")}
-                    className={`px-3.5 py-1.5 rounded-lg transition-colors ${
-                      filtroDia === "manana" ? "bg-brand-blue text-white" : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    Mañana
-                  </button>
-                </div>
-
-                <div className="relative flex-grow max-w-xs">
-                  <i className="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-                  <input
-                    type="text"
-                    value={busquedaPeli}
-                    onChange={(e) => setBusquedaPeli(e.target.value)}
-                    placeholder="Buscar película..."
-                    className="w-full bg-dark-800 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-white text-xs focus:outline-none focus:border-brand-blue"
-                  />
-                </div>
-
-                <div className="flex flex-wrap gap-1.5">
-                  {["Todos", "2D Doblada", "2D Subtitulada", "SALA XD", "IMAX"].map((fmt) => (
-                    <button
-                      key={fmt}
-                      type="button"
-                      onClick={() => setFiltroFormato(fmt)}
-                      className={`px-3 py-1 rounded-full text-xs font-bold border transition-colors ${
-                        filtroFormato === fmt
-                          ? "bg-brand-blue text-white border-brand-blue"
-                          : "bg-dark-900 text-slate-300 border-white/10 hover:border-brand-blue"
-                      }`}
-                    >
-                      {fmt}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Grid de Funciones */}
-              {cargandoFunciones ? (
-                <div className="text-center py-20 text-slate-400">
-                  <i className="fa-solid fa-spinner fa-spin text-3xl text-brand-blue mb-3"></i>
-                  <p className="text-sm">Cargando cartelera de {sedeActual.nombre}...</p>
-                </div>
-              ) : funcionesFiltradas.length === 0 ? (
-                <div className="text-center py-16 bg-dark-800 border border-white/5 rounded-2xl p-8">
-                  <i className="fa-solid fa-film text-slate-500 text-4xl mb-3"></i>
-                  <h3 className="text-lg font-bold text-white mb-1">No hay funciones disponibles</h3>
-                  <p className="text-xs text-slate-400">
-                    Prueba cambiando el día o usando el buscador.
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 2xl:grid-cols-2 gap-4">
-                  {funcionesFiltradas.map((fn) => (
-                    <div
-                      key={fn.id_funcion}
-                      className="bg-dark-800 border border-white/5 hover:border-white/20 rounded-2xl p-4 flex gap-4 transition-colors"
-                    >
-                      <img
-                        src={fn.pelicula?.url_poster || "/img/posters/default.webp"}
-                        alt={fn.pelicula?.titulo || "Película"}
-                        className="w-20 h-28 object-cover rounded-xl shadow-md flex-shrink-0"
-                      />
-                      <div className="flex-1 min-w-0 flex flex-col justify-between">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-white/10 text-slate-300">
-                              {fn.pelicula?.clasificacion || "APT"}
-                            </span>
-                            <span className="text-xs text-slate-400">
-                              {fn.pelicula?.duracion_min || 120} min
-                            </span>
-                          </div>
-                          <h3 className="font-bold text-white text-base truncate mb-1">
-                            {fn.pelicula?.titulo}
-                          </h3>
-                          <p className="text-xs text-slate-400 mb-2">
-                            Sala {fn.sala?.nombre_sala || fn.numero_sala || "1"} · {fn.formato_proyeccion?.nombre || "2D Doblada"}
-                          </p>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                          <span className="text-sm font-bold text-brand-yellow font-mono">
-                            {fn.hora_inicio}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleSeleccionarFuncion(fn)}
-                            className="bg-brand-blue hover:bg-brand-dark-blue text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5"
-                          >
-                            <span>Elegir Butacas</span>
-                            <i className="fa-solid fa-arrow-right text-[10px]"></i>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <CarteleraFuncionesPOS
+                funciones={funciones}
+                cargando={cargandoFunciones}
+                sedeNombre={sedeActual.nombre}
+                filtroDia={filtroDia}
+                onCambiarFiltroDia={(dia) => setFiltroDia(dia)}
+                onSeleccionarFuncion={handleSeleccionarFuncion}
+                funcionSeleccionadaId={funcionSeleccionada?.id_funcion}
+              />
             </div>
           )}
 
           {/* SUBVISTA 2: SELECCIÓN DE BUTACAS */}
           {subvista === "asientos" && funcionSeleccionada && (
-            <div id="cv-asientos" className="p-4 md:p-6 fade-in">
-              <div className="flex flex-wrap items-center gap-4 mb-5">
+            <div className="p-4 md:p-6 fade-in">
+              <div className="flex items-center justify-between gap-4 mb-6">
                 <button
                   type="button"
                   onClick={handleSolicitarCancelarVenta}
-                  className="text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-2 text-xs font-bold flex items-center gap-2 transition-colors"
+                  className="bg-[#0B1528] hover:bg-[#0E1A32] border border-slate-800 text-slate-300 hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
                 >
                   <i className="fa-solid fa-arrow-left"></i>
-                  <span>Volver a Funciones</span>
+                  <span>Volver a Cartelera</span>
                 </button>
 
-                <div className="min-w-0">
-                  <h2 className="text-xl md:text-2xl font-bold truncate">
+                <div className="text-center">
+                  <h2 className="text-lg md:text-xl font-extrabold text-white">
                     {funcionSeleccionada.pelicula?.titulo}
                   </h2>
-                  <p className="text-slate-400 text-xs">
-                    {funcionSeleccionada.hora_inicio} · {funcionSeleccionada.formato_proyeccion?.nombre} · Sala{" "}
-                    {funcionSeleccionada.sala?.nombre_sala || "1"}
+                  <p className="text-xs text-slate-400">
+                    Sala {salaInfo?.numero_sala || funcionSeleccionada.sala?.numero_sala || "1"} · {funcionSeleccionada.formato_proyeccion?.nombre || "2D"} ·{" "}
+                    <span className="text-cyan-400 font-mono font-bold">
+                      {funcionSeleccionada.hora_inicio?.substring(0, 5)}
+                    </span>
                   </p>
                 </div>
-              </div>
 
-              {/* Selector de Tarifa */}
-              <div className="bg-dark-800 border border-white/5 rounded-2xl p-4 mb-5">
-                <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-2">
-                  Tipo de entrada para las próximas butacas seleccionadas:
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {tarifasDisponibles.map((tar) => {
-                    const tarId = tar.id_tipo_entrada;
-                    const esActiva = tarifaActual.id_tipo_entrada === tarId;
-                    return (
-                      <button
-                        key={tarId}
-                        type="button"
-                        onClick={() => setTarifaSeleccionadaId(tarId)}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-colors flex items-center gap-2 ${
-                          esActiva
-                            ? "bg-brand-blue text-white border-brand-blue shadow-md shadow-blue-500/20"
-                            : "bg-dark-900 text-slate-300 border-white/10 hover:border-brand-blue"
-                        }`}
-                      >
-                        <span>{tar.nombre}</span>
-                        <span className="text-[11px] font-mono text-brand-yellow">
-                          S/ {Number(tar.precio).toFixed(2)}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
+                <button
+                  type="button"
+                  disabled={entradasSeleccionadas.length === 0}
+                  onClick={() => setSubvista("dulceria")}
+                  className="bg-[#0284C7] hover:bg-[#0369A1] disabled:bg-slate-800 disabled:text-slate-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <span>Continuar a Dulcería</span>
+                  <i className="fa-solid fa-arrow-right"></i>
+                </button>
               </div>
 
               {/* Matriz de Sala */}
-              <div className="bg-dark-800 border border-white/5 rounded-2xl p-4 md:p-8 overflow-x-auto text-center">
+              <div className="bg-[#0B1528] border border-slate-800/80 rounded-2xl p-6 shadow-xl text-center">
                 {cargandoSala ? (
                   <div className="py-20 text-slate-400">
-                    <i className="fa-solid fa-spinner fa-spin text-3xl text-brand-blue mb-3"></i>
+                    <i className="fa-solid fa-spinner fa-spin text-3xl text-cyan-400 mb-3"></i>
                     <p className="text-sm">Cargando sala y butacas...</p>
                   </div>
                 ) : (
-                  <div className="min-w-[540px] max-w-2xl mx-auto">
-                    <div className="w-full max-w-[460px] mx-auto mb-8 text-center">
-                      <div className="w-full h-8 screen-curve bg-gradient-to-b from-brand-blue/30 to-transparent rounded-t-full border-t-2 border-brand-blue/60 shadow-[0_-10px_20px_rgba(10,126,177,0.2)]"></div>
+                  <div>
+                    {/* Pantalla Curva del Cine */}
+                    <div className="w-3/4 mx-auto mb-10 text-center">
+                      <div className="h-2 bg-gradient-to-r from-transparent via-cyan-400/80 to-transparent rounded-full shadow-[0_0_20px_rgba(6,182,212,0.6)]"></div>
                       <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-2 block">
                         Pantalla
                       </span>
@@ -611,11 +474,15 @@ export default function MixtoView() {
                           asiento.estado === "Ocupado" ||
                           (asiento.estado === "Bloqueado" && asiento.id_sesion_bloqueo !== sesionId);
 
-                        let claseColor = "bg-green-600 hover:bg-green-500 text-white/90 cursor-pointer";
+                        let claseColor = "bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer";
                         if (estaEnCarrito) {
-                          claseColor = "bg-brand-yellow text-black font-extrabold shadow-lg shadow-yellow-500/30 scale-105";
+                          // ROJO como en cliente
+                          claseColor =
+                            "bg-[#DC2026] hover:bg-[#b91c1c] text-white font-black border-black/50 ring-2 ring-[#DC2026] shadow-[0_0_15px_rgba(220,32,38,0.7)] scale-105 cursor-pointer";
+                        } else if (asiento.tipo?.toLowerCase() === "accesible") {
+                          claseColor = "bg-blue-600 hover:bg-blue-500 text-white border-black/50 cursor-pointer";
                         } else if (estaOcupado) {
-                          claseColor = "bg-slate-800 text-slate-600 border-slate-700 cursor-not-allowed opacity-60";
+                          claseColor = "bg-[#1f2937]/90 text-white/20 border-black/60 cursor-not-allowed";
                         }
 
                         return (
@@ -627,24 +494,33 @@ export default function MixtoView() {
                             title={`${asiento.codigo} ${estaOcupado ? "(Ocupado)" : estaEnCarrito ? "(Seleccionado)" : "(Disponible)"}`}
                             className={`w-9 h-9 md:w-10 md:h-10 rounded-t-lg rounded-b-sm border-b-4 border-black/40 flex items-center justify-center text-[10px] font-mono font-bold transition-all ${claseColor}`}
                           >
-                            {asiento.codigo}
+                            {asiento.tipo?.toLowerCase() === "accesible" ? (
+                              <i className="fa-solid fa-wheelchair text-[10px]"></i>
+                            ) : (
+                              asiento.codigo
+                            )}
                           </button>
                         );
                       })}
                     </div>
 
-                    <div className="flex flex-wrap justify-center gap-5 text-xs text-slate-400 pt-4 border-t border-white/5">
+                    {/* Leyenda de Butacas */}
+                    <div className="flex flex-wrap justify-center gap-6 text-xs text-slate-300 pt-5 border-t border-slate-800">
                       <div className="flex items-center gap-2">
-                        <span className="w-3.5 h-3.5 rounded bg-green-600"></span>
+                        <span className="w-3.5 h-3.5 rounded bg-emerald-600"></span>
                         <span>Disponible</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="w-3.5 h-3.5 rounded bg-brand-yellow"></span>
-                        <span>Tu Selección</span>
+                        <span className="w-3.5 h-3.5 rounded bg-[#DC2026] shadow-sm shadow-red-500/50"></span>
+                        <span>Seleccionado</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="w-3.5 h-3.5 rounded bg-slate-800 border border-slate-700"></span>
-                        <span>Ocupado / Bloqueado</span>
+                        <span className="w-3.5 h-3.5 rounded bg-[#1f2937] border border-black/60"></span>
+                        <span>Ocupado</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-3.5 h-3.5 rounded bg-blue-600"></span>
+                        <span>Accesible</span>
                       </div>
                     </div>
                   </div>
@@ -662,28 +538,33 @@ export default function MixtoView() {
                     <button
                       type="button"
                       onClick={() => setSubvista("asientos")}
-                      className="text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-3.5 py-2 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                      className="bg-[#0B1528] hover:bg-[#0E1A32] border border-slate-800 text-slate-300 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                     >
                       <i className="fa-solid fa-arrow-left"></i>
-                      <span>Butacas</span>
+                      <span>Volver a Butacas</span>
                     </button>
                   )}
-                  <div>
-                    <h2 className="text-2xl font-bold">Dulcería & Snacks</h2>
-                    <p className="text-slate-400 text-xs">
-                      {ventaSoloDulceria ? "Venta directa de confitería" : "Agrega snacks a tu compra de entradas"}
-                    </p>
-                  </div>
+                  {ventaSoloDulceria && (
+                    <button
+                      type="button"
+                      onClick={handleSolicitarCancelarVenta}
+                      className="bg-[#0B1528] hover:bg-[#0E1A32] border border-slate-800 text-slate-300 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <i className="fa-solid fa-arrow-left"></i>
+                      <span>Ir a Cartelera</span>
+                    </button>
+                  )}
+                  <h2 className="text-xl md:text-2xl font-bold">Confitería y Snacks</h2>
                 </div>
 
-                <div className="relative w-full sm:w-64">
+                <div className="relative flex-grow max-w-xs">
                   <i className="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
                   <input
                     type="text"
-                    value={busquedaDulceria}
-                    onChange={(e) => setBusquedaDulceria(e.target.value)}
+                    value={busquedaProducto}
+                    onChange={(e) => setBusquedaProducto(e.target.value)}
                     placeholder="Buscar producto..."
-                    className="w-full bg-dark-800 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-white text-xs focus:outline-none focus:border-brand-yellow"
+                    className="w-full bg-[#0B1528] border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
                   />
                 </div>
               </div>
@@ -692,24 +573,24 @@ export default function MixtoView() {
               <div className="flex flex-wrap gap-2 mb-6">
                 <button
                   type="button"
-                  onClick={() => setCategoriaSeleccionada("all")}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors ${
-                    categoriaSeleccionada === "all"
-                      ? "bg-brand-yellow text-black border-brand-yellow"
-                      : "bg-dark-900 text-slate-300 border-white/10 hover:border-brand-yellow"
+                  onClick={() => setCategoriaSeleccionada("todos")}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                    categoriaSeleccionada === "todos"
+                      ? "bg-[#0284C7] text-white border-cyan-500 shadow-md shadow-cyan-900/30"
+                      : "bg-[#0B1528] text-slate-300 border-slate-800 hover:border-slate-700"
                   }`}
                 >
-                  Todo
+                  Todos
                 </button>
                 {categorias.map((cat) => (
                   <button
                     key={cat.id_categoria}
                     type="button"
                     onClick={() => setCategoriaSeleccionada(cat.id_categoria)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors ${
+                    className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                       categoriaSeleccionada === cat.id_categoria
-                        ? "bg-brand-yellow text-black border-brand-yellow"
-                        : "bg-dark-900 text-slate-300 border-white/10 hover:border-brand-yellow"
+                        ? "bg-[#0284C7] text-white border-cyan-500 shadow-md shadow-cyan-900/30"
+                        : "bg-[#0B1528] text-slate-300 border-slate-800 hover:border-slate-700"
                     }`}
                   >
                     {cat.nombre}
@@ -717,265 +598,305 @@ export default function MixtoView() {
                 ))}
               </div>
 
-              {/* Grid Productos */}
-              <div className="grid grid-cols-2 md:grid-cols-3 2xl:grid-cols-4 gap-3">
-                {productosFiltrados.map((prod) => {
-                  const cantidadEnCarrito = carritoDulceria.get(prod.id_producto)?.cantidad || 0;
-                  const precio = Number(prod.precio_final || prod.precio_base || 0);
+              {/* Grid de Productos */}
+              {cargandoProductos ? (
+                <div className="text-center py-20 text-slate-400">
+                  <i className="fa-solid fa-spinner fa-spin text-3xl text-cyan-400 mb-3"></i>
+                  <p className="text-sm">Cargando snacks y bebidas...</p>
+                </div>
+              ) : productosFiltrados.length === 0 ? (
+                <div className="text-center py-16 bg-[#0B1528] border border-slate-800 rounded-2xl p-8">
+                  <i className="fa-solid fa-cookie-bite text-slate-600 text-4xl mb-3"></i>
+                  <p className="text-sm text-slate-400">No hay productos en esta categoría.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {productosFiltrados.map((prod) => {
+                    const itemCarrito = carritoDulceria.get(prod.id_producto);
+                    const cantidad = itemCarrito?.cantidad || 0;
+                    const precio = Number(prod.precio_final || prod.precio_base || 0);
 
-                  return (
-                    <div
-                      key={prod.id_producto}
-                      className={`bg-dark-800 border rounded-2xl p-3 flex flex-col justify-between gap-3 transition-colors ${
-                        cantidadEnCarrito > 0
-                          ? "border-brand-yellow/50 bg-dark-800/90 shadow-lg shadow-yellow-500/5"
-                          : "border-white/5 hover:border-white/20"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        {prod.url_imagen ? (
+                    return (
+                      <div
+                        key={prod.id_producto}
+                        className="bg-[#0B1528] border border-slate-800 hover:border-slate-700 rounded-2xl p-4 flex flex-col justify-between transition-all shadow-md group"
+                      >
+                        <div className="relative mb-3 aspect-square bg-[#070D18] rounded-xl overflow-hidden flex items-center justify-center p-2">
                           <img
-                            src={prod.url_imagen}
+                            src={prod.url_imagen || "/img/dulceria/default.webp"}
                             alt={prod.nombre}
-                            className="w-12 h-12 rounded-xl object-cover bg-dark-900 flex-shrink-0"
+                            className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform"
                           />
-                        ) : (
-                          <div className="w-12 h-12 rounded-xl bg-dark-900 flex items-center justify-center text-brand-yellow text-xl flex-shrink-0">
-                            <i className="fa-solid fa-bowl-food"></i>
-                          </div>
-                        )}
+                          {cantidad > 0 && (
+                            <span className="absolute top-2 right-2 bg-[#0284C7] text-white text-xs font-extrabold w-6 h-6 rounded-full flex items-center justify-center shadow-lg">
+                              {cantidad}
+                            </span>
+                          )}
+                        </div>
 
-                        <div className="min-w-0">
-                          <p className="text-white font-bold text-xs leading-tight line-clamp-2">
+                        <div>
+                          <h3 className="font-bold text-white text-sm line-clamp-1 mb-1">
                             {prod.nombre}
-                          </p>
-                          <p className="text-brand-yellow font-bold text-sm font-mono mt-0.5">
-                            S/ {precio.toFixed(2)}
+                          </h3>
+                          <p className="text-[11px] text-slate-400 line-clamp-2 mb-3">
+                            {prod.descripcion || "Snack fresco preparado al momento."}
                           </p>
                         </div>
+
+                        <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+                          <span className="text-base font-extrabold text-cyan-400 font-mono">
+                            S/ {precio.toFixed(2)}
+                          </span>
+
+                          <div className="flex items-center gap-1.5 bg-[#070D18] border border-slate-800 rounded-lg p-1">
+                            <button
+                              type="button"
+                              disabled={cantidad === 0}
+                              onClick={() => modificarCantidadDulceria(prod, -1)}
+                              className="w-7 h-7 rounded bg-[#0B1528] hover:bg-slate-800 text-slate-300 disabled:opacity-30 disabled:hover:bg-[#0B1528] flex items-center justify-center text-xs font-bold transition-colors cursor-pointer disabled:cursor-not-allowed"
+                            >
+                              -
+                            </button>
+                            <span className="w-6 text-center text-xs font-bold font-mono">
+                              {cantidad}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => modificarCantidadDulceria(prod, 1)}
+                              className="w-7 h-7 rounded bg-[#0284C7] hover:bg-[#0369A1] text-white flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
                       </div>
-
-                      <div className="flex items-center justify-between bg-dark-900 rounded-full px-2 py-1 border border-white/10">
-                        <button
-                          type="button"
-                          disabled={cantidadEnCarrito === 0}
-                          onClick={() => modificarCantidadDulceria(prod, -1)}
-                          className="w-7 h-7 rounded-full bg-dark-700 text-white hover:bg-brand-red disabled:opacity-30 disabled:hover:bg-dark-700 flex items-center justify-center transition-colors"
-                        >
-                          <i className="fa-solid fa-minus text-[10px]"></i>
-                        </button>
-
-                        <span className="text-white font-bold text-xs font-mono">
-                          {cantidadEnCarrito}
-                        </span>
-
-                        <button
-                          type="button"
-                          onClick={() => modificarCantidadDulceria(prod, 1)}
-                          className="w-7 h-7 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black flex items-center justify-center transition-colors"
-                        >
-                          <i className="fa-solid fa-plus text-[10px]"></i>
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 
-          {/* SUBVISTA 4: COBRO POS */}
+          {/* SUBVISTA 4: COBRO */}
           {subvista === "cobro" && (
-            <ModuloPagoPOS
-              total={totalGeneral}
-              subtotal={totalGeneral}
-              socioActivo={socioActivo}
-              onVolver={() => setSubvista(ventaSoloDulceria ? "dulceria" : "dulceria")}
-              onConfirmarCobro={handleConfirmarCobro}
-              procesando={procesandoCobro}
-            />
+            <div className="p-4 md:p-6 fade-in max-w-3xl mx-auto">
+              <ModuloPagoPOS
+                total={totalVenta}
+                subtotal={totalVenta}
+                socioActivo={socioActivo}
+                onVolver={() => setSubvista(ventaSoloDulceria ? "dulceria" : "dulceria")}
+                onConfirmarCobro={handleProcesarCobro}
+                procesando={procesandoCobro}
+              />
+            </div>
           )}
 
-          {/* SUBVISTA 5: TICKET TÉRMICO */}
+          {/* SUBVISTA 5: ÉXITO */}
           {subvista === "exito" && resultadoVenta && (
-            <TicketTermicoPOS
-              venta={resultadoVenta}
-              onNuevaVenta={() => {
-                liberarYLimpiarVenta();
-                setResultadoVenta(null);
-              }}
-            />
+            <div className="p-4 md:p-6 fade-in max-w-xl mx-auto">
+              <div className="bg-[#0B1528] border border-emerald-500/30 rounded-2xl p-6 shadow-2xl text-center mb-6">
+                <div className="w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
+                  <i className="fa-solid fa-check"></i>
+                </div>
+                <h2 className="text-xl font-extrabold text-white">¡Venta POS Completada!</h2>
+                <p className="text-xs text-slate-400 mt-1 font-mono">
+                  Comprobante: {resultadoVenta.numero_comprobante}
+                </p>
+
+                <div className="my-6 text-left">
+                  <TicketTermicoPOS venta={resultadoVenta} onNuevaVenta={iniciarNuevaVenta} />
+                </div>
+              </div>
+            </div>
           )}
         </main>
 
-        {/* ASIDE LATERAL COMBINADO: RESUMEN DE ENTRADAS + DULCERÍA */}
-        <aside
-          id="panel-venta"
-          className="bg-dark-800 border-t lg:border-t-0 lg:border-l border-white/5 flex flex-col lg:h-[calc(100vh-4rem)] lg:sticky lg:top-16"
-        >
-          {subvista === "cartelera" && entradasSeleccionadas.length === 0 && listaProductosCarrito.length === 0 ? (
-            <div className="flex-grow flex flex-col items-center justify-center text-center p-8">
-              <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mb-3">
-                <i className="fa-solid fa-cash-register text-2xl text-emerald-400"></i>
+        {/* ── PANEL LATERAL DERECHO: Carrito Combinado POS ── */}
+        <aside className="border-t lg:border-t-0 lg:border-l border-slate-800 bg-[#0B1528] flex flex-col p-4 md:p-5">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+              <i className="fa-solid fa-cash-register text-cyan-400"></i>
+              <span>Venta en Caja Mixta</span>
+            </h2>
+            {(entradasSeleccionadas.length > 0 || itemsDulceriaArray.length > 0) &&
+              subvista !== "cobro" &&
+              subvista !== "exito" && (
+                <button
+                  type="button"
+                  onClick={handleSolicitarCancelarVenta}
+                  className="text-[11px] text-red-400 hover:text-red-300 font-bold transition-colors cursor-pointer"
+                >
+                  Cancelar Venta
+                </button>
+              )}
+          </div>
+
+          {/* Detalle Combinado */}
+          <div className="flex-1 overflow-y-auto py-3 space-y-4">
+            {entradasSeleccionadas.length === 0 && itemsDulceriaArray.length === 0 ? (
+              <div className="text-center py-12 text-slate-500 text-xs">
+                <i className="fa-solid fa-cart-shopping text-3xl mb-2 opacity-30 block"></i>
+                Elige una función y asientos a la izquierda, o usa el atajo &quot;Solo dulcería&quot;.
               </div>
-              <h3 className="text-lg font-bold text-white mb-1">Nueva Venta Mixta</h3>
-              <p className="text-slate-400 text-xs max-w-[15rem]">
-                Elige una función para vender entradas, o presiona &quot;Solo dulcería&quot; en la cabecera.
-              </p>
-            </div>
-          ) : (
-            <div className="flex-grow flex flex-col justify-between p-5 min-h-0">
-              <div className="space-y-4 overflow-y-auto pr-1">
-                <div className="flex items-center justify-between pb-3 border-b border-white/5">
-                  <div>
-                    <h3 className="font-bold text-white text-base">
-                      {ventaSoloDulceria ? "Pedido Dulcería" : "Venta Mixta"}
-                    </h3>
-                    <p className="text-[11px] text-slate-500 font-mono">Caja POS</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleSolicitarCancelarVenta}
-                    className="text-xs text-slate-400 hover:text-brand-red border border-white/10 hover:border-brand-red/40 rounded-lg px-2.5 py-1 transition-colors"
-                  >
-                    <i className="fa-solid fa-xmark mr-1"></i>
-                    Cancelar
-                  </button>
-                </div>
-
-                {/* Función (si no es solo dulcería) */}
-                {funcionSeleccionada && !ventaSoloDulceria && (
-                  <div className="bg-dark-900 border border-white/5 rounded-xl p-3 flex gap-3">
-                    <img
-                      src={funcionSeleccionada.pelicula?.url_poster || "/img/posters/default.webp"}
-                      className="w-12 h-16 object-cover rounded shadow"
-                      alt=""
-                    />
-                    <div className="min-w-0">
-                      <p className="text-white font-bold text-xs truncate">
-                        {funcionSeleccionada.pelicula?.titulo}
-                      </p>
-                      <p className="text-slate-400 text-[11px] mt-0.5">
-                        Sala {funcionSeleccionada.sala?.nombre_sala || "1"} · {funcionSeleccionada.hora_inicio}
-                      </p>
-                      <p className="text-slate-500 text-[10px]">
-                        {funcionSeleccionada.formato_proyeccion?.nombre}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Lista de Entradas */}
+            ) : (
+              <>
+                {/* Entradas */}
                 {entradasSeleccionadas.length > 0 && (
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1.5">
+                  <div className="space-y-2">
+                    <p className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">
                       Entradas ({entradasSeleccionadas.length})
                     </p>
-                    <div className="space-y-1.5">
-                      {entradasSeleccionadas.map((e) => (
-                        <div
-                          key={e.codigo_asiento}
-                          className="flex items-center justify-between bg-dark-900/60 border border-white/5 rounded-lg px-2.5 py-1.5 text-xs"
-                        >
-                          <span className="text-slate-300">
-                            <b className="text-brand-yellow font-mono mr-1.5">{e.codigo_asiento}</b>
+                    {entradasSeleccionadas.map((e) => (
+                      <div
+                        key={e.codigo_asiento}
+                        className="flex items-center justify-between bg-[#070D18] border border-slate-800/80 rounded-xl p-3 text-xs"
+                      >
+                        <div>
+                          <span className="font-extrabold text-white font-mono block">
+                            Butaca {e.codigo_asiento}
+                          </span>
+                          <span className="text-[11px] text-slate-400">
                             {e.tipo_nombre}
                           </span>
-                          <span className="font-mono text-white">S/ {Number(e.precio).toFixed(2)}</span>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Lista de Snacks */}
-                {listaProductosCarrito.length > 0 && (
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1.5">
-                      Dulcería ({listaProductosCarrito.length})
-                    </p>
-                    <div className="space-y-1.5">
-                      {listaProductosCarrito.map((p) => (
-                        <div
-                          key={p.id_producto}
-                          className="flex items-center justify-between bg-dark-900/60 border border-white/5 rounded-lg px-2.5 py-1.5 text-xs"
-                        >
-                          <span className="text-slate-300 truncate max-w-[170px]">
-                            {p.cantidad}x {p.nombre}
+                        <div className="flex items-center gap-3">
+                          <span className="font-extrabold text-white font-mono">
+                            S/ {Number(e.precio).toFixed(2)}
                           </span>
-                          <span className="font-mono text-white">S/ {p.subtotal.toFixed(2)}</span>
+                          {subvista === "asientos" && (
+                            <button
+                              type="button"
+                              onClick={() => handleToggleAsiento({ codigo: e.codigo_asiento })}
+                              className="text-slate-500 hover:text-red-400 transition-colors cursor-pointer"
+                            >
+                              <i className="fa-solid fa-trash-can"></i>
+                            </button>
+                          )}
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
                   </div>
                 )}
-              </div>
 
-              {/* Subtotales y Botones de Avance */}
-              <div className="pt-4 border-t border-white/5 space-y-3">
-                <div className="space-y-1 text-xs">
-                  {subtotalEntradas > 0 && (
-                    <div className="flex justify-between text-slate-400">
-                      <span>Subtotal Entradas:</span>
-                      <span className="font-mono text-white">S/ {subtotalEntradas.toFixed(2)}</span>
-                    </div>
-                  )}
-                  {subtotalDulceria > 0 && (
-                    <div className="flex justify-between text-slate-400">
-                      <span>Subtotal Dulcería:</span>
-                      <span className="font-mono text-white">S/ {subtotalDulceria.toFixed(2)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between items-center text-sm font-bold pt-1 border-t border-white/5">
-                    <span className="uppercase tracking-wider text-slate-300">Total a Cobrar:</span>
-                    <span className="text-2xl font-black text-brand-yellow font-mono">
-                      S/ {totalGeneral.toFixed(2)}
-                    </span>
+                {/* Dulcería */}
+                {itemsDulceriaArray.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">
+                      Dulcería ({itemsDulceriaArray.length})
+                    </p>
+                    {itemsDulceriaArray.map((p) => (
+                      <div
+                        key={p.id_producto}
+                        className="flex items-center justify-between bg-[#070D18] border border-slate-800/80 rounded-xl p-3 text-xs"
+                      >
+                        <div className="min-w-0 pr-2">
+                          <span className="font-bold text-white block truncate">{p.nombre}</span>
+                          <span className="text-[11px] text-slate-400 font-mono">
+                            {p.cantidad} x S/ {Number(p.precio_unitario).toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-extrabold text-white font-mono">
+                            S/ {Number(p.subtotal).toFixed(2)}
+                          </span>
+                          {subvista === "dulceria" && (
+                            <button
+                              type="button"
+                              onClick={() => modificarCantidadDulceria(p, -p.cantidad)}
+                              className="text-slate-500 hover:text-red-400 transition-colors cursor-pointer"
+                            >
+                              <i className="fa-solid fa-trash-can"></i>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-
-                {/* Botón según la pantalla activa */}
-                {subvista === "asientos" && (
-                  <button
-                    type="button"
-                    disabled={entradasSeleccionadas.length === 0}
-                    onClick={() => setSubvista("dulceria")}
-                    className="w-full bg-brand-blue hover:bg-brand-dark-blue disabled:opacity-40 text-white py-3.5 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
-                  >
-                    <span>Continuar a Dulcería</span>
-                    <i className="fa-solid fa-arrow-right"></i>
-                  </button>
                 )}
+              </>
+            )}
+          </div>
 
-                {subvista === "dulceria" && (
-                  <button
-                    type="button"
-                    disabled={totalGeneral === 0}
-                    onClick={() => setSubvista("cobro")}
-                    className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white py-3.5 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20"
-                  >
-                    <span>Continuar al Cobro</span>
-                    <i className="fa-solid fa-arrow-right"></i>
-                  </button>
-                )}
+          {/* Totales y Botones de Avance */}
+          <div className="pt-4 border-t border-slate-800 space-y-3">
+            {entradasSeleccionadas.length > 0 && (
+              <div className="flex items-center justify-between text-xs text-slate-400">
+                <span>Subtotal Cine:</span>
+                <span className="font-mono font-bold text-white">S/ {subtotalEntradas.toFixed(2)}</span>
               </div>
+            )}
+            {itemsDulceriaArray.length > 0 && (
+              <div className="flex items-center justify-between text-xs text-slate-400">
+                <span>Subtotal Dulcería:</span>
+                <span className="font-mono font-bold text-white">S/ {subtotalDulceria.toFixed(2)}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between text-base font-extrabold pt-2 border-t border-slate-800/60">
+              <span className="text-white">TOTAL A COBRAR:</span>
+              <span className="text-2xl text-cyan-400 font-mono">S/ {totalVenta.toFixed(2)}</span>
             </div>
-          )}
+
+            {/* Botones según la subvistas */}
+            {subvista === "asientos" && (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  disabled={entradasSeleccionadas.length === 0}
+                  onClick={() => setSubvista("dulceria")}
+                  className="w-full bg-[#0284C7] hover:bg-[#0369A1] disabled:bg-slate-800 disabled:text-slate-600 text-white py-3 rounded-xl font-bold text-xs md:text-sm transition-all shadow-md shadow-cyan-900/30 flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <span>Continuar a Dulcería</span>
+                  <i className="fa-solid fa-arrow-right"></i>
+                </button>
+                <button
+                  type="button"
+                  disabled={entradasSeleccionadas.length === 0}
+                  onClick={() => setSubvista("cobro")}
+                  className="w-full bg-[#070D18] hover:bg-slate-800 border border-slate-700 text-slate-300 py-2.5 rounded-xl font-semibold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <span>Saltar directo a Pago</span>
+                  <i className="fa-solid fa-bolt text-amber-400"></i>
+                </button>
+              </div>
+            )}
+
+            {subvista === "dulceria" && (
+              <button
+                type="button"
+                disabled={totalVenta === 0}
+                onClick={() => setSubvista("cobro")}
+                className="w-full bg-[#0284C7] hover:bg-[#0369A1] disabled:bg-slate-800 disabled:text-slate-600 text-white py-3.5 rounded-xl font-bold text-sm transition-all shadow-lg shadow-cyan-900/30 flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+              >
+                <span>Proceder al Cobro</span>
+                <i className="fa-solid fa-arrow-right"></i>
+              </button>
+            )}
+          </div>
         </aside>
       </div>
 
-      {/* MODAL 1: VINCULAR / AFILIAR SOCIO */}
+      {/* ── MODALES COMPARTIDOS ── */}
+      {/* MODAL 1: ELEGIR TIPO DE ENTRADA AL CLICAR BUTACA */}
+      <ModalElegirTipoEntradaPOS
+        asiento={asientoParaModalTipo}
+        tarifas={tarifasDisponibles}
+        onConfirmar={handleConfirmarAsientoConTipo}
+        onCerrar={() => setAsientoParaModalTipo(null)}
+      />
+
+      {/* MODAL 2: VINCULACIÓN Y REGISTRO DE SOCIO */}
       <ModalVincularSocio
         abierto={modalSocioAbierto}
         onCerrar={() => setModalSocioAbierto(false)}
         socioActivo={socioActivo}
-        onSeleccionarSocio={(s) => {
-          setSocioActivo(s);
-          if (s) mostrarToast(`Socio vinculado: ${s.nombre_completo}`);
+        onSeleccionarSocio={(socio: SocioCounterDTO | null) => {
+          setSocioActivo(socio);
+          if (socio) mostrarToast(`Socio ${socio.nombre_completo} vinculado.`);
         }}
       />
 
-      {/* MODAL 2: BÚSQUEDA Y CONTINGENCIA DE ÓRDENES */}
+      {/* MODAL 3: BÚSQUEDA Y CONTINGENCIA DE ÓRDENES */}
       <ModalBuscarOrden
         abierto={modalOrdenAbierto}
         onCerrar={() => setModalOrdenAbierto(false)}
@@ -984,10 +905,10 @@ export default function MixtoView() {
         onMostrarToast={mostrarToast}
       />
 
-      {/* MODAL 3: REIMPRESIÓN TÉRMICA */}
+      {/* MODAL 4: REIMPRESIÓN TÉRMICA */}
       {ordenReimpresion && (
         <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-dark-800 border border-white/10 rounded-2xl w-full max-w-md p-4">
+          <div className="bg-[#0B1528] border border-slate-700/80 rounded-2xl w-full max-w-md p-4">
             <TicketTermicoPOS
               venta={ordenReimpresion}
               esModalReimpresion={true}
@@ -997,7 +918,7 @@ export default function MixtoView() {
         </div>
       )}
 
-      {/* MODAL 4: CONFIRMAR SALIDA Y LIBERAR TODO */}
+      {/* MODAL 5: CONFIRMAR SALIDA Y LIBERAR TODO */}
       <ModalConfirmarSalidaCounter
         abierto={modalSalidaAbierto}
         onCancelar={() => {

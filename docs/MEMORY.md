@@ -16,7 +16,7 @@ Memoria del proyecto entre sesiones. Máximo ~50 líneas: resume o elimina lo qu
 - **Fase 11 — Módulo Counter POS (Boletería, Dulcería, Mixto & Hub Admin Sede): ✅ COMPLETADA** (2026-10-15)
 
 ## Suite de Pruebas y Cobertura
-- **44 de 44 pruebas unitarias e integración pasando en verde** (`npx vitest run` en 10 suites de pruebas).
+- **45 de 45 pruebas unitarias e integración pasando en verde** (`npx vitest run` en 10 suites de pruebas).
 - **TypeScript 0 errores** (`npx tsc --noEmit`).
 - Todas las rutas activas y operativas en HTTP 200 OK (`/`, `/asientos`, `/dulceria`, `/pago`, `/ticket`, `/socio`, `/historial`, `/promociones`, `/ubicacion`, `/contacto`, `/counter`, `/counter/boleteria`, `/counter/dulceria`, `/counter/mixto`).
 

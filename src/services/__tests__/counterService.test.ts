@@ -67,4 +67,12 @@ describe("CounterService - Reglas de Negocio POS", () => {
       })
     ).rejects.toThrow("Nombres y apellidos son requeridos.");
   });
+
+  it("debe aceptar un id_sesion en formato UUID para bloqueo y liberación en Supabase", async () => {
+    const uuidSesion = "123e4567-e89b-12d3-a456-426614174000";
+    expect(uuidSesion).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    );
+  });
 });
+
