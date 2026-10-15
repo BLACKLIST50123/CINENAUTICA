@@ -14,16 +14,28 @@ import { abrirModalLogin, abrirModalRegistro, mostrarToast } from "@/src/lib/ui/
 export default function Socio() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { usuario, esSocio, cargando: cargandoSesion } = useSesion();
+  const { usuario, esSocio, cargando: cargandoSesion, actualizarPerfilLocal } = useSesion();
 
   const [perfil, setPerfil] = useState<PerfilSocioCompletoDTO | null>(null);
   const [cargandoPerfil, setCargandoPerfil] = useState<boolean>(false);
   const [mostrarModalCarnet, setMostrarModalCarnet] = useState<boolean>(false);
 
   // Subtabs horizontales
-  const [subtabActivo, setSubtabActivo] = useState<"compras" | "proximamente">("compras");
+  const [subtabActivo, setSubtabActivo] = useState<"compras" | "proximamente" | "datos">("compras");
   const [ordenes, setOrdenes] = useState<OrdenCompletaDTO[]>([]);
   const [cargandoOrdenes, setCargandoOrdenes] = useState<boolean>(false);
+
+  // Formulario Mis Datos
+  const [formNombre, setFormNombre] = useState<string>("");
+  const [formApellido, setFormApellido] = useState<string>("");
+  const [formCorreo, setFormCorreo] = useState<string>("");
+  const [formTelefono, setFormTelefono] = useState<string>("");
+  const [formContrasena, setFormContrasena] = useState<string>("");
+  const [mostrarPass, setMostrarPass] = useState<boolean>(false);
+
+  // Modal confirmación y guardado
+  const [mostrarModalConfirmacion, setMostrarModalConfirmacion] = useState<boolean>(false);
+  const [guardandoDatos, setGuardandoDatos] = useState<boolean>(false);
 
   // Cargar perfil del socio
   useEffect(() => {
@@ -58,11 +70,21 @@ export default function Socio() {
     }
   }, [usuario, esSocio]);
 
-  // Si viene con parámetro ?tab=compras, activar y bajar al subtab
+  // Sincronizar campos de edición de datos con el usuario actual
+  useEffect(() => {
+    if (usuario) {
+      setFormNombre(usuario.nombre || "");
+      setFormApellido(usuario.apellido || "");
+      setFormCorreo(usuario.correo || "");
+      setFormTelefono(usuario.telefono || perfil?.telefono || "");
+    }
+  }, [usuario, perfil]);
+
+  // Si viene con parámetro ?tab=compras o ?tab=datos, activar y bajar al subtab
   useEffect(() => {
     const tab = searchParams.get("tab");
-    if (tab === "compras") {
-      setSubtabActivo("compras");
+    if (tab === "compras" || tab === "datos" || tab === "proximamente") {
+      setSubtabActivo(tab as any);
       setTimeout(() => {
         const el = document.getElementById("seccion-subtabs");
         if (el) {
@@ -71,6 +93,148 @@ export default function Socio() {
       }, 300);
     }
   }, [searchParams]);
+
+  const manejarCambioNombre = (val: string) => {
+    const soloLetras = val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
+    if (val !== soloLetras) {
+      mostrarToast("El nombre solo debe contener letras.", "error");
+    }
+    setFormNombre(soloLetras);
+  };
+
+  const manejarCambioApellido = (val: string) => {
+    const soloLetras = val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
+    if (val !== soloLetras) {
+      mostrarToast("El apellido solo debe contener letras.", "error");
+    }
+    setFormApellido(soloLetras);
+  };
+
+  const manejarCambioTelefono = (val: string) => {
+    const soloNum = val.replace(/\D/g, "").slice(0, 9);
+    if (val.replace(/\D/g, "") !== val) {
+      mostrarToast("El teléfono solo debe contener números.", "error");
+    }
+    setFormTelefono(soloNum);
+  };
+
+  const restablecerFormulario = () => {
+    if (usuario) {
+      setFormNombre(usuario.nombre || "");
+      setFormApellido(usuario.apellido || "");
+      setFormCorreo(usuario.correo || "");
+      setFormTelefono(usuario.telefono || perfil?.telefono || "");
+      setFormContrasena("");
+      mostrarToast("Formulario restablecido a los valores actuales.", "info");
+    }
+  };
+
+  const solicitarConfirmacionGuardado = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!usuario) return;
+
+    if (!formNombre.trim()) {
+      mostrarToast("Por favor, ingresa tus nombres.", "error");
+      return;
+    }
+    if (/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/.test(formNombre)) {
+      mostrarToast("El nombre solo debe contener letras.", "error");
+      return;
+    }
+
+    if (!formApellido.trim()) {
+      mostrarToast("Por favor, ingresa tus apellidos.", "error");
+      return;
+    }
+    if (/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/.test(formApellido)) {
+      mostrarToast("El apellido solo debe contener letras.", "error");
+      return;
+    }
+
+    if (!formCorreo.trim()) {
+      mostrarToast("Por favor, ingresa tu correo electrónico.", "error");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formCorreo.trim())) {
+      mostrarToast("Por favor, ingresa un correo electrónico válido.", "error");
+      return;
+    }
+
+    if (formTelefono.trim() && formTelefono.trim().length !== 9) {
+      mostrarToast("El teléfono debe contener exactamente 9 dígitos.", "error");
+      return;
+    }
+
+    if (formContrasena && formContrasena.length < 6) {
+      mostrarToast("La nueva contraseña debe tener al menos 6 caracteres.", "error");
+      return;
+    }
+
+    // Comprobar si hubo cambios reales
+    const cambioNombre = formNombre.trim() !== (usuario.nombre || "").trim();
+    const cambioApellido = formApellido.trim() !== (usuario.apellido || "").trim();
+    const cambioCorreo = formCorreo.trim().toLowerCase() !== (usuario.correo || "").trim().toLowerCase();
+    const cambioTelefono = formTelefono.trim() !== (usuario.telefono || perfil?.telefono || "").trim();
+    const cambioContrasena = Boolean(formContrasena);
+
+    if (!cambioNombre && !cambioApellido && !cambioCorreo && !cambioTelefono && !cambioContrasena) {
+      mostrarToast("No has realizado ninguna modificación en tus datos.", "info");
+      return;
+    }
+
+    setMostrarModalConfirmacion(true);
+  };
+
+  const confirmarYGuardarDatos = async () => {
+    if (!usuario) return;
+
+    setGuardandoDatos(true);
+    try {
+      // Simular un tiempo breve de espera para feedback visual y seguridad de concurrencia
+      await new Promise((resolve) => setTimeout(resolve, 600));
+
+      const res = await SocioService.actualizarDatosSocio(usuario.id_usuario, {
+        nombre: formNombre.trim(),
+        apellido: formApellido.trim(),
+        correo: formCorreo.trim().toLowerCase(),
+        telefono: formTelefono.trim() || undefined,
+        contrasena: formContrasena.trim() || undefined,
+      });
+
+      if (!res.ok) {
+        throw new Error(res.error || "No se pudo actualizar los datos.");
+      }
+
+      // Sincronizar contexto global y estado de la vista
+      actualizarPerfilLocal({
+        nombre: formNombre.trim(),
+        apellido: formApellido.trim(),
+        correo: formCorreo.trim().toLowerCase(),
+        telefono: formTelefono.trim() || null,
+      });
+
+      setPerfil((prev) =>
+        prev
+          ? {
+              ...prev,
+              nombre: formNombre.trim(),
+              apellido: formApellido.trim(),
+              correo: formCorreo.trim().toLowerCase(),
+              telefono: formTelefono.trim() || null,
+            }
+          : null
+      );
+
+      setFormContrasena("");
+      setMostrarModalConfirmacion(false);
+      mostrarToast("¡Tus datos se actualizaron correctamente!", "exito");
+    } catch (err: any) {
+      console.error("Error al actualizar datos:", err);
+      mostrarToast(err.message || "Error al actualizar tus datos.", "error");
+    } finally {
+      setGuardandoDatos(false);
+    }
+  };
 
   const copiarCodigo = () => {
     if (!perfil?.codigo_socio) return;
@@ -251,7 +415,7 @@ export default function Socio() {
       {usuario && esSocio && (
         <section id="seccion-subtabs" className="max-w-[1200px] mx-auto px-4 md:px-8 mb-16 scroll-mt-28">
           {/* Header de Tabs */}
-          <div className="flex items-center gap-3 border-b border-white/10 pb-4 mb-8">
+          <div className="flex flex-wrap items-center gap-3 border-b border-white/10 pb-4 mb-8">
             <button
               type="button"
               onClick={() => setSubtabActivo("compras")}
@@ -268,6 +432,19 @@ export default function Socio() {
                   {ordenes.length}
                 </span>
               )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSubtabActivo("datos")}
+              className={`flex items-center gap-2.5 px-6 py-3 rounded-xl font-bold text-sm transition-all cursor-pointer ${
+                subtabActivo === "datos"
+                  ? "bg-brand-blue text-white shadow-lg shadow-blue-500/20"
+                  : "bg-dark-800 text-slate-400 hover:text-white hover:bg-dark-700"
+              }`}
+            >
+              <i className="fa-solid fa-user-pen"></i>
+              Mis Datos
             </button>
 
             <button
@@ -417,6 +594,140 @@ export default function Socio() {
                 })}
               </div>
             )
+          ) : subtabActivo === "datos" ? (
+            /* Subtab Mis Datos */
+            <div className="bg-dark-800/90 border border-white/10 rounded-3xl p-6 md:p-10 max-w-2xl mx-auto shadow-2xl backdrop-blur-md">
+              <div className="flex items-center gap-3.5 mb-6 pb-5 border-b border-white/10">
+                <div className="w-12 h-12 rounded-2xl bg-brand-blue/15 border border-brand-blue/30 flex items-center justify-center text-brand-blue text-xl shadow-lg shrink-0">
+                  <i className="fa-solid fa-user-pen"></i>
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-white leading-tight">
+                    Actualizar Mis Datos
+                  </h3>
+                  <p className="text-slate-400 text-xs mt-1">
+                    Modifica tus datos de contacto y credenciales de acceso para tu cuenta de socio.
+                  </p>
+                </div>
+              </div>
+
+              <form onSubmit={solicitarConfirmacionGuardado} className="space-y-5" noValidate>
+                {/* DNI si existe (identificador inmutable) */}
+                {usuario?.dni && (
+                  <div className="bg-dark-900/60 p-3.5 rounded-2xl border border-white/5 flex items-center justify-between">
+                    <div>
+                      <span className="text-[11px] uppercase tracking-wider font-bold text-slate-400 block">
+                        Documento Nacional de Identidad (DNI)
+                      </span>
+                      <span className="font-mono text-sm font-bold text-white tracking-widest">
+                        {usuario.dni}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-slate-400 bg-white/5 border border-white/10 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
+                      <i className="fa-solid fa-lock text-[10px] text-brand-blue"></i> No modificable
+                    </span>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-slate-300 text-xs font-semibold mb-1.5">
+                      Nombres <span className="text-brand-red">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formNombre}
+                      onChange={(e) => manejarCambioNombre(e.target.value)}
+                      placeholder="Tus nombres"
+                      className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-brand-blue transition-colors"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-300 text-xs font-semibold mb-1.5">
+                      Apellidos <span className="text-brand-red">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formApellido}
+                      onChange={(e) => manejarCambioApellido(e.target.value)}
+                      placeholder="Tus apellidos"
+                      className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-brand-blue transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 text-xs font-semibold mb-1.5">
+                    Correo Electrónico <span className="text-brand-red">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={formCorreo}
+                    onChange={(e) => setFormCorreo(e.target.value)}
+                    placeholder="ejemplo@correo.com"
+                    className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-brand-blue transition-colors"
+                  />
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Se utilizará para iniciar sesión y para el envío de tus boletas y entradas digitales.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 text-xs font-semibold mb-1.5">
+                    Teléfono Celular <span className="text-slate-500 font-normal">(9 dígitos)</span>
+                  </label>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={9}
+                    value={formTelefono}
+                    onChange={(e) => manejarCambioTelefono(e.target.value)}
+                    placeholder="Ej. 987654321"
+                    className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-mono outline-none focus:border-brand-blue transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 text-xs font-semibold mb-1.5">
+                    Nueva Contraseña <span className="text-slate-500 font-normal">(opcional, mín. 6 caracteres)</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={mostrarPass ? "text" : "password"}
+                      value={formContrasena}
+                      onChange={(e) => setFormContrasena(e.target.value)}
+                      placeholder="Dejar en blanco si no deseas cambiarla"
+                      className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm pr-12 outline-none focus:border-brand-blue transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setMostrarPass(!mostrarPass)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 text-sm cursor-pointer"
+                    >
+                      <i className={`fa-solid ${mostrarPass ? "fa-eye-slash" : "fa-eye"}`}></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-4 flex flex-col sm:flex-row gap-3">
+                  <button
+                    type="button"
+                    onClick={restablecerFormulario}
+                    className="bg-white/5 hover:bg-white/10 text-slate-300 px-5 py-3 rounded-xl text-xs font-bold transition-colors cursor-pointer border border-white/5"
+                  >
+                    Restablecer
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 bg-brand-blue hover:bg-blue-600 text-white py-3 px-6 rounded-xl font-bold text-sm transition-all shadow-lg shadow-blue-500/20 cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <i className="fa-solid fa-floppy-disk"></i>
+                    Guardar Cambios
+                  </button>
+                </div>
+              </form>
+            </div>
           ) : (
             /* Subtab Próximamente */
             <div className="bg-dark-800/60 border border-white/10 rounded-3xl p-10 text-center max-w-xl mx-auto shadow-2xl backdrop-blur-md">
@@ -437,6 +748,88 @@ export default function Socio() {
             </div>
           )}
         </section>
+      )}
+
+      {/* ── MODAL DE CONFIRMACIÓN DE CAMBIOS EN DATOS ── */}
+      {mostrarModalConfirmacion && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-dark-800 border border-white/15 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl relative text-white animate-scale-up">
+            <div className="w-14 h-14 rounded-2xl bg-brand-blue/15 border border-brand-blue/30 mx-auto flex items-center justify-center text-brand-blue text-2xl shadow-lg mb-4">
+              <i className="fa-solid fa-user-check"></i>
+            </div>
+
+            <h3 className="text-xl font-bold text-center mb-1.5">
+              Confirmar Actualización de Datos
+            </h3>
+            <p className="text-slate-400 text-xs text-center mb-5">
+              ¿Estás seguro de que deseas guardar las siguientes modificaciones en tu cuenta de socio?
+            </p>
+
+            {/* Resumen de cambios */}
+            <div className="bg-dark-900/80 rounded-2xl p-4 border border-white/5 text-xs space-y-2 mb-5">
+              <div className="flex justify-between items-center py-1 border-b border-white/5">
+                <span className="text-slate-400">Nombres:</span>
+                <span className="font-semibold text-white truncate max-w-[200px]">{formNombre}</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-white/5">
+                <span className="text-slate-400">Apellidos:</span>
+                <span className="font-semibold text-white truncate max-w-[200px]">{formApellido}</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-white/5">
+                <span className="text-slate-400">Correo Electrónico:</span>
+                <span className="font-semibold text-white truncate max-w-[200px]">{formCorreo}</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-white/5">
+                <span className="text-slate-400">Teléfono:</span>
+                <span className="font-semibold text-white">{formTelefono || "(Sin teléfono)"}</span>
+              </div>
+              <div className="flex justify-between items-center py-1">
+                <span className="text-slate-400">Contraseña:</span>
+                <span className={`font-semibold ${formContrasena ? "text-brand-yellow font-mono" : "text-slate-500"}`}>
+                  {formContrasena ? "•••••••• (Se actualizará)" : "Sin cambios"}
+                </span>
+              </div>
+            </div>
+
+            {(formCorreo !== usuario?.correo || Boolean(formContrasena)) && (
+              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-300 text-[11px] mb-5 flex items-start gap-2">
+                <i className="fa-solid fa-triangle-exclamation shrink-0 mt-0.5"></i>
+                <span>
+                  Al modificar tu correo o contraseña, deberás utilizar tus nuevas credenciales para tus próximos inicios de sesión.
+                </span>
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                disabled={guardandoDatos}
+                onClick={() => setMostrarModalConfirmacion(false)}
+                className="flex-1 bg-white/10 hover:bg-white/15 text-white py-3 rounded-xl font-bold text-xs transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={guardandoDatos}
+                onClick={confirmarYGuardarDatos}
+                className="flex-1 bg-brand-blue hover:bg-blue-600 text-white py-3 rounded-xl font-bold text-xs transition-all shadow-lg shadow-blue-500/25 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {guardandoDatos ? (
+                  <>
+                    <i className="fa-solid fa-circle-notch fa-spin"></i>
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <i className="fa-solid fa-check"></i>
+                    Sí, Guardar Cambios
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ── MODAL CARNET DIGITAL ── */}

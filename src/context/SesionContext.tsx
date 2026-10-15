@@ -29,6 +29,8 @@ export interface DatosUsuario {
   nombre: string;
   apellido: string;
   correo: string;
+  dni?: string | null;
+  telefono?: string | null;
   id_rol: string;
   codigo_rol: string;  // 'cliente' | 'counter' | 'admin_sede' | 'admin_general'
 }
@@ -46,6 +48,8 @@ interface SesionContextType {
   registro: (datos: DatosRegistro) => Promise<ResultadoAuth>;
   logout: () => Promise<void>;
   recargarSocio: () => Promise<void>;
+  recargarUsuario: () => Promise<void>;
+  actualizarPerfilLocal: (nuevosDatos: Partial<DatosUsuario>) => void;
 }
 
 // ---------- Contexto ----------
@@ -73,7 +77,7 @@ export function SesionProvider({ children }: { children: React.ReactNode }) {
     // Obtener datos de usuario + rol
     const { data: usuarioData } = await supabase
       .from('usuario')
-      .select('id_usuario, nombre, apellido, correo, id_rol, rol(codigo)')
+      .select('id_usuario, nombre, apellido, correo, dni, telefono, id_rol, rol(codigo)')
       .eq('id_usuario', user.id)
       .single();
 
@@ -84,6 +88,8 @@ export function SesionProvider({ children }: { children: React.ReactNode }) {
       nombre: usuarioData.nombre,
       apellido: usuarioData.apellido,
       correo: usuarioData.correo,
+      dni: usuarioData.dni ?? null,
+      telefono: usuarioData.telefono ?? null,
       id_rol: usuarioData.id_rol,
       codigo_rol: (usuarioData.rol as any)?.codigo ?? 'cliente',
     };
@@ -164,6 +170,18 @@ export function SesionProvider({ children }: { children: React.ReactNode }) {
     }
   }, [authUser]);
 
+  // Recargar datos completos del usuario
+  const recargarUsuario = useCallback(async () => {
+    if (authUser) {
+      await cargarPerfil(authUser);
+    }
+  }, [authUser, cargarPerfil]);
+
+  // Actualizar perfil en el estado local de forma inmediata
+  const actualizarPerfilLocal = useCallback((nuevosDatos: Partial<DatosUsuario>) => {
+    setUsuario((prev) => (prev ? { ...prev, ...nuevosDatos } : null));
+  }, []);
+
   // Wrappers para acciones de auth
   const login = useCallback(async (correo: string, contrasena: string) => {
     setCargando(true);
@@ -183,7 +201,21 @@ export function SesionProvider({ children }: { children: React.ReactNode }) {
   const esPersonal = !!usuario && usuario.codigo_rol !== 'cliente';
 
   return (
-    <SesionContext.Provider value={{ usuario, socio, cargando, esSocio, esPersonal, login, registro, logout, recargarSocio }}>
+    <SesionContext.Provider
+      value={{
+        usuario,
+        socio,
+        cargando,
+        esSocio,
+        esPersonal,
+        login,
+        registro,
+        logout,
+        recargarSocio,
+        recargarUsuario,
+        actualizarPerfilLocal,
+      }}
+    >
       {children}
     </SesionContext.Provider>
   );

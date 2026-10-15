@@ -44,7 +44,9 @@ export class SocioDao {
         usuario (
           nombre,
           apellido,
-          correo
+          correo,
+          dni,
+          telefono
         ),
         nivel_socio (
           id_nivel,
@@ -77,6 +79,8 @@ export class SocioDao {
       nombre: u?.nombre || "Socio",
       apellido: u?.apellido || "",
       correo: u?.correo || "",
+      dni: u?.dni ?? null,
+      telefono: u?.telefono ?? null,
       nivel: n
         ? {
             id_nivel: n.id_nivel,
@@ -124,5 +128,30 @@ export class SocioDao {
       descripcion: h.descripcion,
       fecha_hora: h.fecha_hora,
     }));
+  }
+
+  /**
+   * Actualiza los datos del usuario en la tabla 'usuario'
+   */
+  static async actualizarDatosUsuario(
+    idUsuario: string,
+    datos: { nombre: string; apellido: string; correo: string; telefono?: string }
+  ): Promise<{ ok: boolean; error?: string }> {
+    const { error } = await supabase
+      .from("usuario")
+      .update({
+        nombre: datos.nombre.trim(),
+        apellido: datos.apellido.trim(),
+        correo: datos.correo.trim(),
+        telefono: datos.telefono?.trim() || null,
+      })
+      .eq("id_usuario", idUsuario);
+
+    if (error) {
+      console.error("Error al actualizar usuario en BD:", error);
+      return { ok: false, error: error.message };
+    }
+
+    return { ok: true };
   }
 }

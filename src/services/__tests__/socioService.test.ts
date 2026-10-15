@@ -83,4 +83,44 @@ describe("SocioService - Progresión de Niveles y Beneficios", () => {
     expect(resSinFecha.disponible).toBe(false);
     expect(resSinFecha.es_mes_actual).toBe(false);
   });
+
+  it("debe validar correctamente los campos al intentar actualizar datos de socio", async () => {
+    // Nombre con números o caracteres inválidos
+    const resNombreInvalido = await SocioService.actualizarDatosSocio("fake-id", {
+      nombre: "Juan123",
+      apellido: "Perez",
+      correo: "juan@correo.com",
+    });
+    expect(resNombreInvalido.ok).toBe(false);
+    expect(resNombreInvalido.error).toContain("solo debe contener letras");
+
+    // Apellido con caracteres especiales
+    const resApellidoInvalido = await SocioService.actualizarDatosSocio("fake-id", {
+      nombre: "Juan",
+      apellido: "Perez!",
+      correo: "juan@correo.com",
+    });
+    expect(resApellidoInvalido.ok).toBe(false);
+    expect(resApellidoInvalido.error).toContain("solo debe contener letras");
+
+    // Teléfono de longitud incorrecta
+    const resTelInvalido = await SocioService.actualizarDatosSocio("fake-id", {
+      nombre: "Juan",
+      apellido: "Perez",
+      correo: "juan@correo.com",
+      telefono: "12345",
+    });
+    expect(resTelInvalido.ok).toBe(false);
+    expect(resTelInvalido.error).toContain("9 dígitos");
+
+    // Contraseña demasiado corta
+    const resPassInvalido = await SocioService.actualizarDatosSocio("fake-id", {
+      nombre: "Juan",
+      apellido: "Perez",
+      correo: "juan@correo.com",
+      contrasena: "123",
+    });
+    expect(resPassInvalido.ok).toBe(false);
+    expect(resPassInvalido.error).toContain("al menos 6 caracteres");
+  });
 });

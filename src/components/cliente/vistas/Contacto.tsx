@@ -29,21 +29,76 @@ export default function Contacto() {
     }
   }, [usuario]);
 
+  const esSocioRegistrado = Boolean(usuario);
+
+  const manejarCambioNombres = (val: string) => {
+    if (esSocioRegistrado) return;
+    const soloLetras = val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
+    if (val !== soloLetras) {
+      mostrarToast("El nombre solo debe contener letras.", "error");
+    }
+    setNombres(soloLetras);
+  };
+
+  const manejarCambioApellidos = (val: string) => {
+    if (esSocioRegistrado) return;
+    const soloLetras = val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
+    if (val !== soloLetras) {
+      mostrarToast("El apellido solo debe contener letras.", "error");
+    }
+    setApellidos(soloLetras);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
-    if (!nombres.trim() || !apellidos.trim()) {
-      setErrorMsg("Por favor, ingresa tus nombres y apellidos.");
+    if (!nombres.trim()) {
+      mostrarToast("Por favor, ingresa tus nombres.", "error");
+      setErrorMsg("Por favor, ingresa tus nombres.");
+      return;
+    }
+    if (/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/.test(nombres)) {
+      mostrarToast("El nombre solo debe contener letras.", "error");
+      setErrorMsg("El nombre solo debe contener letras.");
       return;
     }
 
-    if (!correo.trim() || !/^\S+@\S+\.\S+$/.test(correo)) {
+    if (!apellidos.trim()) {
+      mostrarToast("Por favor, ingresa tus apellidos.", "error");
+      setErrorMsg("Por favor, ingresa tus apellidos.");
+      return;
+    }
+    if (/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/.test(apellidos)) {
+      mostrarToast("El apellido solo debe contener letras.", "error");
+      setErrorMsg("El apellido solo debe contener letras.");
+      return;
+    }
+
+    if (!correo.trim()) {
+      mostrarToast("Por favor, ingresa tu correo electrónico.", "error");
+      setErrorMsg("Por favor, ingresa tu correo electrónico.");
+      return;
+    }
+    if (!/^\S+@\S+\.\S+$/.test(correo)) {
+      mostrarToast("Por favor, ingresa un correo electrónico válido.", "error");
       setErrorMsg("Por favor, ingresa un correo electrónico válido.");
       return;
     }
 
-    if (!mensaje.trim() || mensaje.trim().length < 10) {
+    if (!distrito.trim()) {
+      mostrarToast("Por favor, selecciona tu distrito o sede más cercana.", "error");
+      setErrorMsg("Por favor, selecciona tu distrito o sede.");
+      return;
+    }
+
+    if (!mensaje.trim()) {
+      mostrarToast("Por favor, ingresa tu mensaje o consulta.", "error");
+      setErrorMsg("Por favor, ingresa tu mensaje o consulta.");
+      return;
+    }
+    if (mensaje.trim().length < 10) {
+      mostrarToast("Tu mensaje debe tener al menos 10 caracteres.", "error");
       setErrorMsg("Tu mensaje debe tener al menos 10 caracteres.");
       return;
     }
@@ -134,7 +189,7 @@ export default function Contacto() {
               </div>
             </div>
           ) : (
-            <form className="space-y-4" onSubmit={handleSubmit}>
+            <form className="space-y-4" onSubmit={handleSubmit} noValidate>
               {errorMsg && (
                 <div className="p-3 bg-red-500/15 border border-red-500/30 rounded-xl text-red-300 text-xs flex items-center gap-2">
                   <i className="fa-solid fa-circle-exclamation shrink-0"></i>
@@ -142,52 +197,79 @@ export default function Contacto() {
                 </div>
               )}
 
+              {esSocioRegistrado && (
+                <div className="p-3 bg-brand-blue/10 border border-brand-blue/20 rounded-xl text-brand-blue text-xs flex items-center gap-2">
+                  <i className="fa-solid fa-circle-user text-sm"></i>
+                  <span>
+                    Identificado como <strong>Socio CineNáutica</strong>. Tus datos personales se han autocompletado y están protegidos contra edición.
+                  </span>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-slate-300 text-xs font-semibold mb-1.5">
-                    Nombres <span className="text-brand-red">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-slate-300 text-xs font-semibold">
+                      Nombres <span className="text-brand-red">*</span>
+                    </label>
+                    {esSocioRegistrado}
+                  </div>
                   <input
                     type="text"
-                    required
                     value={nombres}
-                    onChange={(e) => setNombres(e.target.value)}
+                    readOnly={esSocioRegistrado}
+                    onChange={(e) => manejarCambioNombres(e.target.value)}
                     placeholder="Ej. Juan"
-                    className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm outline-none focus:border-brand-blue transition-colors"
+                    className={`w-full rounded-xl px-4 py-2.5 text-sm transition-all ${esSocioRegistrado
+                      ? "bg-dark-950/70 border border-white/5 text-slate-300 cursor-not-allowed select-none opacity-85"
+                      : "bg-dark-900 border border-white/10 text-white outline-none focus:border-brand-blue"
+                      }`}
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 text-xs font-semibold mb-1.5">
-                    Apellidos <span className="text-brand-red">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-slate-300 text-xs font-semibold">
+                      Apellidos <span className="text-brand-red">*</span>
+                    </label>
+                    {esSocioRegistrado}
+                  </div>
                   <input
                     type="text"
-                    required
                     value={apellidos}
-                    onChange={(e) => setApellidos(e.target.value)}
+                    readOnly={esSocioRegistrado}
+                    onChange={(e) => manejarCambioApellidos(e.target.value)}
                     placeholder="Ej. Pérez"
-                    className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm outline-none focus:border-brand-blue transition-colors"
+                    className={`w-full rounded-xl px-4 py-2.5 text-sm transition-all ${esSocioRegistrado
+                      ? "bg-dark-950/70 border border-white/5 text-slate-300 cursor-not-allowed select-none opacity-85"
+                      : "bg-dark-900 border border-white/10 text-white outline-none focus:border-brand-blue"
+                      }`}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-300 text-xs font-semibold mb-1.5">
-                  Correo Electrónico <span className="text-brand-red">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-slate-300 text-xs font-semibold">
+                    Correo Electrónico <span className="text-brand-red">*</span>
+                  </label>
+                  {esSocioRegistrado}
+                </div>
                 <input
                   type="email"
-                  required
                   value={correo}
+                  readOnly={esSocioRegistrado}
                   onChange={(e) => setCorreo(e.target.value)}
                   placeholder="ejemplo@correo.com"
-                  className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm outline-none focus:border-brand-blue transition-colors"
+                  className={`w-full rounded-xl px-4 py-2.5 text-sm transition-all ${esSocioRegistrado
+                    ? "bg-dark-950/70 border border-white/5 text-slate-300 cursor-not-allowed select-none opacity-85"
+                    : "bg-dark-900 border border-white/10 text-white outline-none focus:border-brand-blue"
+                    }`}
                 />
               </div>
 
               <div>
                 <label className="block text-slate-300 text-xs font-semibold mb-1.5">
-                  Distrito / Ciudad
+                  Distrito / Ciudad <span className="text-brand-red">*</span>
                 </label>
                 <select
                   value={distrito}
@@ -209,7 +291,6 @@ export default function Contacto() {
                   Mensaje o Consulta <span className="text-brand-red">*</span>
                 </label>
                 <textarea
-                  required
                   rows={4}
                   value={mensaje}
                   onChange={(e) => setMensaje(e.target.value)}

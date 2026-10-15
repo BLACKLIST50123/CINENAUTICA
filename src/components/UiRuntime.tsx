@@ -8,7 +8,7 @@
    ============================================================================ */
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { setRouter } from "@/src/lib/ui/nav";
+import { setRouter, tieneCompraActiva } from "@/src/lib/ui/nav";
 import { init as initCommon } from "@/src/lib/ui/common";
 import { init as initCliente } from "@/src/lib/ui/cliente";
 import { init as initAdmin } from "@/src/lib/ui/admin";
@@ -18,6 +18,17 @@ export default function UiRuntime({ area }: { area: "cliente" | "admin" | "count
     const router = useRouter();
 
     useEffect(() => { setRouter(router); }, [router]);
+
+    useEffect(() => {
+        function onBeforeUnload(e: BeforeUnloadEvent) {
+            if (tieneCompraActiva()) {
+                e.preventDefault();
+                e.returnValue = "";
+            }
+        }
+        window.addEventListener("beforeunload", onBeforeUnload);
+        return () => window.removeEventListener("beforeunload", onBeforeUnload);
+    }, []);
 
     useEffect(() => {
         initCommon();

@@ -21,6 +21,13 @@ export function limpiarCantidadesDulceria(..._x: any[]) {
     $$('#grid-productos [data-cat] .rounded-full > span').forEach(cantidad => { cantidad.textContent = '0'; });
 }
 export function actualizarResumenDulceria(..._x: any[]) {
+    const elTotal = $('total-entradas');
+    const elPagoTotal = $('pago-total-entradas');
+    const elListaAsientos = $('lista-final-asientos');
+    const elListaDulces = $('lista-final-dulces');
+    if (!elTotal && !elPagoTotal && !elListaAsientos && !elListaDulces) {
+        return; // Vista React moderna activa, no operar sobre DOM legacy
+    }
     const productos = $$('#grid-productos [data-cat]').map(card => ({
         nombre: card.querySelector('h4')?.textContent.trim() || '',
         precio: Number((card.querySelector('.font-bold.text-white.text-lg')?.textContent || '').replace(/[^\d.]/g, '')) || 0,
@@ -29,52 +36,59 @@ export function actualizarResumenDulceria(..._x: any[]) {
     const totalDulces = productos.reduce((total, producto) => total + producto.precio * producto.cantidad, 0);
     const asientos = $$('#grid-asientos .seat.selected').map(asiento => asiento.dataset.id);
     const totalEntradas = S.dulceria ? 0 : asientos.length * 18;
-    $('total-entradas').textContent = `S/ ${totalEntradas.toFixed(2)}`;
-    $('pago-total-entradas').textContent = `S/ ${totalEntradas.toFixed(2)}`;
-    const listaAsientos = $('lista-final-asientos');
-    listaAsientos.replaceChildren();
-    asientos.forEach(asiento => {
-        const fila = document.createElement('div');
-        fila.className = 'flex justify-between text-sm';
-        const nombre = document.createElement('span');
-        nombre.className = 'text-slate-300';
-        nombre.innerHTML = `<i class="fa-solid fa-chair text-brand-yellow mr-2"></i>${asiento}`;
-        const precio = document.createElement('span');
-        precio.className = 'text-white';
-        precio.textContent = 'S/ 18.00';
-        fila.append(nombre, precio);
-        listaAsientos.appendChild(fila);
-    });
-    const lista = $('lista-final-dulces');
-    lista.replaceChildren();
-    if (!productos.length) {
-        const vacio = document.createElement('p');
-        vacio.className = 'text-slate-500 text-sm';
-        vacio.textContent = 'Aún no seleccionas productos.';
-        lista.appendChild(vacio);
-    } else {
-        productos.forEach(producto => {
+    if (elTotal) elTotal.textContent = `S/ ${totalEntradas.toFixed(2)}`;
+    if (elPagoTotal) elPagoTotal.textContent = `S/ ${totalEntradas.toFixed(2)}`;
+    if (elListaAsientos) {
+        elListaAsientos.replaceChildren();
+        asientos.forEach(asiento => {
             const fila = document.createElement('div');
-            fila.className = 'flex justify-between text-sm gap-3';
+            fila.className = 'flex justify-between text-sm';
             const nombre = document.createElement('span');
-            nombre.className = 'text-slate-300 min-w-0';
-            nombre.textContent = `${producto.cantidad}x ${producto.nombre}`;
+            nombre.className = 'text-slate-300';
+            nombre.innerHTML = `<i class="fa-solid fa-chair text-brand-yellow mr-2"></i>${asiento}`;
             const precio = document.createElement('span');
-            precio.className = 'text-white flex-shrink-0';
-            precio.textContent = `S/ ${(producto.precio * producto.cantidad).toFixed(2)}`;
+            precio.className = 'text-white';
+            precio.textContent = 'S/ 18.00';
             fila.append(nombre, precio);
-            lista.appendChild(fila);
+            elListaAsientos.appendChild(fila);
         });
     }
-    $('bloque-entradas-resumen-dulceria').classList.toggle('hidden', S.dulceria);
-    $('fila-total-entradas-dulceria').classList.toggle('hidden', S.dulceria);
-    $('bloque-pelicula-pago').classList.toggle('hidden', S.dulceria);
-    $('bloque-entradas-resumen-pago').classList.toggle('hidden', S.dulceria);
-    $('titulo-pedido-dulceria').textContent = S.dulceria ? 'Pedido de Dulcería' : 'Tu Pedido Final';
-    $('total-dulces').textContent = `S/ ${totalDulces.toFixed(2)}`;
-    $('total-general-dulceria').textContent = `S/ ${(totalEntradas + totalDulces).toFixed(2)}`;
-    $('pago-total-dulces').textContent = `S/ ${totalDulces.toFixed(2)}`;
-    $('pago-total-general').textContent = `S/ ${(totalEntradas + totalDulces).toFixed(2)}`;
+    if (elListaDulces) {
+        elListaDulces.replaceChildren();
+        if (!productos.length) {
+            const vacio = document.createElement('p');
+            vacio.className = 'text-slate-500 text-sm';
+            vacio.textContent = 'Aún no seleccionas productos.';
+            elListaDulces.appendChild(vacio);
+        } else {
+            productos.forEach(producto => {
+                const fila = document.createElement('div');
+                fila.className = 'flex justify-between text-sm gap-3';
+                const nombre = document.createElement('span');
+                nombre.className = 'text-slate-300 min-w-0';
+                nombre.textContent = `${producto.cantidad}x ${producto.nombre}`;
+                const precio = document.createElement('span');
+                precio.className = 'text-white flex-shrink-0';
+                precio.textContent = `S/ ${(producto.precio * producto.cantidad).toFixed(2)}`;
+                fila.append(nombre, precio);
+                elListaDulces.appendChild(fila);
+            });
+        }
+    }
+    $('bloque-entradas-resumen-dulceria')?.classList.toggle('hidden', S.dulceria);
+    $('fila-total-entradas-dulceria')?.classList.toggle('hidden', S.dulceria);
+    $('bloque-pelicula-pago')?.classList.toggle('hidden', S.dulceria);
+    $('bloque-entradas-resumen-pago')?.classList.toggle('hidden', S.dulceria);
+    const tit = $('titulo-pedido-dulceria');
+    if (tit) tit.textContent = S.dulceria ? 'Pedido de Dulcería' : 'Tu Pedido Final';
+    const td = $('total-dulces');
+    if (td) td.textContent = `S/ ${totalDulces.toFixed(2)}`;
+    const tg = $('total-general-dulceria');
+    if (tg) tg.textContent = `S/ ${(totalEntradas + totalDulces).toFixed(2)}`;
+    const ptd = $('pago-total-dulces');
+    if (ptd) ptd.textContent = `S/ ${totalDulces.toFixed(2)}`;
+    const ptg = $('pago-total-general');
+    if (ptg) ptg.textContent = `S/ ${(totalEntradas + totalDulces).toFixed(2)}`;
 }
 export function pintarSedeDulceria(..._x: any[]) {
     const sub = $('subtitulo-sede-dulceria');
@@ -84,14 +98,21 @@ export function pintarSedeDulceria(..._x: any[]) {
     $('nombre-sede-dulceria').textContent = `${sd.nombre} · ${sd.ciudad}`;
 }
 export function alCambiarCiudadDulceria(..._x: any[]) {
-    const c = $('dulceria-ciudad').value, sed = $('dulceria-sede');
+    const elC = $('dulceria-ciudad'), sed = $('dulceria-sede');
+    if (!elC || !sed) return;
+    const c = elC.value;
     sed.disabled = !c;
     [...sed.options].forEach(o => { o.hidden = o.value && o.dataset.ciudad !== c; });
     if (!c || (sed.selectedOptions[0] && sed.selectedOptions[0].hidden)) sed.value = '';
     validarSedeDulceria();
 }
 export function validarSedeDulceria(..._x: any[]) {
-    $('btn-confirmar-sede-dulceria').disabled = !$('dulceria-ciudad').value || !$('dulceria-sede').value;
+    const btn = $('btn-confirmar-sede-dulceria');
+    const elC = $('dulceria-ciudad');
+    const elS = $('dulceria-sede');
+    if (btn && elC && elS) {
+        btn.disabled = !elC.value || !elS.value;
+    }
 }
 /* ---------- Detalle de película ---------- */
 /* Filtro del detalle: Ciudad -> Sede -> Fecha (oculta/muestra tarjetas de sede) */
@@ -372,8 +393,9 @@ export function cargarLeaflet() {
 
 /* ---------- Lo que antes hacían cambiarVista()/irAAsientos()/etc. al "entrar" a una vista ---------- */
 export function aplicarVistaActual() {
-    const p = window.location.pathname;
-    setSesion(S.sesion);
+    const p = typeof window !== "undefined" ? window.location.pathname : "";
+    if (!p) return;
+    if (typeof setSesion === "function") setSesion(S.sesion);
     if (p === '/') {
         // La vista de inicio ahora se controla reactivamente por Inicio.tsx
     } else if (p.startsWith('/pelicula/')) {
@@ -381,10 +403,12 @@ export function aplicarVistaActual() {
     } else if (p === '/asientos') {
         // La vista de asientos ahora se gestiona reactivamente por Asientos.tsx
     } else if (p === '/dulceria') {
-        $('btn-volver-asientos-dulceria').classList.toggle('hidden', !!S.dulceria);
-        pintarSedeDulceria(); actualizarResumenDulceria();
+        const btnVolver = $('btn-volver-asientos-dulceria');
+        if (btnVolver) btnVolver.classList.toggle('hidden', !!S.dulceria);
+        if ($('subtitulo-sede-dulceria')) pintarSedeDulceria();
+        if ($('total-entradas')) actualizarResumenDulceria();
     } else if (p === '/pago') {
-        actualizarResumenDulceria();
+        if ($('pago-total-entradas')) actualizarResumenDulceria();
     } else if (p === '/ubicacion') {
         if (mapa) { try { mapa.remove(); } catch (e) { } mapa = null; marcador = null; }
         pintarInfoSede(sedeMapa); iniciarMapa();

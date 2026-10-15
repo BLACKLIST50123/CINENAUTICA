@@ -44,6 +44,8 @@ export interface PerfilSocioCompletoDTO {
   nombre: string;
   apellido: string;
   correo: string;
+  dni?: string | null;
+  telefono?: string | null;
   puntos: number;
   nivel: NivelSocioDTO;
   fecha_nacimiento: string | null;

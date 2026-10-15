@@ -6,17 +6,24 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { S } from "@/src/lib/ui/nav";
 
-const PASOS = [
+const PASOS_PELICULA = [
   { ruta: "/pelicula", label: "Función", icono: "fa-clock" },
   { ruta: "/asientos", label: "Asientos", icono: "fa-chair" },
   { ruta: "/dulceria", label: "Dulcería", icono: "fa-bowl-food" },
   { ruta: "/pago", label: "Pago", icono: "fa-credit-card" },
-  { ruta: "/ticket", label: "Listo", icono: "fa-ticket" },
+  { ruta: "/ticket", label: "Ticket", icono: "fa-ticket" },
+];
+
+const PASOS_DULCERIA = [
+  { ruta: "/dulceria", label: "Dulcería", icono: "fa-bowl-food" },
+  { ruta: "/pago", label: "Pago", icono: "fa-credit-card" },
+  { ruta: "/ticket", label: "Comprobante", icono: "fa-receipt" },
 ];
 
 export default function StepperCompra() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
+  const [esDulceriaDirecta, setEsDulceriaDirecta] = useState(false);
 
   useEffect(() => {
     function handleScroll() {
@@ -27,9 +34,24 @@ export default function StepperCompra() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const pasos = S.dulceria
-    ? PASOS.filter((p) => p.ruta !== "/pelicula" && p.ruta !== "/asientos")
-    : PASOS;
+  useEffect(() => {
+    function actualizarFlujo() {
+      if (typeof window !== "undefined") {
+        const directo =
+          sessionStorage.getItem("cinenautica_flujo_dulceria_directo") === "true";
+        setEsDulceriaDirecta(directo || Boolean(S.dulceria));
+      }
+    }
+    actualizarFlujo();
+    window.addEventListener("storage", actualizarFlujo);
+    window.addEventListener("cambio-flujo-compra", actualizarFlujo);
+    return () => {
+      window.removeEventListener("storage", actualizarFlujo);
+      window.removeEventListener("cambio-flujo-compra", actualizarFlujo);
+    };
+  }, [pathname]);
+
+  const pasos = esDulceriaDirecta ? PASOS_DULCERIA : PASOS_PELICULA;
   const actual = pasos.findIndex(
     (p) => pathname === p.ruta || pathname.startsWith(p.ruta + "/")
   );

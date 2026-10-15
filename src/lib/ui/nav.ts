@@ -53,15 +53,30 @@ export function tieneCompraActiva(): boolean {
     if (typeof window === "undefined") return false;
     // Si la ruta es /ticket, la compra ya finalizó y no debe advertir de salida
     if (window.location.pathname.startsWith("/ticket")) return false;
+
+    // 1. Asientos seleccionados (flujo de cine)
     if ((window as any).__tieneAsientosSeleccionados) return true;
     try {
-        const raw = sessionStorage.getItem("cinenautica_asientos_seleccionados");
-        if (raw) {
-            const data = JSON.parse(raw);
+        const rawAsientos = sessionStorage.getItem("cinenautica_asientos_seleccionados");
+        if (rawAsientos) {
+            const data = JSON.parse(rawAsientos);
             if (data.asientos && data.asientos.length > 0) return true;
         }
         if (SEL.asientos && SEL.asientos.length > 0) return true;
     } catch {}
+
+    // 2. Productos de dulcería seleccionados (flujo directo de dulcería o carrito con snacks)
+    if ((window as any).__tieneProductosDulceriaSeleccionados) return true;
+    try {
+        const rawDulces = sessionStorage.getItem("cinenautica_dulceria_seleccion");
+        if (rawDulces) {
+            const data = JSON.parse(rawDulces);
+            if (Array.isArray(data.items) && data.items.length > 0) return true;
+            if (Number(data.total_productos) > 0) return true;
+        }
+        if (Array.isArray(SEL.dulces) && SEL.dulces.length > 0) return true;
+    } catch {}
+
     return false;
 }
 
@@ -89,12 +104,20 @@ export function limpiarEstadoCompraGlobal() {
             sessionStorage.removeItem("cinenautica_asientos_seleccionados");
             sessionStorage.removeItem("cinenautica_seleccion_funcion");
             sessionStorage.removeItem("cinenautica_dulceria_seleccion");
+            sessionStorage.removeItem("cinenautica_flujo_dulceria_directo");
+            sessionStorage.removeItem("cinenautica_sede_id");
+            sessionStorage.removeItem("cinenautica_sede_nombre");
         } catch {}
         (window as any).__tieneAsientosSeleccionados = false;
+        (window as any).__tieneProductosDulceriaSeleccionados = false;
         window.dispatchEvent(new CustomEvent("asientos-liberados-sesion"));
+        window.dispatchEvent(new CustomEvent("cambio-flujo-compra"));
     }
+    S.dulceria = false;
     SEL.asientos = [];
     SEL.total_asientos = 0;
+    SEL.dulces = [];
+    SEL.total_dulces = 0;
     delete SEL.id_funcion;
     delete SEL.id_sala;
     delete SEL.sala;
@@ -102,12 +125,15 @@ export function limpiarEstadoCompraGlobal() {
     delete SEL.hora;
     delete SEL.formato;
     delete SEL.dia_label;
+    delete SEL.id_sede;
+    delete SEL.nombre_sede;
+    delete SEL.peli;
 }
 
 export function cancelarSalirDelFlujoDeCompra() {
     _accionSalirPendiente = null;
     if (typeof window !== "undefined" && tieneCompraActiva()) {
-        window.history.pushState({ cinenauticaAsientos: true }, "", window.location.href);
+        window.history.pushState({ cinenauticaCompraActiva: true }, "", window.location.href);
     }
 }
 
@@ -133,22 +159,35 @@ export const irAAsientos = (id?: string) => go(id ? `/asientos?funcion=${id}` : 
 export const irADulceria = () => { S.dulceria = false; go("/dulceria"); };
 export const irAPago = () => go("/pago");
 export const procesarPago = () => go("/ticket");
-export const abrirDulceriaDirecta = () => { S.dulceria = true; go("/dulceria"); };
+export const abrirDulceriaDirecta = (idSede?: string, nombreSede?: string) => {
+    S.dulceria = true;
+    if (typeof window !== "undefined") {
+        try {
+            sessionStorage.setItem("cinenautica_flujo_dulceria_directo", "true");
+            if (idSede) sessionStorage.setItem("cinenautica_sede_id", idSede);
+            if (nombreSede) sessionStorage.setItem("cinenautica_sede_nombre", nombreSede);
+            sessionStorage.removeItem("cinenautica_asientos_seleccionados");
+            sessionStorage.removeItem("cinenautica_seleccion_funcion");
+            window.dispatchEvent(new CustomEvent("cambio-flujo-compra"));
+        } catch {}
+    }
+    go(idSede ? `/dulceria?sede=${idSede}` : "/dulceria");
+};
 
 /* Dulcería directa: el modal pide sede y luego entra a /dulceria */
 export function pedirSedeParaDulceria() {
-    const ciu = $("dulceria-ciudad") as HTMLSelectElement, sed = $("dulceria-sede") as HTMLSelectElement;
-    ciu.value = ""; sed.value = ""; sed.disabled = true;
-    ([...sed.options] as HTMLOptionElement[]).forEach(o => { o.hidden = false; });
-    ($("btn-confirmar-sede-dulceria") as HTMLButtonElement).disabled = true;
+    if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("abrir-modal-dulceria-sede"));
+    }
     abrirModal("modal-dulceria-sede");
 }
-export function confirmarSedeDulceria() {
-    const id = ($("dulceria-sede") as HTMLSelectElement).value;
-    if (!id) return;
+export function confirmarSedeDulceria(idSede?: string, nombreSede?: string) {
     cerrarModal("modal-dulceria-sede");
+    const id = idSede || (($("dulceria-sede") as HTMLSelectElement)?.value);
+    if (!id) return;
     SEL.sede = id; S.sedeNav = id;
-    abrirDulceriaDirecta();
+    if (nombreSede) SEL.nombre_sede = nombreSede;
+    abrirDulceriaDirecta(id, nombreSede);
 }
 
 /* Cambiar de sede desde el modal del navbar / mapa: vuelve al inicio con el filtro aplicado */

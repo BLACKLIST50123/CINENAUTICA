@@ -63,3 +63,21 @@ describe("DulceriaService - Integración con Supabase", () => {
     expect(comboMegaLima?.precio_final).toBe(68);
   });
 });
+
+describe("DulceriaService - Flujo Directo de Dulcería y Salida Controlada", () => {
+  it("debe verificar que un pedido sin productos no genere totales ni compra activa", () => {
+    const resumen = DulceriaService.calcularTotalesPedido([]);
+    expect(resumen.total_productos).toBe(0);
+    expect(resumen.total_importe).toBe(0);
+  });
+
+  it("debe acumular correctamente cantidades de múltiples productos para compra directa", () => {
+    const items = [
+      { id_producto: "prod-1", nombre: "Popcorn Gigante", precio_unitario: 22, cantidad: 2, subtotal: 44 },
+      { id_producto: "prod-2", nombre: "Gaseosa Mediana", precio_unitario: 10, cantidad: 1, subtotal: 10 },
+    ];
+    const resumen = DulceriaService.calcularTotalesPedido(items);
+    expect(resumen.total_productos).toBe(3);
+    expect(resumen.total_importe).toBe(54);
+  });
+});

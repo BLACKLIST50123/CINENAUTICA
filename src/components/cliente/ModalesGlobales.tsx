@@ -5,8 +5,9 @@
 // React reales importados desde ModalesAuth.tsx, que usan useSesion() con Supabase.
 // El resto de modales (trailer, legal, sede, promo, dulcería) permanece igual por ahora.
 
-import { useEffect, useState } from "react";
-import { abrirModalLegal, alCambiarCiudadDulceria, cerrarModalTrailer, validarSedeDulceria } from "@/src/lib/ui/cliente";
+import { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { abrirModalLegal, cerrarModalTrailer } from "@/src/lib/ui/cliente";
 import { cerrarModal, cerrarModalLegal, cerrarModalPromoBanner } from "@/src/lib/ui/common";
 import { abrirDetallePelicula, confirmarSedeDulceria, elegirSedeNav, ejecutarSalirDelFlujoDeCompra, cancelarSalirDelFlujoDeCompra, limpiarEstadoCompraGlobal, SEL } from "@/src/lib/ui/nav";
 import { ModalLogin, ModalRegistro, ModalPerfil, ModalCarnetSocio } from "./ModalesAuth";
@@ -15,12 +16,25 @@ import { AsientoService } from "@/src/services/asientoService";
 import type { SedeDTO } from "@/src/dtos/cartelera";
 
 export default function ModalesGlobales() {
+  const router = useRouter();
   const [sedes, setSedes] = useState<SedeDTO[]>([]);
+  const [ciudadDulceria, setCiudadDulceria] = useState<string>("");
+  const [sedeDulceria, setSedeDulceria] = useState<string>("");
 
   useEffect(() => {
     SedeDao.obtenerSedes()
       .then(setSedes)
       .catch((err) => console.error("Error al cargar sedes para modales:", err));
+  }, []);
+
+  // Escuchar cuando el navbar solicite abrir el modal de dulcería para reiniciar filtros
+  useEffect(() => {
+    function handleAbrirDulceria() {
+      setCiudadDulceria("");
+      setSedeDulceria("");
+    }
+    window.addEventListener("abrir-modal-dulceria-sede", handleAbrirDulceria);
+    return () => window.removeEventListener("abrir-modal-dulceria-sede", handleAbrirDulceria);
   }, []);
 
   // Agrupar sedes por región y ciudad
@@ -35,6 +49,18 @@ export default function ModalesGlobales() {
   const ciudadesUnicas = Array.from(
     new Set(sedes.map((s) => s.ciudad.nombre))
   ).sort();
+
+  // Sedes filtradas según la ciudad seleccionada
+  const sedesDulceriaFiltradas = useMemo(() => {
+    if (!ciudadDulceria) return [];
+    return sedes.filter((s) => s.ciudad.nombre === ciudadDulceria);
+  }, [sedes, ciudadDulceria]);
+
+  function manejarConfirmarSedeDulceria() {
+    if (!sedeDulceria) return;
+    const sedeObj = sedes.find((s) => String(s.id_sede) === String(sedeDulceria));
+    confirmarSedeDulceria(sedeDulceria, sedeObj?.nombre);
+  }
 
   return (
     <>
@@ -212,7 +238,7 @@ export default function ModalesGlobales() {
       </div>
       <div className="hidden fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center opacity-0 transition-opacity duration-200 p-4" id="modal-dulceria-sede">
         <div className="bg-dark-800 p-6 md:p-8 rounded-2xl border border-white/10 shadow-2xl max-w-md w-full relative transform scale-95 transition-transform duration-200">
-          <button className="absolute top-4 right-4 text-slate-400 hover:text-white" onClick={() => { cerrarModal('modal-dulceria-sede'); }}>
+          <button className="absolute top-4 right-4 text-slate-400 hover:text-white cursor-pointer" onClick={() => { cerrarModal('modal-dulceria-sede'); }}>
             <i className="fa-solid fa-xmark text-xl"></i>
           </button>
           <div className="w-14 h-14 rounded-full bg-brand-yellow/10 border border-brand-yellow/30 flex items-center justify-center mb-4">
@@ -228,7 +254,15 @@ export default function ModalesGlobales() {
             <div className="filtro-campo">
               <label>Ciudad</label>
               <i className="fa-solid fa-city"></i>
-              <select className="filtro-select" id="dulceria-ciudad" onChange={() => { alCambiarCiudadDulceria(); }}>
+              <select
+                className="filtro-select cursor-pointer"
+                id="dulceria-ciudad"
+                value={ciudadDulceria}
+                onChange={(e) => {
+                  setCiudadDulceria(e.target.value);
+                  setSedeDulceria("");
+                }}
+              >
                 <option value="">Selecciona una ciudad</option>
                 {ciudadesUnicas.map((c) => (
                   <option key={c} value={c}>{c}</option>
@@ -238,17 +272,29 @@ export default function ModalesGlobales() {
             <div className="filtro-campo">
               <label>Sede</label>
               <i className="fa-solid fa-location-dot"></i>
-              <select className="filtro-select" disabled id="dulceria-sede" onChange={() => { validarSedeDulceria(); }}>
-                <option value="">Selecciona una sede</option>
-                {sedes.map((s) => (
-                  <option key={s.id_sede} data-ciudad={s.ciudad.nombre} value={String(s.id_sede)}>
+              <select
+                className="filtro-select cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!ciudadDulceria}
+                id="dulceria-sede"
+                value={sedeDulceria}
+                onChange={(e) => setSedeDulceria(e.target.value)}
+              >
+                <option value="">{ciudadDulceria ? "Selecciona una sede" : "Primero selecciona una ciudad"}</option>
+                {sedesDulceriaFiltradas.map((s) => (
+                  <option key={s.id_sede} value={String(s.id_sede)}>
                     {s.nombre}
                   </option>
                 ))}
               </select>
             </div>
           </div>
-          <button className="w-full mt-6 bg-brand-yellow hover:bg-yellow-400 disabled:bg-slate-700 disabled:text-slate-500 disabled:hover:bg-slate-700 text-black py-3.5 rounded-xl font-bold transition-colors flex items-center justify-center gap-2" disabled id="btn-confirmar-sede-dulceria" type="button" onClick={() => { confirmarSedeDulceria(); }}>
+          <button
+            className="w-full mt-6 bg-brand-yellow hover:bg-yellow-400 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-black py-3.5 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-lg"
+            disabled={!sedeDulceria}
+            id="btn-confirmar-sede-dulceria"
+            type="button"
+            onClick={manejarConfirmarSedeDulceria}
+          >
             Continuar a Dulcería
             <i className="fa-solid fa-bowl-food"></i>
           </button>

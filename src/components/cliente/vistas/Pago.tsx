@@ -13,6 +13,7 @@ import type {
 } from "@/src/dtos/orden";
 import { mostrarToast } from "@/src/lib/ui/common";
 import { abrirModalLegal } from "@/src/lib/ui/cliente";
+import { S } from "@/src/lib/ui/nav";
 
 export default function Pago() {
   const router = useRouter();
@@ -65,21 +66,35 @@ export default function Pago() {
         "";
       setIdSesion(sesionToken);
 
-      // Cargar función
       const rawFn = sessionStorage.getItem("cinenautica_seleccion_funcion");
-      if (rawFn) {
-        const fn = JSON.parse(rawFn);
-        setDatosFuncion(fn);
-        if (fn.id_sede) setIdSede(Number(fn.id_sede));
-        if (fn.nombre_sede) setNombreSede(fn.nombre_sede);
-      }
-
-      // Cargar asientos
       const rawAsientos = sessionStorage.getItem("cinenautica_asientos_seleccionados");
-      if (rawAsientos) {
-        const as = JSON.parse(rawAsientos);
-        if (Array.isArray(as.asientos)) {
-          setAsientosComprados(as.asientos);
+
+      // Determinar si es flujo directo de dulcería
+      const directo =
+        sessionStorage.getItem("cinenautica_flujo_dulceria_directo") === "true" ||
+        Boolean(S.dulceria) ||
+        (!rawFn && !rawAsientos);
+      setEsFlujoDirecto(directo);
+
+      if (directo) {
+        // En compra directa de dulcería, no hay función ni asientos de películas
+        setDatosFuncion(null);
+        setAsientosComprados([]);
+      } else {
+        // Cargar función
+        if (rawFn) {
+          const fn = JSON.parse(rawFn);
+          setDatosFuncion(fn);
+          if (fn.id_sede) setIdSede(Number(fn.id_sede));
+          if (fn.nombre_sede) setNombreSede(fn.nombre_sede);
+        }
+
+        // Cargar asientos
+        if (rawAsientos) {
+          const as = JSON.parse(rawAsientos);
+          if (Array.isArray(as.asientos)) {
+            setAsientosComprados(as.asientos);
+          }
         }
       }
 
@@ -92,10 +107,6 @@ export default function Pago() {
         }
         if (du.id_sede) setIdSede(Number(du.id_sede));
       }
-
-      // Determinar si es flujo directo
-      const directo = !rawFn && !rawAsientos;
-      setEsFlujoDirecto(directo);
     } catch (e) {
       console.error("Error al cargar contexto de compra en Pago:", e);
     } finally {
@@ -106,14 +117,30 @@ export default function Pago() {
   // Pre-llenar datos si el usuario está autenticado
   useEffect(() => {
     if (usuario) {
-      if (!nombreContacto) {
-        setNombreContacto(`${usuario.nombre} ${usuario.apellido}`.trim());
+      const nombreCompleto = `${usuario.nombre || ""} ${usuario.apellido || ""}`.trim();
+      if (nombreCompleto) {
+        setNombreContacto(nombreCompleto);
       }
-      if (!correoContacto) {
+      if (usuario.correo) {
         setCorreoContacto(usuario.correo);
       }
+      if (tipoComprobante === "Boleta" && usuario.dni) {
+        setNumeroDocumento(usuario.dni);
+      }
     }
-  }, [usuario, nombreContacto, correoContacto]);
+  }, [usuario, tipoComprobante]);
+
+  // Sincronizar estado global de compra activa en pago
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      (window as any).__tieneProductosDulceriaSeleccionados = itemsDulceria.length > 0;
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        (window as any).__tieneProductosDulceriaSeleccionados = false;
+      }
+    };
+  }, [itemsDulceria.length]);
 
   // Subtotales
   const subtotalEntradas = useMemo(() => {
@@ -411,7 +438,9 @@ export default function Pago() {
           </button>
 
           <div className="flex items-center gap-2 text-xs text-slate-400">
-            <span className="hidden sm:inline">Paso 3 de 4:</span>
+            <span className="hidden sm:inline">
+              {esFlujoDirecto ? "Paso 2 de 3:" : "Paso 4 de 5:"}
+            </span>
             <span className="text-brand-yellow font-bold uppercase tracking-wider">
               Pago Seguro y Comprobante
             </span>
@@ -452,7 +481,14 @@ export default function Pago() {
                     value="Boleta"
                     onChange={() => {
                       setTipoComprobante("Boleta");
-                      setNumeroDocumento("");
+                      if (usuario?.dni) {
+                        setNumeroDocumento(usuario.dni);
+                      } else {
+                        setNumeroDocumento("");
+                      }
+                      if (usuario) {
+                        setNombreContacto(`${usuario.nombre || ""} ${usuario.apellido || ""}`.trim());
+                      }
                     }}
                   />
                   <div className="text-left">
@@ -477,6 +513,9 @@ export default function Pago() {
                     onChange={() => {
                       setTipoComprobante("Factura");
                       setNumeroDocumento("");
+                      if (usuario) {
+                        setNombreContacto("");
+                      }
                     }}
                   />
                   <div className="text-left">
@@ -489,17 +528,30 @@ export default function Pago() {
               {/* Inputs de Documento y Contacto */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    {tipoComprobante === "Boleta" ? "Número de DNI (8 dígitos):" : "Número de RUC (11 dígitos):"}
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-300">
+                      {tipoComprobante === "Boleta" ? "Número de DNI (8 dígitos):" : "Número de RUC (11 dígitos):"}
+                    </label>
+                    {tipoComprobante === "Boleta" && usuario?.dni && (
+                      <span className="text-[10px] text-slate-400 flex items-center gap-1 font-mono">
+                        <i className="fa-solid fa-lock text-[9px] text-brand-blue"></i> Socio
+                      </span>
+                    )}
+                  </div>
                   <input
-                    className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-blue transition-colors font-mono tracking-wider text-sm"
+                    className={`w-full rounded-xl px-4 py-3 text-sm font-mono tracking-wider transition-colors ${
+                      tipoComprobante === "Boleta" && usuario?.dni
+                        ? "bg-dark-950/70 border border-white/5 text-slate-300 cursor-not-allowed select-none opacity-85"
+                        : "bg-dark-900 border border-white/10 text-white focus:outline-none focus:border-brand-blue"
+                    }`}
                     inputMode="numeric"
                     maxLength={tipoComprobante === "Boleta" ? 8 : 11}
                     placeholder={tipoComprobante === "Boleta" ? "Ej: 72481920" : "Ej: 20601234567"}
                     type="text"
                     value={numeroDocumento}
+                    readOnly={Boolean(tipoComprobante === "Boleta" && usuario?.dni)}
                     onInput={(e) => {
+                      if (tipoComprobante === "Boleta" && usuario?.dni) return;
                       const val = e.currentTarget.value.replace(/\D/g, "");
                       setNumeroDocumento(val.slice(0, tipoComprobante === "Boleta" ? 8 : 11));
                     }}
@@ -507,15 +559,28 @@ export default function Pago() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    {tipoComprobante === "Boleta" ? "Nombres y Apellidos:" : "Razón Social:"}
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-300">
+                      {tipoComprobante === "Boleta" ? "Nombres y Apellidos:" : "Razón Social:"}
+                    </label>
+                    {tipoComprobante === "Boleta" && usuario && (
+                      <span className="text-[10px] text-slate-400 flex items-center gap-1 font-mono">
+                        <i className="fa-solid fa-lock text-[9px] text-brand-blue"></i> Socio
+                      </span>
+                    )}
+                  </div>
                   <input
-                    className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-blue transition-colors text-sm"
+                    className={`w-full rounded-xl px-4 py-3 text-sm transition-colors ${
+                      tipoComprobante === "Boleta" && usuario
+                        ? "bg-dark-950/70 border border-white/5 text-slate-300 cursor-not-allowed select-none opacity-85"
+                        : "bg-dark-900 border border-white/10 text-white focus:outline-none focus:border-brand-blue"
+                    }`}
                     placeholder={tipoComprobante === "Boleta" ? "Ej: Juan Pérez Morales" : "Ej: Cine Inversiones SAC"}
                     type="text"
                     value={nombreContacto}
+                    readOnly={Boolean(tipoComprobante === "Boleta" && usuario)}
                     onChange={(e) => {
+                      if (tipoComprobante === "Boleta" && usuario) return;
                       const val = e.target.value;
                       if (tipoComprobante === "Boleta") {
                         const soloLetras = val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
@@ -531,15 +596,30 @@ export default function Pago() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    Correo Electrónico (para el envío de tus entradas digitales):
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-300">
+                      Correo Electrónico (para el envío de tus entradas digitales):
+                    </label>
+                    {usuario && (
+                      <span className="text-[10px] text-slate-400 flex items-center gap-1 font-mono">
+                        <i className="fa-solid fa-lock text-[9px] text-brand-blue"></i> Socio
+                      </span>
+                    )}
+                  </div>
                   <input
-                    className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-blue transition-colors text-sm"
+                    className={`w-full rounded-xl px-4 py-3 text-sm transition-colors ${
+                      usuario
+                        ? "bg-dark-950/70 border border-white/5 text-slate-300 cursor-not-allowed select-none opacity-85"
+                        : "bg-dark-900 border border-white/10 text-white focus:outline-none focus:border-brand-blue"
+                    }`}
                     placeholder="Ej: tu-correo@ejemplo.com"
                     type="email"
                     value={correoContacto}
-                    onChange={(e) => setCorreoContacto(e.target.value)}
+                    readOnly={Boolean(usuario)}
+                    onChange={(e) => {
+                      if (usuario) return;
+                      setCorreoContacto(e.target.value);
+                    }}
                   />
                 </div>
               </div>

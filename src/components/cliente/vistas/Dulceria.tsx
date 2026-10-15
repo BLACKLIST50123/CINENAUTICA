@@ -1,14 +1,16 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { DulceriaService } from "@/src/services/dulceriaService";
 import type { CategoriaProductoDTO, ProductoDTO, ItemPedidoDulceriaDTO } from "@/src/dtos/producto";
-import { SEL, S, intentarSalirDelFlujoDeCompra } from "@/src/lib/ui/nav";
+import { SEL, S, intentarSalirDelFlujoDeCompra, limpiarEstadoCompraGlobal } from "@/src/lib/ui/nav";
 import { mostrarToast } from "@/src/lib/ui/common";
 
 export default function Dulceria() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const sedeParam = searchParams.get("sede");
 
   // ── 1. Estados de Datos y Carga ──
   const [cargando, setCargando] = useState(true);
@@ -35,41 +37,58 @@ export default function Dulceria() {
     let sedeNom = "CineNáutica Chimbote";
 
     // Verificar si es dulcería directa
-    const directo = Boolean(S.dulceria);
+    const directo =
+      Boolean(S.dulceria) ||
+      (typeof window !== "undefined" &&
+        sessionStorage.getItem("cinenautica_flujo_dulceria_directo") === "true");
     setEsFlujoDirecto(directo);
 
-    // 1. Obtener datos de función y asientos si viene del flujo de películas
-    try {
-      const rawFuncion = sessionStorage.getItem("cinenautica_seleccion_funcion");
-      if (rawFuncion) {
-        const fn = JSON.parse(rawFuncion);
-        setDatosFuncion(fn);
-        if (fn.id_sede) {
-          sedeId = Number(fn.id_sede);
-          sedeNom = fn.nombre_sede || sedeNom;
-        }
-      } else if (SEL.id_sede) {
-        sedeId = Number(SEL.id_sede);
-        sedeNom = SEL.nombre_sede || sedeNom;
-      }
-
-      const rawAsientos = sessionStorage.getItem("cinenautica_asientos_seleccionados");
-      if (rawAsientos) {
-        const as = JSON.parse(rawAsientos);
-        if (Array.isArray(as.asientos)) {
-          setAsientosComprados(as.asientos);
-          setTotalEntradas(Number(as.total) || 0);
-        }
-      }
-    } catch {}
-
-    // Si es dulcería directa, verificar si se eligió sede en S o SEL
     if (directo) {
-      if (SEL.sede) {
-        const match = String(SEL.sede).match(/\d+/);
-        if (match) sedeId = Number(match[0]);
-      }
-      if (SEL.nombre_sede) sedeNom = SEL.nombre_sede;
+      // En compra directa de dulcería, aislar y limpiar películas/asientos anteriores
+      setDatosFuncion(null);
+      setAsientosComprados([]);
+      setTotalEntradas(0);
+      try {
+        sessionStorage.removeItem("cinenautica_seleccion_funcion");
+        sessionStorage.removeItem("cinenautica_asientos_seleccionados");
+
+        const sid =
+          sedeParam ||
+          sessionStorage.getItem("cinenautica_sede_id") ||
+          SEL.sede;
+        if (sid) {
+          const match = String(sid).match(/\d+/);
+          if (match) sedeId = Number(match[0]);
+        }
+        const sNom =
+          sessionStorage.getItem("cinenautica_sede_nombre") || SEL.nombre_sede;
+        if (sNom) sedeNom = sNom;
+      } catch {}
+    } else {
+      // 1. Obtener datos de función y asientos si viene del flujo de películas
+      try {
+        const rawFuncion = sessionStorage.getItem("cinenautica_seleccion_funcion");
+        if (rawFuncion) {
+          const fn = JSON.parse(rawFuncion);
+          setDatosFuncion(fn);
+          if (fn.id_sede) {
+            sedeId = Number(fn.id_sede);
+            sedeNom = fn.nombre_sede || sedeNom;
+          }
+        } else if (SEL.id_sede) {
+          sedeId = Number(SEL.id_sede);
+          sedeNom = SEL.nombre_sede || sedeNom;
+        }
+
+        const rawAsientos = sessionStorage.getItem("cinenautica_asientos_seleccionados");
+        if (rawAsientos) {
+          const as = JSON.parse(rawAsientos);
+          if (Array.isArray(as.asientos)) {
+            setAsientosComprados(as.asientos);
+            setTotalEntradas(Number(as.total) || 0);
+          }
+        }
+      } catch {}
     }
 
     setIdSede(sedeId);
@@ -170,12 +189,91 @@ export default function Dulceria() {
     return (esFlujoDirecto ? 0 : totalEntradas) + resumenPedido.total_importe;
   }, [esFlujoDirecto, totalEntradas, resumenPedido.total_importe]);
 
+  // Sincronizar estado global de compra activa con la dulcería
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const tieneProductos = resumenPedido.total_productos > 0;
+    (window as any).__tieneProductosDulceriaSeleccionados = tieneProductos;
+
+    if (tieneProductos) {
+      const payload = {
+        id_sede: idSede,
+        items: itemsPedido,
+        total_productos: resumenPedido.total_productos,
+        total_importe: resumenPedido.total_importe,
+      };
+      try {
+        sessionStorage.setItem("cinenautica_dulceria_seleccion", JSON.stringify(payload));
+      } catch {}
+      SEL.dulces = itemsPedido;
+      SEL.total_dulces = resumenPedido.total_importe;
+    } else {
+      try {
+        sessionStorage.removeItem("cinenautica_dulceria_seleccion");
+      } catch {}
+      SEL.dulces = [];
+      SEL.total_dulces = 0;
+    }
+  }, [resumenPedido.total_productos, itemsPedido, idSede]);
+
+  // Interceptar botón atrás del navegador si es flujo directo y tiene productos agregados
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    if (esFlujoDirecto && resumenPedido.total_productos > 0) {
+      window.history.pushState({ cinenauticaDulceria: true }, "", window.location.href);
+    }
+
+    function manejarPopState() {
+      if (esFlujoDirecto && (resumenPedido.total_productos > 0 || (window as any).__tieneProductosDulceriaSeleccionados)) {
+        intentarSalirDelFlujoDeCompra(() => {
+          limpiarEstadoCompraGlobal();
+          router.push("/");
+        });
+      }
+    }
+
+    window.addEventListener("popstate", manejarPopState);
+    return () => {
+      window.removeEventListener("popstate", manejarPopState);
+    };
+  }, [esFlujoDirecto, resumenPedido.total_productos, router]);
+
+  // Escuchar cuando se limpia la compra desde el modal de confirmación o navbar
+  useEffect(() => {
+    function onLimpiar() {
+      setCantidades({});
+    }
+    window.addEventListener("cambio-flujo-compra", onLimpiar);
+    return () => {
+      window.removeEventListener("cambio-flujo-compra", onLimpiar);
+    };
+  }, []);
+
+  // Limpieza al desmontar
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined") {
+        (window as any).__tieneProductosDulceriaSeleccionados = false;
+      }
+    };
+  }, []);
+
   // Continuar al paso de pago
   const continuarAPago = () => {
     // Si es dulcería directa, exige al menos 1 producto
     if (esFlujoDirecto && resumenPedido.total_productos === 0) {
       mostrarToast("Selecciona al menos un producto de la dulcería para continuar.", "info");
       return;
+    }
+
+    // Si es dulcería directa, persistir flag para las vistas siguientes
+    if (esFlujoDirecto) {
+      try {
+        sessionStorage.setItem("cinenautica_flujo_dulceria_directo", "true");
+        sessionStorage.removeItem("cinenautica_seleccion_funcion");
+        sessionStorage.removeItem("cinenautica_asientos_seleccionados");
+      } catch {}
     }
 
     // Guardar selección en sessionStorage y en objeto global SEL
@@ -199,7 +297,15 @@ export default function Dulceria() {
   // Volver atrás
   const manejarVolver = () => {
     if (esFlujoDirecto) {
-      router.push("/");
+      if (resumenPedido.total_productos > 0) {
+        intentarSalirDelFlujoDeCompra(() => {
+          limpiarEstadoCompraGlobal();
+          router.push("/");
+        });
+      } else {
+        limpiarEstadoCompraGlobal();
+        router.push("/");
+      }
     } else {
       router.push(SEL.id_funcion ? `/asientos?funcion=${SEL.id_funcion}` : "/asientos");
     }

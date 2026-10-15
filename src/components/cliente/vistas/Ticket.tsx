@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
 import { TicketService } from "@/src/services/ticketService";
 import type { OrdenCompletaDTO } from "@/src/dtos/orden";
-import { limpiarEstadoCompraGlobal } from "@/src/lib/ui/nav";
+import { limpiarEstadoCompraGlobal, S } from "@/src/lib/ui/nav";
 
 export default function Ticket() {
   const router = useRouter();
@@ -16,8 +16,16 @@ export default function Ticket() {
   const [puntosGanados, setPuntosGanados] = useState<number>(0);
 
   useEffect(() => {
-    // La compra ya finalizó con éxito: limpiar residuos de asientos o bloqueos temporales
-    limpiarEstadoCompraGlobal();
+    // La compra ya finalizó con éxito: limpiar residuos de asientos o bloqueos temporales de película
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.removeItem("cinenautica_asientos_seleccionados");
+        sessionStorage.removeItem("cinenautica_seleccion_funcion");
+        sessionStorage.removeItem("cinenautica_dulceria_seleccion");
+      } catch {}
+      (window as any).__tieneAsientosSeleccionados = false;
+      window.dispatchEvent(new CustomEvent("asientos-liberados-sesion"));
+    }
 
     let idOrden = searchParams.get("orden");
 
@@ -46,6 +54,20 @@ export default function Ticket() {
       .then((datos) => {
         if (datos) {
           setOrden(datos);
+          const esSoloDulc =
+            (!datos.entradas || datos.entradas.length === 0) &&
+            Array.isArray(datos.productos) &&
+            datos.productos.length > 0;
+          if (typeof window !== "undefined") {
+            if (esSoloDulc) {
+              sessionStorage.setItem("cinenautica_flujo_dulceria_directo", "true");
+              S.dulceria = true;
+            } else {
+              sessionStorage.removeItem("cinenautica_flujo_dulceria_directo");
+              S.dulceria = false;
+            }
+            window.dispatchEvent(new CustomEvent("cambio-flujo-compra"));
+          }
           // Si no teníamos puntos calculados, calcularlos base 1 sol = 1 punto
           if (puntosGanados === 0 && datos.total > 0) {
             setPuntosGanados(Math.floor(datos.total));
@@ -58,6 +80,11 @@ export default function Ticket() {
       .finally(() => {
         setCargando(false);
       });
+
+    return () => {
+      // Limpiar al salir o desmontar la pantalla de ticket
+      limpiarEstadoCompraGlobal();
+    };
   }, [searchParams, puntosGanados]);
 
   // Si está cargando
@@ -85,7 +112,10 @@ export default function Ticket() {
           <button
             className="bg-brand-yellow hover:bg-yellow-400 text-black px-6 py-3 rounded-xl font-bold transition-all text-sm cursor-pointer"
             type="button"
-            onClick={() => router.push("/")}
+            onClick={() => {
+              limpiarEstadoCompraGlobal();
+              router.push("/");
+            }}
           >
             Explorar Cartelera
           </button>
@@ -102,6 +132,11 @@ export default function Ticket() {
   const fechaEmision = comp?.fecha_emision
     ? TicketService.formatearFechaHora(comp.fecha_emision)
     : TicketService.formatearFechaHora(orden.fecha_creacion);
+
+  const esSoloDulceria =
+    (!orden.entradas || orden.entradas.length === 0) &&
+    Boolean(orden.productos && orden.productos.length > 0);
+  const mostrarTicket = Boolean((orden.entradas && orden.entradas.length > 0) || esSoloDulceria);
 
   // String para código QR SUNAT
   const sunatQrString = `20512345678|${esFactura ? "01" : "03"}|${comp?.serie || "B001"}|${
@@ -149,8 +184,8 @@ export default function Ticket() {
         {/* Contenedor de Comprobantes */}
         <div className="flex flex-col lg:flex-row gap-8 w-full justify-center items-center lg:items-start">
 
-          {/* ── 1. TICKET DE CINE IMPRIMIBLE ── */}
-          {orden.entradas && orden.entradas.length > 0 && (
+          {/* ── 1. TICKET IMPRIMIBLE (Cine o Dulcería) ── */}
+          {mostrarTicket && (
             <div className="flex flex-col items-center w-full max-w-[360px]">
               <div
                 className="bg-[#fdfcfa] w-full shadow-2xl overflow-hidden border border-slate-200 text-black flex flex-col rounded-none"
@@ -163,70 +198,99 @@ export default function Ticket() {
                       CINE NÁUTICA
                     </span>
                     <span className="text-[10px] text-white/80 tracking-wider">
-                      ENTRADA OFICIAL
+                      {esSoloDulceria ? "DULCERÍA OFICIAL" : "ENTRADA OFICIAL"}
                     </span>
                   </div>
-                  <i className="fa-solid fa-film text-2xl text-white"></i>
+                  <i className={`fa-solid ${esSoloDulceria ? "fa-bowl-food" : "fa-film"} text-2xl text-white`}></i>
                 </div>
 
                 <div className="p-6 pb-4 flex-1">
-                  {/* Título de Película */}
+                  {/* Título de Película o Dulcería */}
                   <h3
                     className="text-2xl font-black text-black uppercase mb-1 leading-tight tracking-tight"
                     id="pdf-titulo-pelicula"
                   >
-                    {orden.pelicula?.titulo || "Función Cine"}
+                    {esSoloDulceria ? "COMPRA DE DULCERÍA" : (orden.pelicula?.titulo || "Función Cine")}
                   </h3>
                   <p className="text-brand-blue font-bold text-xs uppercase mb-4" id="pdf-formato">
-                    {orden.pelicula?.formato || "2D"} • {orden.pelicula?.sala || "Sala"}
+                    {esSoloDulceria
+                      ? `RECLAMAR EN BARRA • ${orden.nombre_sede || "CineNáutica"}`
+                      : `${orden.pelicula?.formato || "2D"} • ${orden.pelicula?.sala || "Sala"}`}
                   </p>
 
-                  {/* Grid de Datos */}
-                  <div className="grid grid-cols-2 gap-y-3.5 gap-x-2 text-xs text-slate-800 mb-4 pb-4 border-b border-dashed border-slate-300">
-                    <div>
-                      <p className="text-slate-400 text-[10px] uppercase font-bold">Fecha</p>
-                      <p className="font-bold text-sm" id="pdf-fecha">
-                        {orden.pelicula?.fecha || fechaEmision.fecha}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-slate-400 text-[10px] uppercase font-bold">Hora</p>
-                      <p className="font-bold text-sm" id="pdf-hora">
-                        {orden.pelicula?.hora || fechaEmision.hora}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-slate-400 text-[10px] uppercase font-bold">Sede</p>
-                      <p className="font-bold text-xs line-clamp-1" id="pdf-cine">
-                        {orden.nombre_sede || "CineNáutica"}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-slate-400 text-[10px] uppercase font-bold">Butacas</p>
-                      <p className="font-black text-sm text-brand-blue" id="pdf-asientos">
-                        {orden.entradas.map((e) => e.codigo_asiento).filter(Boolean).join(", ")}
-                      </p>
-                    </div>
-
-                    {orden.direccion_sede && (
-                      <div className="col-span-2 pt-1">
-                        <p className="text-slate-400 text-[10px] uppercase font-bold">Dirección</p>
-                        <p className="font-semibold text-[11px] text-slate-600">
-                          {orden.direccion_sede}
+                  {/* Grid de Datos: Si es dulcería se omiten HORA y BUTACAS como requerido */}
+                  {esSoloDulceria ? (
+                    <div className="grid grid-cols-2 gap-y-3.5 gap-x-2 text-xs text-slate-800 mb-4 pb-4 border-b border-dashed border-slate-300">
+                      <div>
+                        <p className="text-slate-400 text-[10px] uppercase font-bold">Fecha</p>
+                        <p className="font-bold text-sm" id="pdf-fecha">
+                          {fechaEmision.fecha}
                         </p>
                       </div>
-                    )}
-                  </div>
 
-                  {/* Dulcería si compró */}
+                      <div>
+                        <p className="text-slate-400 text-[10px] uppercase font-bold">Sede</p>
+                        <p className="font-bold text-xs line-clamp-2" id="pdf-cine">
+                          {orden.nombre_sede || "CineNáutica"}
+                        </p>
+                      </div>
+
+                      {orden.direccion_sede && (
+                        <div className="col-span-2 pt-1">
+                          <p className="text-slate-400 text-[10px] uppercase font-bold">Dirección</p>
+                          <p className="font-semibold text-[11px] text-slate-600">
+                            {orden.direccion_sede}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-y-3.5 gap-x-2 text-xs text-slate-800 mb-4 pb-4 border-b border-dashed border-slate-300">
+                      <div>
+                        <p className="text-slate-400 text-[10px] uppercase font-bold">Fecha</p>
+                        <p className="font-bold text-sm" id="pdf-fecha">
+                          {orden.pelicula?.fecha || fechaEmision.fecha}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-slate-400 text-[10px] uppercase font-bold">Hora</p>
+                        <p className="font-bold text-sm" id="pdf-hora">
+                          {orden.pelicula?.hora || fechaEmision.hora}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-slate-400 text-[10px] uppercase font-bold">Sede</p>
+                        <p className="font-bold text-xs line-clamp-1" id="pdf-cine">
+                          {orden.nombre_sede || "CineNáutica"}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-slate-400 text-[10px] uppercase font-bold">Butacas</p>
+                        <p className="font-black text-sm text-brand-blue" id="pdf-asientos">
+                          {orden.entradas?.map((e) => e.codigo_asiento).filter(Boolean).join(", ") || "-"}
+                        </p>
+                      </div>
+
+                      {orden.direccion_sede && (
+                        <div className="col-span-2 pt-1">
+                          <p className="text-slate-400 text-[10px] uppercase font-bold">Dirección</p>
+                          <p className="font-semibold text-[11px] text-slate-600">
+                            {orden.direccion_sede}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Dulcería */}
                   {orden.productos && orden.productos.length > 0 && (
-                    <div className="bg-amber-50 p-3 rounded-xl border border-amber-200/80 mb-4">
+                    <div className="bg-amber-50 p-3 rounded-none border border-amber-200/80 mb-4">
                       <p className="text-amber-800 text-[11px] uppercase font-black mb-1.5 flex items-center gap-1.5">
                         <i className="fa-solid fa-bowl-food text-amber-600"></i>
-                        Dulcería (Reclamar en barra)
+                        {esSoloDulceria ? "Productos Comprados" : "Dulcería (Reclamar en barra)"}
                       </p>
                       <ul className="text-xs font-semibold text-slate-800 leading-snug space-y-1">
                         {orden.productos.map((prod, idx) => (
@@ -245,7 +309,7 @@ export default function Ticket() {
 
                   {/* Código QR y Código alfanumérico */}
                   <div className="text-center pt-2">
-                    <div className="inline-block p-2 bg-white rounded-xl border border-slate-200 shadow-sm mb-2">
+                    <div className="inline-block p-2 bg-white rounded-none border border-slate-200 shadow-sm mb-2">
                       <QRCodeSVG
                         level="M"
                         size={110}
@@ -261,7 +325,9 @@ export default function Ticket() {
                 {/* Pie de ticket */}
                 <div className="bg-dark-900 p-2.5 text-center text-white">
                   <p className="text-[10px] text-slate-400">
-                    Presenta este código QR o impreso para ingresar directamente a tu sala.
+                    {esSoloDulceria
+                      ? "Presenta este código QR en la barra de dulcería para retirar tus productos."
+                      : "Presenta este código QR o impreso para ingresar directamente a tu sala."}
                   </p>
                 </div>
               </div>
@@ -273,12 +339,14 @@ export default function Ticket() {
                 onClick={() =>
                   TicketService.imprimirElemento(
                     "ticket-imprimible",
-                    `Ticket_${orden.codigo_orden}`
+                    esSoloDulceria
+                      ? `Ticket_Dulceria_${orden.codigo_orden}`
+                      : `Ticket_${orden.codigo_orden}`
                   )
                 }
               >
                 <i className="fa-solid fa-print"></i>
-                Descargar / Imprimir Ticket
+                {esSoloDulceria ? "Descargar / Imprimir Ticket Dulcería" : "Descargar / Imprimir Ticket"}
               </button>
             </div>
           )}
@@ -338,7 +406,7 @@ export default function Ticket() {
                 </thead>
                 <tbody className="divide-y divide-dashed divide-slate-200">
                   {/* Entradas */}
-                  {orden.entradas.map((ent, idx) => (
+                  {orden.entradas?.map((ent, idx) => (
                     <tr key={`ent-${idx}`}>
                       <td className="py-1">
                         1x Entrada {ent.tipo_entrada || "General"} ({ent.codigo_asiento})
@@ -424,7 +492,10 @@ export default function Ticket() {
           <button
             className="text-brand-yellow hover:text-white font-bold transition-colors text-sm flex items-center gap-2 mx-auto cursor-pointer"
             type="button"
-            onClick={() => router.push("/")}
+            onClick={() => {
+              limpiarEstadoCompraGlobal();
+              router.push("/");
+            }}
           >
             <i className="fa-solid fa-house"></i>
             Volver a la Cartelera Principal
