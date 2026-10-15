@@ -130,22 +130,22 @@ export default function CounterView() {
                   <input type="text" placeholder="Buscar película..." className="w-full bg-dark-800 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-brand-blue" />
                 </div>
                 <div className="flex flex-wrap gap-2" id="fmt-chips">
-                  <button className="px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors bg-brand-blue text-white border-brand-blue" onClick={(event) => { filtrarFmtC(event.currentTarget,'Todos'); }}>
+                  <button className="px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors bg-brand-blue text-white border-brand-blue" onClick={(event) => { filtrarFmtC(event.currentTarget, 'Todos'); }}>
                     Todos
                   </button>
-                  <button className="px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors bg-dark-900 text-slate-300 border-white/10 hover:border-brand-blue" onClick={(event) => { filtrarFmtC(event.currentTarget,'2D Doblada'); }}>
+                  <button className="px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors bg-dark-900 text-slate-300 border-white/10 hover:border-brand-blue" onClick={(event) => { filtrarFmtC(event.currentTarget, '2D Doblada'); }}>
                     2D Doblada
                   </button>
-                  <button className="px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors bg-dark-900 text-slate-300 border-white/10 hover:border-brand-blue" onClick={(event) => { filtrarFmtC(event.currentTarget,'2D Subtitulada'); }}>
+                  <button className="px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors bg-dark-900 text-slate-300 border-white/10 hover:border-brand-blue" onClick={(event) => { filtrarFmtC(event.currentTarget, '2D Subtitulada'); }}>
                     2D Subtitulada
                   </button>
-                  <button className="px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors bg-dark-900 text-slate-300 border-white/10 hover:border-brand-blue" onClick={(event) => { filtrarFmtC(event.currentTarget,'SALA XD'); }}>
+                  <button className="px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors bg-dark-900 text-slate-300 border-white/10 hover:border-brand-blue" onClick={(event) => { filtrarFmtC(event.currentTarget, 'SALA XD'); }}>
                     SALA XD
                   </button>
-                  <button className="px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors bg-dark-900 text-slate-300 border-white/10 hover:border-brand-blue" onClick={(event) => { filtrarFmtC(event.currentTarget,'D-BOX'); }}>
+                  <button className="px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors bg-dark-900 text-slate-300 border-white/10 hover:border-brand-blue" onClick={(event) => { filtrarFmtC(event.currentTarget, 'D-BOX'); }}>
                     D-BOX
                   </button>
-                  <button className="px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors bg-dark-900 text-slate-300 border-white/10 hover:border-brand-blue" onClick={(event) => { filtrarFmtC(event.currentTarget,'IMAX'); }}>
+                  <button className="px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors bg-dark-900 text-slate-300 border-white/10 hover:border-brand-blue" onClick={(event) => { filtrarFmtC(event.currentTarget, 'IMAX'); }}>
                     IMAX
                   </button>
                 </div>
@@ -187,7 +187,7 @@ export default function CounterView() {
                         IMAX
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        <button disabled className="pos-hora pasada" title="Sala 2 · 58/84" onClick={(event) => { iniciarVenta('endgame-bonus','15:15','IMAX',2); }}>
+                        <button disabled className="pos-hora pasada" title="Sala 2 · 58/84" onClick={(event) => { iniciarVenta('endgame-bonus', '15:15', 'IMAX', 2); }}>
                           15:15
                           <small>
                             S2 · 58/84
@@ -196,7 +196,7 @@ export default function CounterView() {
                             <i style={{ width: "70%", background: "#475569" }}></i>
                           </span>
                         </button>
-                        <button className="pos-hora ok" title="Sala 2 · 47/84" onClick={(event) => { iniciarVenta('endgame-bonus','19:15','IMAX',2); }}>
+                        <button className="pos-hora ok" title="Sala 2 · 47/84" onClick={(event) => { iniciarVenta('endgame-bonus', '19:15', 'IMAX', 2); }}>
                           19:15
                           <small>
                             S2 · 47/84
@@ -212,7 +212,7 @@ export default function CounterView() {
                         2D Subtitulada
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        <button disabled className="pos-hora pasada" title="Sala 1 · 28/84" onClick={(event) => { iniciarVenta('endgame-bonus','16:15','2D Subtitulada',1); }}>
+                        <button disabled className="pos-hora pasada" title="Sala 1 · 28/84" onClick={(event) => { iniciarVenta('endgame-bonus', '16:15', '2D Subtitulada', 1); }}>
                           16:15
                           <small>
                             S1 · 28/84
@@ -221,7 +221,7 @@ export default function CounterView() {
                             <i style={{ width: "34%", background: "#475569" }}></i>
                           </span>
                         </button>
-                        <button className="pos-hora ok" title="Sala 1 · 16/84" onClick={(event) => { iniciarVenta('endgame-bonus','20:15','2D Subtitulada',1); }}>
+                        <button className="pos-hora ok" title="Sala 1 · 16/84" onClick={(event) => { iniciarVenta('endgame-bonus', '20:15', '2D Subtitulada', 1); }}>
                           20:15
                           <small>
                             S1 · 16/84
@@ -256,7 +256,7 @@ export default function CounterView() {
                         D-BOX
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        <button className="pos-hora casi" title="Sala 6 · 73/84" onClick={(event) => { iniciarVenta('re-noche-cero','17:45','D-BOX',6); }}>
+                        <button className="pos-hora casi" title="Sala 6 · 73/84" onClick={(event) => { iniciarVenta('re-noche-cero', '17:45', 'D-BOX', 6); }}>
                           17:45
                           <small>
                             S6 · 73/84
@@ -265,7 +265,7 @@ export default function CounterView() {
                             <i style={{ width: "87%", background: "var(--brand-red)" }}></i>
                           </span>
                         </button>
-                        <button className="pos-hora casi" title="Sala 6 · 77/84" onClick={(event) => { iniciarVenta('re-noche-cero','20:15','D-BOX',6); }}>
+                        <button className="pos-hora casi" title="Sala 6 · 77/84" onClick={(event) => { iniciarVenta('re-noche-cero', '20:15', 'D-BOX', 6); }}>
                           20:15
                           <small>
                             S6 · 77/84
@@ -274,7 +274,7 @@ export default function CounterView() {
                             <i style={{ width: "92%", background: "var(--brand-red)" }}></i>
                           </span>
                         </button>
-                        <button className="pos-hora casi" title="Sala 6 · 75/84" onClick={(event) => { iniciarVenta('re-noche-cero','22:45','D-BOX',6); }}>
+                        <button className="pos-hora casi" title="Sala 6 · 75/84" onClick={(event) => { iniciarVenta('re-noche-cero', '22:45', 'D-BOX', 6); }}>
                           22:45
                           <small>
                             S6 · 75/84
@@ -290,7 +290,7 @@ export default function CounterView() {
                         2D Doblada
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        <button disabled className="pos-hora pasada" title="Sala 3 · 24/84" onClick={(event) => { iniciarVenta('re-noche-cero','16:15','2D Doblada',3); }}>
+                        <button disabled className="pos-hora pasada" title="Sala 3 · 24/84" onClick={(event) => { iniciarVenta('re-noche-cero', '16:15', '2D Doblada', 3); }}>
                           16:15
                           <small>
                             S3 · 24/84
@@ -299,7 +299,7 @@ export default function CounterView() {
                             <i style={{ width: "29%", background: "#475569" }}></i>
                           </span>
                         </button>
-                        <button className="pos-hora ok" title="Sala 3 · 22/84" onClick={(event) => { iniciarVenta('re-noche-cero','18:45','2D Doblada',3); }}>
+                        <button className="pos-hora ok" title="Sala 3 · 22/84" onClick={(event) => { iniciarVenta('re-noche-cero', '18:45', '2D Doblada', 3); }}>
                           18:45
                           <small>
                             S3 · 22/84
@@ -308,7 +308,7 @@ export default function CounterView() {
                             <i style={{ width: "27%", background: "#22c55e" }}></i>
                           </span>
                         </button>
-                        <button className="pos-hora ok" title="Sala 3 · 26/84" onClick={(event) => { iniciarVenta('re-noche-cero','21:15','2D Doblada',3); }}>
+                        <button className="pos-hora ok" title="Sala 3 · 26/84" onClick={(event) => { iniciarVenta('re-noche-cero', '21:15', '2D Doblada', 3); }}>
                           21:15
                           <small>
                             S3 · 26/84
@@ -343,7 +343,7 @@ export default function CounterView() {
                         SALA XD
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        <button disabled className="pos-hora pasada" title="Sala 3 · 40/84" onClick={(event) => { iniciarVenta('spiderman','14:15','SALA XD',3); }}>
+                        <button disabled className="pos-hora pasada" title="Sala 3 · 40/84" onClick={(event) => { iniciarVenta('spiderman', '14:15', 'SALA XD', 3); }}>
                           14:15
                           <small>
                             S3 · 40/84
@@ -352,7 +352,7 @@ export default function CounterView() {
                             <i style={{ width: "48%", background: "#475569" }}></i>
                           </span>
                         </button>
-                        <button disabled className="pos-hora pasada" title="Sala 3 · 14/84" onClick={(event) => { iniciarVenta('spiderman','17:15','SALA XD',3); }}>
+                        <button disabled className="pos-hora pasada" title="Sala 3 · 14/84" onClick={(event) => { iniciarVenta('spiderman', '17:15', 'SALA XD', 3); }}>
                           17:15
                           <small>
                             S3 · 14/84
@@ -361,7 +361,7 @@ export default function CounterView() {
                             <i style={{ width: "17%", background: "#475569" }}></i>
                           </span>
                         </button>
-                        <button className="pos-hora medio" title="Sala 3 · 57/84" onClick={(event) => { iniciarVenta('spiderman','20:15','SALA XD',3); }}>
+                        <button className="pos-hora medio" title="Sala 3 · 57/84" onClick={(event) => { iniciarVenta('spiderman', '20:15', 'SALA XD', 3); }}>
                           20:15
                           <small>
                             S3 · 57/84
@@ -377,7 +377,7 @@ export default function CounterView() {
                         2D Subtitulada
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        <button disabled className="pos-hora pasada" title="Sala 2 · 38/84" onClick={(event) => { iniciarVenta('spiderman','17:15','2D Subtitulada',2); }}>
+                        <button disabled className="pos-hora pasada" title="Sala 2 · 38/84" onClick={(event) => { iniciarVenta('spiderman', '17:15', '2D Subtitulada', 2); }}>
                           17:15
                           <small>
                             S2 · 38/84
@@ -386,7 +386,7 @@ export default function CounterView() {
                             <i style={{ width: "46%", background: "#475569" }}></i>
                           </span>
                         </button>
-                        <button className="pos-hora ok" title="Sala 2 · 12/84" onClick={(event) => { iniciarVenta('spiderman','20:15','2D Subtitulada',2); }}>
+                        <button className="pos-hora ok" title="Sala 2 · 12/84" onClick={(event) => { iniciarVenta('spiderman', '20:15', '2D Subtitulada', 2); }}>
                           20:15
                           <small>
                             S2 · 12/84
@@ -421,7 +421,7 @@ export default function CounterView() {
                         D-BOX
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        <button disabled className="pos-hora pasada" title="Sala 6 · 26/84" onClick={(event) => { iniciarVenta('coyote-acme','15:15','D-BOX',6); }}>
+                        <button disabled className="pos-hora pasada" title="Sala 6 · 26/84" onClick={(event) => { iniciarVenta('coyote-acme', '15:15', 'D-BOX', 6); }}>
                           15:15
                           <small>
                             S6 · 26/84
@@ -430,7 +430,7 @@ export default function CounterView() {
                             <i style={{ width: "31%", background: "#475569" }}></i>
                           </span>
                         </button>
-                        <button className="pos-hora ok" title="Sala 6 · 24/84" onClick={(event) => { iniciarVenta('coyote-acme','17:45','D-BOX',6); }}>
+                        <button className="pos-hora ok" title="Sala 6 · 24/84" onClick={(event) => { iniciarVenta('coyote-acme', '17:45', 'D-BOX', 6); }}>
                           17:45
                           <small>
                             S6 · 24/84
@@ -446,7 +446,7 @@ export default function CounterView() {
                         2D Doblada
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        <button disabled className="pos-hora pasada" title="Sala 4 · 30/84" onClick={(event) => { iniciarVenta('coyote-acme','14:45','2D Doblada',4); }}>
+                        <button disabled className="pos-hora pasada" title="Sala 4 · 30/84" onClick={(event) => { iniciarVenta('coyote-acme', '14:45', '2D Doblada', 4); }}>
                           14:45
                           <small>
                             S4 · 30/84
@@ -455,7 +455,7 @@ export default function CounterView() {
                             <i style={{ width: "36%", background: "#475569" }}></i>
                           </span>
                         </button>
-                        <button disabled className="pos-hora pasada" title="Sala 4 · 34/84" onClick={(event) => { iniciarVenta('coyote-acme','17:15','2D Doblada',4); }}>
+                        <button disabled className="pos-hora pasada" title="Sala 4 · 34/84" onClick={(event) => { iniciarVenta('coyote-acme', '17:15', '2D Doblada', 4); }}>
                           17:15
                           <small>
                             S4 · 34/84
@@ -464,7 +464,7 @@ export default function CounterView() {
                             <i style={{ width: "41%", background: "#475569" }}></i>
                           </span>
                         </button>
-                        <button className="pos-hora ok" title="Sala 4 · 32/84" onClick={(event) => { iniciarVenta('coyote-acme','19:45','2D Doblada',4); }}>
+                        <button className="pos-hora ok" title="Sala 4 · 32/84" onClick={(event) => { iniciarVenta('coyote-acme', '19:45', '2D Doblada', 4); }}>
                           19:45
                           <small>
                             S4 · 32/84
@@ -499,7 +499,7 @@ export default function CounterView() {
                         2D Subtitulada
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        <button className="pos-hora ok" title="Sala 2 · 18/84" onClick={(event) => { iniciarVenta('sombra-exorcista','19:15','2D Subtitulada',2); }}>
+                        <button className="pos-hora ok" title="Sala 2 · 18/84" onClick={(event) => { iniciarVenta('sombra-exorcista', '19:15', '2D Subtitulada', 2); }}>
                           19:15
                           <small>
                             S2 · 18/84
@@ -508,7 +508,7 @@ export default function CounterView() {
                             <i style={{ width: "22%", background: "#22c55e" }}></i>
                           </span>
                         </button>
-                        <button className="pos-hora ok" title="Sala 2 · 16/84" onClick={(event) => { iniciarVenta('sombra-exorcista','21:45','2D Subtitulada',2); }}>
+                        <button className="pos-hora ok" title="Sala 2 · 16/84" onClick={(event) => { iniciarVenta('sombra-exorcista', '21:45', '2D Subtitulada', 2); }}>
                           21:45
                           <small>
                             S2 · 16/84
@@ -524,7 +524,7 @@ export default function CounterView() {
                         2D Doblada
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        <button className="pos-hora medio" title="Sala 5 · 68/84" onClick={(event) => { iniciarVenta('sombra-exorcista','18:15','2D Doblada',5); }}>
+                        <button className="pos-hora medio" title="Sala 5 · 68/84" onClick={(event) => { iniciarVenta('sombra-exorcista', '18:15', '2D Doblada', 5); }}>
                           18:15
                           <small>
                             S5 · 68/84
@@ -533,7 +533,7 @@ export default function CounterView() {
                             <i style={{ width: "82%", background: "var(--brand-yellow)" }}></i>
                           </span>
                         </button>
-                        <button className="pos-hora medio" title="Sala 5 · 67/84" onClick={(event) => { iniciarVenta('sombra-exorcista','20:45','2D Doblada',5); }}>
+                        <button className="pos-hora medio" title="Sala 5 · 67/84" onClick={(event) => { iniciarVenta('sombra-exorcista', '20:45', '2D Doblada', 5); }}>
                           20:45
                           <small>
                             S5 · 67/84
@@ -568,7 +568,7 @@ export default function CounterView() {
                         D-BOX
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        <button className="pos-hora medio" title="Sala 5 · 58/84" onClick={(event) => { iniciarVenta('demonio','19:15','D-BOX',5); }}>
+                        <button className="pos-hora medio" title="Sala 5 · 58/84" onClick={(event) => { iniciarVenta('demonio', '19:15', 'D-BOX', 5); }}>
                           19:15
                           <small>
                             S5 · 58/84
@@ -577,7 +577,7 @@ export default function CounterView() {
                             <i style={{ width: "70%", background: "var(--brand-yellow)" }}></i>
                           </span>
                         </button>
-                        <button className="pos-hora medio" title="Sala 5 · 57/84" onClick={(event) => { iniciarVenta('demonio','21:45','D-BOX',5); }}>
+                        <button className="pos-hora medio" title="Sala 5 · 57/84" onClick={(event) => { iniciarVenta('demonio', '21:45', 'D-BOX', 5); }}>
                           21:45
                           <small>
                             S5 · 57/84
@@ -593,7 +593,7 @@ export default function CounterView() {
                         2D Doblada
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        <button disabled className="pos-hora pasada" title="Sala 4 · 40/84" onClick={(event) => { iniciarVenta('demonio','16:15','2D Doblada',4); }}>
+                        <button disabled className="pos-hora pasada" title="Sala 4 · 40/84" onClick={(event) => { iniciarVenta('demonio', '16:15', '2D Doblada', 4); }}>
                           16:15
                           <small>
                             S4 · 40/84
@@ -602,7 +602,7 @@ export default function CounterView() {
                             <i style={{ width: "48%", background: "#475569" }}></i>
                           </span>
                         </button>
-                        <button className="pos-hora ok" title="Sala 4 · 38/84" onClick={(event) => { iniciarVenta('demonio','18:45','2D Doblada',4); }}>
+                        <button className="pos-hora ok" title="Sala 4 · 38/84" onClick={(event) => { iniciarVenta('demonio', '18:45', '2D Doblada', 4); }}>
                           18:45
                           <small>
                             S4 · 38/84
@@ -611,7 +611,7 @@ export default function CounterView() {
                             <i style={{ width: "46%", background: "#22c55e" }}></i>
                           </span>
                         </button>
-                        <button className="pos-hora ok" title="Sala 4 · 42/84" onClick={(event) => { iniciarVenta('demonio','21:15','2D Doblada',4); }}>
+                        <button className="pos-hora ok" title="Sala 4 · 42/84" onClick={(event) => { iniciarVenta('demonio', '21:15', '2D Doblada', 4); }}>
                           21:15
                           <small>
                             S4 · 42/84
@@ -963,7 +963,7 @@ export default function CounterView() {
                       <i style={{ width: "29%", background: "#22c55e" }}></i>
                     </div>
                   </div>
-                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('coyote-acme','17:45','D-BOX',6); }}>
+                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('coyote-acme', '17:45', 'D-BOX', 6); }}>
                     Vender
                   </button>
                 </div>
@@ -994,7 +994,7 @@ export default function CounterView() {
                       <i style={{ width: "87%", background: "var(--brand-red)" }}></i>
                     </div>
                   </div>
-                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('re-noche-cero','17:45','D-BOX',6); }}>
+                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('re-noche-cero', '17:45', 'D-BOX', 6); }}>
                     Vender
                   </button>
                 </div>
@@ -1025,7 +1025,7 @@ export default function CounterView() {
                       <i style={{ width: "82%", background: "var(--brand-yellow)" }}></i>
                     </div>
                   </div>
-                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('sombra-exorcista','18:15','2D Doblada',5); }}>
+                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('sombra-exorcista', '18:15', '2D Doblada', 5); }}>
                     Vender
                   </button>
                 </div>
@@ -1056,7 +1056,7 @@ export default function CounterView() {
                       <i style={{ width: "46%", background: "#22c55e" }}></i>
                     </div>
                   </div>
-                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('demonio','18:45','2D Doblada',4); }}>
+                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('demonio', '18:45', '2D Doblada', 4); }}>
                     Vender
                   </button>
                 </div>
@@ -1087,7 +1087,7 @@ export default function CounterView() {
                       <i style={{ width: "27%", background: "#22c55e" }}></i>
                     </div>
                   </div>
-                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('re-noche-cero','18:45','2D Doblada',3); }}>
+                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('re-noche-cero', '18:45', '2D Doblada', 3); }}>
                     Vender
                   </button>
                 </div>
@@ -1118,7 +1118,7 @@ export default function CounterView() {
                       <i style={{ width: "70%", background: "var(--brand-yellow)" }}></i>
                     </div>
                   </div>
-                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('demonio','19:15','D-BOX',5); }}>
+                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('demonio', '19:15', 'D-BOX', 5); }}>
                     Vender
                   </button>
                 </div>
@@ -1149,7 +1149,7 @@ export default function CounterView() {
                       <i style={{ width: "56%", background: "#22c55e" }}></i>
                     </div>
                   </div>
-                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('endgame-bonus','19:15','IMAX',2); }}>
+                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('endgame-bonus', '19:15', 'IMAX', 2); }}>
                     Vender
                   </button>
                 </div>
@@ -1180,7 +1180,7 @@ export default function CounterView() {
                       <i style={{ width: "22%", background: "#22c55e" }}></i>
                     </div>
                   </div>
-                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('sombra-exorcista','19:15','2D Subtitulada',2); }}>
+                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('sombra-exorcista', '19:15', '2D Subtitulada', 2); }}>
                     Vender
                   </button>
                 </div>
@@ -1211,7 +1211,7 @@ export default function CounterView() {
                       <i style={{ width: "39%", background: "#22c55e" }}></i>
                     </div>
                   </div>
-                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('coyote-acme','19:45','2D Doblada',4); }}>
+                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('coyote-acme', '19:45', '2D Doblada', 4); }}>
                     Vender
                   </button>
                 </div>
@@ -1242,7 +1242,7 @@ export default function CounterView() {
                       <i style={{ width: "20%", background: "#22c55e" }}></i>
                     </div>
                   </div>
-                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('endgame-bonus','20:15','2D Subtitulada',1); }}>
+                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('endgame-bonus', '20:15', '2D Subtitulada', 1); }}>
                     Vender
                   </button>
                 </div>
@@ -1273,7 +1273,7 @@ export default function CounterView() {
                       <i style={{ width: "92%", background: "var(--brand-red)" }}></i>
                     </div>
                   </div>
-                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('re-noche-cero','20:15','D-BOX',6); }}>
+                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('re-noche-cero', '20:15', 'D-BOX', 6); }}>
                     Vender
                   </button>
                 </div>
@@ -1304,7 +1304,7 @@ export default function CounterView() {
                       <i style={{ width: "15%", background: "#22c55e" }}></i>
                     </div>
                   </div>
-                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('spiderman','20:15','2D Subtitulada',2); }}>
+                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('spiderman', '20:15', '2D Subtitulada', 2); }}>
                     Vender
                   </button>
                 </div>
@@ -1335,7 +1335,7 @@ export default function CounterView() {
                       <i style={{ width: "68%", background: "var(--brand-yellow)" }}></i>
                     </div>
                   </div>
-                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('spiderman','20:15','SALA XD',3); }}>
+                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('spiderman', '20:15', 'SALA XD', 3); }}>
                     Vender
                   </button>
                 </div>
@@ -1366,7 +1366,7 @@ export default function CounterView() {
                       <i style={{ width: "80%", background: "var(--brand-yellow)" }}></i>
                     </div>
                   </div>
-                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('sombra-exorcista','20:45','2D Doblada',5); }}>
+                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('sombra-exorcista', '20:45', '2D Doblada', 5); }}>
                     Vender
                   </button>
                 </div>
@@ -1397,7 +1397,7 @@ export default function CounterView() {
                       <i style={{ width: "51%", background: "#22c55e" }}></i>
                     </div>
                   </div>
-                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('demonio','21:15','2D Doblada',4); }}>
+                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('demonio', '21:15', '2D Doblada', 4); }}>
                     Vender
                   </button>
                 </div>
@@ -1428,7 +1428,7 @@ export default function CounterView() {
                       <i style={{ width: "32%", background: "#22c55e" }}></i>
                     </div>
                   </div>
-                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('re-noche-cero','21:15','2D Doblada',3); }}>
+                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('re-noche-cero', '21:15', '2D Doblada', 3); }}>
                     Vender
                   </button>
                 </div>
@@ -1459,7 +1459,7 @@ export default function CounterView() {
                       <i style={{ width: "68%", background: "var(--brand-yellow)" }}></i>
                     </div>
                   </div>
-                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('demonio','21:45','D-BOX',5); }}>
+                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('demonio', '21:45', 'D-BOX', 5); }}>
                     Vender
                   </button>
                 </div>
@@ -1490,7 +1490,7 @@ export default function CounterView() {
                       <i style={{ width: "20%", background: "#22c55e" }}></i>
                     </div>
                   </div>
-                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('sombra-exorcista','21:45','2D Subtitulada',2); }}>
+                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('sombra-exorcista', '21:45', '2D Subtitulada', 2); }}>
                     Vender
                   </button>
                 </div>
@@ -1521,7 +1521,7 @@ export default function CounterView() {
                       <i style={{ width: "90%", background: "var(--brand-red)" }}></i>
                     </div>
                   </div>
-                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('re-noche-cero','22:45','D-BOX',6); }}>
+                  <button className="px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue hover:bg-brand-dark-blue text-white transition-colors" onClick={(event) => { iniciarVenta('re-noche-cero', '22:45', 'D-BOX', 6); }}>
                     Vender
                   </button>
                 </div>
@@ -1903,19 +1903,19 @@ export default function CounterView() {
                 </div>
               </div>
               <div className="flex flex-wrap gap-2 mb-5" id="cats-c">
-                <button className="px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors bg-brand-yellow text-black border-brand-yellow" onClick={(event) => { filtrarCatC(event.currentTarget,'all'); }}>
+                <button className="px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors bg-brand-yellow text-black border-brand-yellow" onClick={(event) => { filtrarCatC(event.currentTarget, 'all'); }}>
                   Todo
                 </button>
-                <button className="px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors bg-dark-900 text-slate-300 border-white/10 hover:border-brand-yellow" onClick={(event) => { filtrarCatC(event.currentTarget,'combo'); }}>
+                <button className="px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors bg-dark-900 text-slate-300 border-white/10 hover:border-brand-yellow" onClick={(event) => { filtrarCatC(event.currentTarget, 'combo'); }}>
                   Combos Populares
                 </button>
-                <button className="px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors bg-dark-900 text-slate-300 border-white/10 hover:border-brand-yellow" onClick={(event) => { filtrarCatC(event.currentTarget,'cancha'); }}>
+                <button className="px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors bg-dark-900 text-slate-300 border-white/10 hover:border-brand-yellow" onClick={(event) => { filtrarCatC(event.currentTarget, 'cancha'); }}>
                   Cancha (Popcorn)
                 </button>
-                <button className="px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors bg-dark-900 text-slate-300 border-white/10 hover:border-brand-yellow" onClick={(event) => { filtrarCatC(event.currentTarget,'bebida'); }}>
+                <button className="px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors bg-dark-900 text-slate-300 border-white/10 hover:border-brand-yellow" onClick={(event) => { filtrarCatC(event.currentTarget, 'bebida'); }}>
                   Bebidas
                 </button>
-                <button className="px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors bg-dark-900 text-slate-300 border-white/10 hover:border-brand-yellow" onClick={(event) => { filtrarCatC(event.currentTarget,'snack'); }}>
+                <button className="px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors bg-dark-900 text-slate-300 border-white/10 hover:border-brand-yellow" onClick={(event) => { filtrarCatC(event.currentTarget, 'snack'); }}>
                   Snacks &amp; Dulces
                 </button>
               </div>
@@ -1935,13 +1935,13 @@ export default function CounterView() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between bg-dark-900 rounded-full px-2 py-1 border border-white/10">
-                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-blue" onClick={(event) => { cambiarCantidad(event.currentTarget,-1); }}>
+                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-blue" onClick={(event) => { cambiarCantidad(event.currentTarget, -1); }}>
                       <i className="fa-solid fa-minus text-xs"></i>
                     </button>
                     <span className="text-white font-bold">
                       0
                     </span>
-                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black" onClick={(event) => { cambiarCantidad(event.currentTarget,1); }}>
+                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black" onClick={(event) => { cambiarCantidad(event.currentTarget, 1); }}>
                       <i className="fa-solid fa-plus text-xs"></i>
                     </button>
                   </div>
@@ -1961,13 +1961,13 @@ export default function CounterView() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between bg-dark-900 rounded-full px-2 py-1 border border-white/10">
-                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-blue" onClick={(event) => { cambiarCantidad(event.currentTarget,-1); }}>
+                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-blue" onClick={(event) => { cambiarCantidad(event.currentTarget, -1); }}>
                       <i className="fa-solid fa-minus text-xs"></i>
                     </button>
                     <span className="text-white font-bold">
                       1
                     </span>
-                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black" onClick={(event) => { cambiarCantidad(event.currentTarget,1); }}>
+                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black" onClick={(event) => { cambiarCantidad(event.currentTarget, 1); }}>
                       <i className="fa-solid fa-plus text-xs"></i>
                     </button>
                   </div>
@@ -1987,13 +1987,13 @@ export default function CounterView() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between bg-dark-900 rounded-full px-2 py-1 border border-white/10">
-                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-blue" onClick={(event) => { cambiarCantidad(event.currentTarget,-1); }}>
+                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-blue" onClick={(event) => { cambiarCantidad(event.currentTarget, -1); }}>
                       <i className="fa-solid fa-minus text-xs"></i>
                     </button>
                     <span className="text-white font-bold">
                       0
                     </span>
-                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black" onClick={(event) => { cambiarCantidad(event.currentTarget,1); }}>
+                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black" onClick={(event) => { cambiarCantidad(event.currentTarget, 1); }}>
                       <i className="fa-solid fa-plus text-xs"></i>
                     </button>
                   </div>
@@ -2013,13 +2013,13 @@ export default function CounterView() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between bg-dark-900 rounded-full px-2 py-1 border border-white/10">
-                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-blue" onClick={(event) => { cambiarCantidad(event.currentTarget,-1); }}>
+                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-blue" onClick={(event) => { cambiarCantidad(event.currentTarget, -1); }}>
                       <i className="fa-solid fa-minus text-xs"></i>
                     </button>
                     <span className="text-white font-bold">
                       0
                     </span>
-                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black" onClick={(event) => { cambiarCantidad(event.currentTarget,1); }}>
+                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black" onClick={(event) => { cambiarCantidad(event.currentTarget, 1); }}>
                       <i className="fa-solid fa-plus text-xs"></i>
                     </button>
                   </div>
@@ -2039,13 +2039,13 @@ export default function CounterView() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between bg-dark-900 rounded-full px-2 py-1 border border-white/10">
-                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-blue" onClick={(event) => { cambiarCantidad(event.currentTarget,-1); }}>
+                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-blue" onClick={(event) => { cambiarCantidad(event.currentTarget, -1); }}>
                       <i className="fa-solid fa-minus text-xs"></i>
                     </button>
                     <span className="text-white font-bold">
                       0
                     </span>
-                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black" onClick={(event) => { cambiarCantidad(event.currentTarget,1); }}>
+                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black" onClick={(event) => { cambiarCantidad(event.currentTarget, 1); }}>
                       <i className="fa-solid fa-plus text-xs"></i>
                     </button>
                   </div>
@@ -2065,13 +2065,13 @@ export default function CounterView() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between bg-dark-900 rounded-full px-2 py-1 border border-white/10">
-                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-blue" onClick={(event) => { cambiarCantidad(event.currentTarget,-1); }}>
+                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-blue" onClick={(event) => { cambiarCantidad(event.currentTarget, -1); }}>
                       <i className="fa-solid fa-minus text-xs"></i>
                     </button>
                     <span className="text-white font-bold">
                       0
                     </span>
-                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black" onClick={(event) => { cambiarCantidad(event.currentTarget,1); }}>
+                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black" onClick={(event) => { cambiarCantidad(event.currentTarget, 1); }}>
                       <i className="fa-solid fa-plus text-xs"></i>
                     </button>
                   </div>
@@ -2091,13 +2091,13 @@ export default function CounterView() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between bg-dark-900 rounded-full px-2 py-1 border border-white/10">
-                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-blue" onClick={(event) => { cambiarCantidad(event.currentTarget,-1); }}>
+                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-blue" onClick={(event) => { cambiarCantidad(event.currentTarget, -1); }}>
                       <i className="fa-solid fa-minus text-xs"></i>
                     </button>
                     <span className="text-white font-bold">
                       0
                     </span>
-                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black" onClick={(event) => { cambiarCantidad(event.currentTarget,1); }}>
+                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black" onClick={(event) => { cambiarCantidad(event.currentTarget, 1); }}>
                       <i className="fa-solid fa-plus text-xs"></i>
                     </button>
                   </div>
@@ -2117,13 +2117,13 @@ export default function CounterView() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between bg-dark-900 rounded-full px-2 py-1 border border-white/10">
-                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-blue" onClick={(event) => { cambiarCantidad(event.currentTarget,-1); }}>
+                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-blue" onClick={(event) => { cambiarCantidad(event.currentTarget, -1); }}>
                       <i className="fa-solid fa-minus text-xs"></i>
                     </button>
                     <span className="text-white font-bold">
                       0
                     </span>
-                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black" onClick={(event) => { cambiarCantidad(event.currentTarget,1); }}>
+                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black" onClick={(event) => { cambiarCantidad(event.currentTarget, 1); }}>
                       <i className="fa-solid fa-plus text-xs"></i>
                     </button>
                   </div>
@@ -2143,13 +2143,13 @@ export default function CounterView() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between bg-dark-900 rounded-full px-2 py-1 border border-white/10">
-                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-blue" onClick={(event) => { cambiarCantidad(event.currentTarget,-1); }}>
+                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-blue" onClick={(event) => { cambiarCantidad(event.currentTarget, -1); }}>
                       <i className="fa-solid fa-minus text-xs"></i>
                     </button>
                     <span className="text-white font-bold">
                       0
                     </span>
-                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black" onClick={(event) => { cambiarCantidad(event.currentTarget,1); }}>
+                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black" onClick={(event) => { cambiarCantidad(event.currentTarget, 1); }}>
                       <i className="fa-solid fa-plus text-xs"></i>
                     </button>
                   </div>
@@ -2169,13 +2169,13 @@ export default function CounterView() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between bg-dark-900 rounded-full px-2 py-1 border border-white/10">
-                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-blue" onClick={(event) => { cambiarCantidad(event.currentTarget,-1); }}>
+                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-blue" onClick={(event) => { cambiarCantidad(event.currentTarget, -1); }}>
                       <i className="fa-solid fa-minus text-xs"></i>
                     </button>
                     <span className="text-white font-bold">
                       0
                     </span>
-                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black" onClick={(event) => { cambiarCantidad(event.currentTarget,1); }}>
+                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black" onClick={(event) => { cambiarCantidad(event.currentTarget, 1); }}>
                       <i className="fa-solid fa-plus text-xs"></i>
                     </button>
                   </div>
@@ -2195,13 +2195,13 @@ export default function CounterView() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between bg-dark-900 rounded-full px-2 py-1 border border-white/10">
-                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-blue" onClick={(event) => { cambiarCantidad(event.currentTarget,-1); }}>
+                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-blue" onClick={(event) => { cambiarCantidad(event.currentTarget, -1); }}>
                       <i className="fa-solid fa-minus text-xs"></i>
                     </button>
                     <span className="text-white font-bold">
                       0
                     </span>
-                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black" onClick={(event) => { cambiarCantidad(event.currentTarget,1); }}>
+                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black" onClick={(event) => { cambiarCantidad(event.currentTarget, 1); }}>
                       <i className="fa-solid fa-plus text-xs"></i>
                     </button>
                   </div>
@@ -2221,13 +2221,13 @@ export default function CounterView() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between bg-dark-900 rounded-full px-2 py-1 border border-white/10">
-                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-blue" onClick={(event) => { cambiarCantidad(event.currentTarget,-1); }}>
+                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-blue" onClick={(event) => { cambiarCantidad(event.currentTarget, -1); }}>
                       <i className="fa-solid fa-minus text-xs"></i>
                     </button>
                     <span className="text-white font-bold">
                       0
                     </span>
-                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black" onClick={(event) => { cambiarCantidad(event.currentTarget,1); }}>
+                    <button className="w-8 h-8 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black" onClick={(event) => { cambiarCantidad(event.currentTarget, 1); }}>
                       <i className="fa-solid fa-plus text-xs"></i>
                     </button>
                   </div>

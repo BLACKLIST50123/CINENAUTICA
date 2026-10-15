@@ -82,7 +82,7 @@ El costo final de cada entrada se calcula aplicando tres capas jerárquicas:
 ### 4. Programa de Lealtad "Socio Náutica"
 - **Elegibilidad y Exclusividad de Rol:**
   - El rol `'cliente'` es el **único** que participa en el programa de lealtad (acumula puntos, tiene nivel, carnet y código `CIN-XXXXXX` Ejemplo).
-  - Las cuentas de personal (`'counter'`,`'admin_general'` y `'admin_sede'`) **nunca** son socios ni acumulan puntos.
+  - Las cuentas de personal (`'counter_boleteria'`, `'counter_dulceria'`, `'counter_mixto'`, `'admin_general'` y `'admin_sede'`) **nunca** son socios ni acumulan puntos.
 - **Acumulación de Puntos:**
   - Se otorga **1 punto por cada S/ 1.00** efectivamente pagado (redondeado hacia abajo).
   - Se aplica un multiplicador de ganancia según el nivel alcanzado:
@@ -102,7 +102,7 @@ El costo final de cada entrada se calcula aplicando tres capas jerárquicas:
 - **Preventa Exclusiva:**
   - Acceso prioritario a películas en categoría `Pre-Venta` exclusivo para usuarios con sesión de socio activa. **(Falta agregar en interfaz WEB una cola de venta para peliculas en Pre-Venta)**
 
-### 5. Venta Presencial en Counter (Módulo de Caja)
+### 5. Venta Presencial en Counter (Módulo de Caja "Ahora son 3 tipos Boleteria/Dulceria/Mixto, luego edito el flujo pero seria el mismo solo que cada uno con sus funciones correspondiente.)
 - El personal con rol `'counter'` dispone de acceso directo para ventas presenciales en mostrador físico.
 - **Vinculación Opcional de Socio:** El cajero puede buscar al cliente por Código de Socio, DNI o Correo. Si existe, la venta acumula puntos al socio y permite aplicar sus beneficios (canjes o cumpleaños). Si no es socio, la venta se emite como invitado sin vincular puntos a la cuenta del cajero.
 - **Protección y Limpieza de Terminal:** Tras procesar la venta, el formulario de pago se limpia por completo para evitar que queden expuestos datos personales del cliente anterior.

@@ -13,19 +13,21 @@ Memoria del proyecto entre sesiones. Máximo ~50 líneas: resume o elimina lo qu
 - **Fase 8 — Perfil Socio (Nivel, Puntos, Beneficio Cumpleaños, Carnet Digital): ✅ COMPLETADA** (2026-10-14)
 - **Fase 9 — Historial de Compras (Órdenes, Invitados, Detalles Expandibles, Tickets): ✅ COMPLETADA** (2026-10-14)
 - **Fase 10 — Vistas Estáticas con Datos Reales (Ubicación, Promociones, Contacto): ✅ COMPLETADA** (2026-10-14)
+- **Fase 11 — Módulo Counter POS (Boletería, Dulcería, Mixto & Hub Admin Sede): ✅ COMPLETADA** (2026-10-15)
 
 ## Suite de Pruebas y Cobertura
-- **38 de 38 pruebas unitarias e integración pasando en verde** (`npx vitest run` en 9 suites de pruebas).
+- **44 de 44 pruebas unitarias e integración pasando en verde** (`npx vitest run` en 10 suites de pruebas).
 - **TypeScript 0 errores** (`npx tsc --noEmit`).
-- Todas las rutas activas y operativas en HTTP 200 OK (`/`, `/asientos`, `/dulceria`, `/pago`, `/ticket`, `/socio`, `/historial`, `/promociones`, `/ubicacion`, `/contacto`).
+- Todas las rutas activas y operativas en HTTP 200 OK (`/`, `/asientos`, `/dulceria`, `/pago`, `/ticket`, `/socio`, `/historial`, `/promociones`, `/ubicacion`, `/contacto`, `/counter`, `/counter/boleteria`, `/counter/dulceria`, `/counter/mixto`).
 
-## Archivos clave de Fases 7 a 10
-- `src/services/ticketService.ts`, `socioService.ts`, `historialService.ts` — Servicios de ticket, fidelización e historial
+## Archivos clave de Fases 7 a 11
+- `src/services/ticketService.ts`, `socioService.ts`, `historialService.ts`, `counterService.ts` — Servicios de ticket, fidelización, historial y POS Counter
 - `src/daos/SocioDao.ts`, `OrdenDao.ts`, `CuponDao.ts`, `ContactoDao.ts` — DAOs conectados a Supabase
 - `src/components/cliente/vistas/` (`Ticket.tsx`, `Socio.tsx`, `Historial.tsx`, `Promociones.tsx`, `Ubicacion.tsx`, `Contacto.tsx`)
-- `supabase/migrations/20261014_006_contacto.sql` — Tabla `mensaje_contacto` con RLS habilitada
+- `src/components/counter/` (`boleteria/BoleteriaView.tsx`, `dulceria/DulceriaView.tsx`, `mixto/MixtoView.tsx`, `comun/`)
+- `supabase/migrations/20261014_007_roles_counter.sql` — Roles `counter_boleteria`, `counter_dulceria`, `counter_mixto`
 
-## PATRONES USADOS EN EL PROYECTO, RAZON Y UBICACION (No borrar excluir de la longitud maxima de MEMORY)
+## PATRONES USADOS EN EL PROYECTO, RAZON Y UBICACION (No borrar, excluir de la longitud maxima de MEMORY )
 - **DAO Pattern (Data Access Object):**
   - *Ubicación:* `src/daos/` (`PeliculaDao.ts`, `SedeDao.ts`, `FuncionDao.ts`, `TarifaDao.ts`, `AsientoDao.ts`, `ProductoDao.ts`, `CuponDao.ts`, `OrdenDao.ts`, `SocioDao.ts`, `ContactoDao.ts`).
   - *Razón:* Desacopla y encapsula todas las consultas directas a Supabase PostgREST, abstrayendo la persistencia del resto del sistema.
