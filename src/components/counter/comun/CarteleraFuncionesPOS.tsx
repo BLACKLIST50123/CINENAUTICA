@@ -33,6 +33,11 @@ export interface FuncionPOSItem {
     codigo: string;
     nombre: string;
   };
+  ocupacion?: {
+    ocupados: number;
+    total: number;
+    pct: number;
+  };
 }
 
 interface CarteleraFuncionesPOSProps {
@@ -45,67 +50,24 @@ interface CarteleraFuncionesPOSProps {
   funcionSeleccionadaId?: string | null;
 }
 
-// Occupancy data lookup for mockup accuracy
-const MOCK_OCUPACIONES: Record<string, { ocupados: number; total: number }> = {
-  // Avengers: Endgame Encore
-  "Avengers: Endgame Encore-15:15": { ocupados: 58, total: 84 },
-  "Avengers: Endgame Encore-19:15": { ocupados: 47, total: 84 },
-  "Avengers: Endgame Encore-16:15": { ocupados: 28, total: 84 },
-  "Avengers: Endgame Encore-20:15": { ocupados: 16, total: 84 },
-
-  // Resident Evil: Noche Cero
-  "Resident Evil: Noche Cero-17:45": { ocupados: 73, total: 84 },
-  "Resident Evil: Noche Cero-20:15": { ocupados: 77, total: 84 },
-  "Resident Evil: Noche Cero-22:45": { ocupados: 75, total: 84 },
-  "Resident Evil: Noche Cero-16:15": { ocupados: 24, total: 84 },
-  "Resident Evil: Noche Cero-18:45": { ocupados: 22, total: 84 },
-  "Resident Evil: Noche Cero-21:15": { ocupados: 26, total: 84 },
-
-  // Spider-Man: Un Nuevo Día
-  "Spider-Man: Un Nuevo Día-14:15": { ocupados: 40, total: 84 },
-  "Spider-Man: Un Nuevo Día-17:15": { ocupados: 14, total: 84 },
-  "Spider-Man: Un Nuevo Día-20:15": { ocupados: 57, total: 84 },
-
-  // Coyote vs. Acme
-  "Coyote vs. Acme-15:15": { ocupados: 26, total: 84 },
-  "Coyote vs. Acme-17:45": { ocupados: 24, total: 84 },
-  "Coyote vs. Acme-14:45": { ocupados: 30, total: 84 },
-  "Coyote vs. Acme-19:45": { ocupados: 32, total: 84 },
-
-  // La Sombra del Exorcista
-  "La Sombra del Exorcista-19:15": { ocupados: 18, total: 84 },
-  "La Sombra del Exorcista-21:45": { ocupados: 16, total: 84 },
-
-  // La Noche del Demonio
-  "La Noche del Demonio-16:15": { ocupados: 40, total: 84 },
-  "La Noche del Demonio-18:45": { ocupados: 38, total: 84 },
-};
-
 function calcularOcupacion(fn: FuncionPOSItem): {
   ocupados: number;
   total: number;
   pct: number;
 } {
-  const titulo = fn.pelicula?.titulo || "";
-  const hora = (fn.hora_inicio || "").substring(0, 5);
-  const key = `${titulo}-${hora}`;
+  if (fn.ocupacion && typeof fn.ocupacion.total === "number" && fn.ocupacion.total > 0) {
+    const ocupados = Math.max(0, Math.min(fn.ocupacion.ocupados || 0, fn.ocupacion.total));
+    const total = fn.ocupacion.total;
+    const pct = Math.round((ocupados / total) * 100);
+    return { ocupados, total, pct };
+  }
 
   const total =
     fn.sala && fn.sala.filas && fn.sala.columnas
       ? fn.sala.filas * fn.sala.columnas
       : 84;
 
-  if (MOCK_OCUPACIONES[key]) {
-    const m = MOCK_OCUPACIONES[key];
-    const pct = Math.round((m.ocupados / m.total) * 100);
-    return { ocupados: m.ocupados, total: m.total, pct };
-  }
-
-  // Fallback determinístico
-  const seed = (fn.id_funcion || "f").charCodeAt(0) + (titulo.charCodeAt(0) || 0);
-  const ocupados = 14 + (seed % (total - 25));
-  const pct = Math.round((ocupados / total) * 100);
-  return { ocupados, total, pct };
+  return { ocupados: 0, total, pct: 0 };
 }
 
 export default function CarteleraFuncionesPOS({
@@ -296,11 +258,10 @@ export default function CarteleraFuncionesPOS({
           <button
             type="button"
             onClick={() => setModoVista("peli")}
-            className={`px-3.5 py-2 rounded-lg transition-all flex items-center gap-2 cursor-pointer ${
-              modoVista === "peli"
-                ? "bg-[#0284C7] text-white shadow-md shadow-cyan-900/40"
-                : "text-slate-400 hover:text-white"
-            }`}
+            className={`px-3.5 py-2 rounded-lg transition-all flex items-center gap-2 cursor-pointer ${modoVista === "peli"
+              ? "bg-[#0284C7] text-white shadow-md shadow-cyan-900/40"
+              : "text-slate-400 hover:text-white"
+              }`}
           >
             <i className="fa-solid fa-film text-sm"></i>
             <span>Por película</span>
@@ -308,11 +269,10 @@ export default function CarteleraFuncionesPOS({
           <button
             type="button"
             onClick={() => setModoVista("hora")}
-            className={`px-3.5 py-2 rounded-lg transition-all flex items-center gap-2 cursor-pointer ${
-              modoVista === "hora"
-                ? "bg-[#0284C7] text-white shadow-md shadow-cyan-900/40"
-                : "text-slate-400 hover:text-white"
-            }`}
+            className={`px-3.5 py-2 rounded-lg transition-all flex items-center gap-2 cursor-pointer ${modoVista === "hora"
+              ? "bg-[#0284C7] text-white shadow-md shadow-cyan-900/40"
+              : "text-slate-400 hover:text-white"
+              }`}
           >
             <i className="fa-regular fa-clock text-sm"></i>
             <span>Por hora</span>
@@ -327,22 +287,20 @@ export default function CarteleraFuncionesPOS({
           <button
             type="button"
             onClick={() => onCambiarFiltroDia("hoy")}
-            className={`px-4 py-2 rounded-lg transition-all cursor-pointer ${
-              filtroDia === "hoy"
-                ? "bg-[#0284C7] text-white shadow-md shadow-cyan-900/40"
-                : "text-slate-400 hover:text-white"
-            }`}
+            className={`px-4 py-2 rounded-lg transition-all cursor-pointer ${filtroDia === "hoy"
+              ? "bg-[#0284C7] text-white shadow-md shadow-cyan-900/40"
+              : "text-slate-400 hover:text-white"
+              }`}
           >
             Hoy
           </button>
           <button
             type="button"
             onClick={() => onCambiarFiltroDia("manana")}
-            className={`px-4 py-2 rounded-lg transition-all cursor-pointer ${
-              filtroDia === "manana"
-                ? "bg-[#0284C7] text-white shadow-md shadow-cyan-900/40"
-                : "text-slate-400 hover:text-white"
-            }`}
+            className={`px-4 py-2 rounded-lg transition-all cursor-pointer ${filtroDia === "manana"
+              ? "bg-[#0284C7] text-white shadow-md shadow-cyan-900/40"
+              : "text-slate-400 hover:text-white"
+              }`}
           >
             Mañana
           </button>
@@ -367,11 +325,10 @@ export default function CarteleraFuncionesPOS({
               key={fmt}
               type="button"
               onClick={() => setFiltroFormato(fmt)}
-              className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all cursor-pointer ${
-                filtroFormato === fmt
-                  ? "bg-[#0284C7] text-white border-cyan-500 shadow-sm"
-                  : "bg-[#0B1528] text-slate-300 border-slate-800 hover:border-slate-700"
-              }`}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all cursor-pointer ${filtroFormato === fmt
+                ? "bg-[#0284C7] text-white border-cyan-500 shadow-sm"
+                : "bg-[#0B1528] text-slate-300 border-slate-800 hover:border-slate-700"
+                }`}
             >
               {fmt}
             </button>
@@ -420,20 +377,20 @@ export default function CarteleraFuncionesPOS({
           {peliculasAgrupadas.map(({ pelicula, formatos }) => (
             <article
               key={pelicula.id_pelicula}
-              className="bg-[#0B1528] border border-slate-800/80 hover:border-slate-700 rounded-2xl p-4 flex gap-4 transition-all shadow-xl min-h-[275px] relative"
+              className="bg-[#0B1528] border border-slate-800/80 hover:border-slate-700 rounded-2xl p-4 md:p-5 flex gap-4 md:gap-5 transition-all shadow-xl min-h-[340px] md:min-h-[360px] relative"
             >
               {/* Poster de la película a la izquierda */}
               <img
                 src={pelicula.url_poster || "/img/posters/default.webp"}
                 alt={pelicula.titulo}
-                className="w-24 md:w-28 aspect-[2/3] object-cover rounded-xl shadow-lg shrink-0 border border-slate-800"
+                className="w-28 md:w-36 aspect-[2/3] object-cover rounded-xl shadow-lg shrink-0 border border-slate-800 self-start"
               />
 
               {/* Contenido derecho de la película */}
               <div className="flex-1 min-w-0 flex flex-col justify-between">
                 <div>
                   {/* Fila superior: Título, duración y clasificación */}
-                  <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="flex items-start justify-between gap-2 mb-2.5">
                     <div className="min-w-0">
                       <h3 className="font-bold text-white text-base md:text-lg leading-tight truncate">
                         {pelicula.titulo}
@@ -448,8 +405,8 @@ export default function CarteleraFuncionesPOS({
                     </span>
                   </div>
 
-                  {/* Contenedor de formatos con scroll vertical para no deformar el modal */}
-                  <div className="max-h-[175px] overflow-y-auto pr-1 space-y-3 custom-scrollbar">
+                  {/* Contenedor de formatos amplio para que 2 formatos se vean completos sin cortarse */}
+                  <div className="max-h-[220px] overflow-y-auto pr-1 space-y-3.5 custom-scrollbar">
                     {Array.from(formatos.entries()).map(([nombreFormato, showtimes]) => (
                       <div key={nombreFormato}>
                         <p className="text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-1.5">
@@ -545,15 +502,13 @@ export default function CarteleraFuncionesPOS({
             return (
               <div
                 key={fn.id_funcion}
-                className={`flex items-center gap-4 bg-[#0B1528] border border-slate-800 rounded-xl px-4 py-3 transition-all ${
-                  pasada ? "opacity-50" : "hover:border-slate-700"
-                }`}
+                className={`flex items-center gap-4 bg-[#0B1528] border border-slate-800 rounded-xl px-4 py-3 transition-all ${pasada ? "opacity-50" : "hover:border-slate-700"
+                  }`}
               >
                 {/* Hora grande a la izquierda */}
                 <span
-                  className={`text-2xl font-bold font-mono w-20 shrink-0 ${
-                    pasada ? "text-slate-500 line-through decoration-slate-600" : "text-white"
-                  }`}
+                  className={`text-2xl font-bold font-mono w-20 shrink-0 ${pasada ? "text-slate-500 line-through decoration-slate-600" : "text-white"
+                    }`}
                 >
                   {fn.hora_inicio.substring(0, 5)}
                 </span>

@@ -191,6 +191,9 @@ export class AsientoDao {
     idSesion: string,
     idUsuario?: string | null
   ): Promise<string> {
+    const esUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idSesion);
+    const sesionValida = esUuid ? idSesion : crypto.randomUUID();
+
     const ahora = new Date();
     const ahoraIso = ahora.toISOString();
     const expiracionIso = new Date(ahora.getTime() + 5 * 60 * 1000).toISOString();
@@ -203,12 +206,12 @@ export class AsientoDao {
       .eq("estado", "Activo")
       .gt("fecha_hora_expiracion", ahoraIso);
 
-    const bloqueoOtro = bloqueosExistentes?.find((b) => b.id_sesion !== idSesion);
+    const bloqueoOtro = bloqueosExistentes?.find((b) => b.id_sesion !== sesionValida);
     if (bloqueoOtro) {
       throw new Error("El asiento acaba de ser seleccionado por otro cliente.");
     }
 
-    const bloqueoMio = bloqueosExistentes?.find((b) => b.id_sesion === idSesion);
+    const bloqueoMio = bloqueosExistentes?.find((b) => b.id_sesion === sesionValida);
     if (bloqueoMio) {
       // Renovar expiración del bloqueo existente
       await supabase
@@ -226,7 +229,7 @@ export class AsientoDao {
       .from("bloqueo_temporal")
       .insert({
         id_asiento_funcion: idAsientoFuncion,
-        id_sesion: idSesion,
+        id_sesion: sesionValida,
         id_usuario: idUsuario || null,
         fecha_hora_bloqueo: ahoraIso,
         fecha_hora_expiracion: expiracionIso,
@@ -250,6 +253,10 @@ export class AsientoDao {
     idAsientoFuncion: string,
     idSesion: string
   ): Promise<void> {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idSesion)) {
+      return;
+    }
+
     const { error } = await supabase
       .from("bloqueo_temporal")
       .delete()
@@ -265,6 +272,10 @@ export class AsientoDao {
    * Libera todos los bloqueos temporales activos de una sesión (al salir o expirar el tiempo)
    */
   static async liberarTodosLosBloqueosDeSesion(idSesion: string): Promise<void> {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idSesion)) {
+      return;
+    }
+
     const { error } = await supabase
       .from("bloqueo_temporal")
       .delete()
@@ -279,6 +290,10 @@ export class AsientoDao {
    * Renueva el tiempo de expiración (+5 minutos) de todos los bloqueos activos de una sesión
    */
   static async renovarBloqueosDeSesion(idSesion: string): Promise<void> {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idSesion)) {
+      return;
+    }
+
     const expiracionIso = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
     const { error } = await supabase

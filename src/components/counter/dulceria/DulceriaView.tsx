@@ -15,6 +15,61 @@ import type {
   OrdenContingenciaDTO,
 } from "@/src/dtos/counter";
 
+export function obtenerIconoProducto(nombre: string, categoria?: string) {
+  const n = (nombre || "").toLowerCase();
+  const c = (categoria || "").toLowerCase();
+
+  if (n.includes("popcorn") || n.includes("canchita") || c.includes("popcorn") || c.includes("canchita")) {
+    return {
+      icono: "fa-solid fa-bowl-food",
+      colorIcono: "text-amber-400",
+      bgGradiente: "from-amber-500/20 via-yellow-500/10 to-amber-950/30 border-amber-500/30",
+    };
+  }
+  if (n.includes("combo") || c.includes("combo")) {
+    return {
+      icono: "fa-solid fa-boxes-stacked",
+      colorIcono: "text-cyan-400",
+      bgGradiente: "from-cyan-500/20 via-blue-500/10 to-cyan-950/30 border-cyan-500/30",
+    };
+  }
+  if (
+    n.includes("gaseosa") ||
+    n.includes("bebida") ||
+    n.includes("agua") ||
+    n.includes("jugo") ||
+    n.includes("coca") ||
+    n.includes("inca") ||
+    c.includes("bebida")
+  ) {
+    return {
+      icono: "fa-solid fa-glass-water",
+      colorIcono: "text-sky-400",
+      bgGradiente: "from-blue-500/20 via-sky-500/10 to-blue-950/30 border-sky-500/30",
+    };
+  }
+  if (n.includes("nacho") || n.includes("queso") || n.includes("hot") || n.includes("snack") || c.includes("snack")) {
+    return {
+      icono: "fa-solid fa-hotdog",
+      colorIcono: "text-orange-400",
+      bgGradiente: "from-orange-500/20 via-amber-500/10 to-orange-950/30 border-orange-500/30",
+    };
+  }
+  if (n.includes("chocolate") || n.includes("dulce") || n.includes("gomita") || n.includes("golosina") || c.includes("dulce")) {
+    return {
+      icono: "fa-solid fa-cookie-bite",
+      colorIcono: "text-pink-400",
+      bgGradiente: "from-pink-500/20 via-rose-500/10 to-pink-950/30 border-pink-500/30",
+    };
+  }
+
+  return {
+    icono: "fa-solid fa-utensils",
+    colorIcono: "text-slate-300",
+    bgGradiente: "from-slate-700/30 via-slate-800/20 to-slate-900/40 border-slate-700/40",
+  };
+}
+
 export default function DulceriaView() {
   // ── 1. Sedes y Contexto Operativo ──
   const [sedes, setSedes] = useState<{ id_sede: number; nombre: string }[]>([
@@ -289,50 +344,60 @@ export default function DulceriaView() {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 2xl:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
                   {productosFiltrados.map((prod) => {
                     const cantidadEnCarrito = carrito.get(prod.id_producto)?.cantidad || 0;
                     const precio = Number(prod.precio_final || prod.precio_base || 0);
+                    const { icono, colorIcono, bgGradiente } = obtenerIconoProducto(
+                      prod.nombre,
+                      prod.nombre_categoria
+                    );
 
                     return (
                       <div
                         key={prod.id_producto}
-                        className={`bg-dark-800 border rounded-2xl p-3 flex flex-col justify-between gap-3 transition-colors ${
+                        className={`bg-dark-800 border rounded-2xl p-3.5 flex flex-col justify-between gap-3 transition-all group shadow-md hover:border-slate-700 ${
                           cantidadEnCarrito > 0
-                            ? "border-brand-yellow/50 bg-dark-800/90 shadow-lg shadow-yellow-500/5"
+                            ? "border-brand-yellow/60 bg-dark-800/95 shadow-lg shadow-yellow-500/10 ring-1 ring-brand-yellow/40"
                             : "border-white/5 hover:border-white/20"
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          {prod.url_imagen ? (
-                            <img
-                              src={prod.url_imagen}
-                              alt={prod.nombre}
-                              className="w-12 h-12 rounded-xl object-cover bg-dark-900 flex-shrink-0"
-                            />
-                          ) : (
-                            <div className="w-12 h-12 rounded-xl bg-dark-900 flex items-center justify-center text-brand-yellow text-xl flex-shrink-0">
-                              <i className="fa-solid fa-bowl-food"></i>
-                            </div>
-                          )}
-
-                          <div className="min-w-0">
-                            <p className="text-white font-bold text-xs leading-tight line-clamp-2">
-                              {prod.nombre}
-                            </p>
-                            <p className="text-brand-yellow font-bold text-sm font-mono mt-0.5">
-                              S/ {precio.toFixed(2)}
-                            </p>
+                        <div>
+                          {/* Espacio superior de la imagen: rectángulo a ancho completo con icono temático */}
+                          <div
+                            className={`w-full aspect-[4/3] rounded-xl flex items-center justify-center bg-gradient-to-br ${bgGradiente} border relative mb-2.5 overflow-hidden transition-transform group-hover:scale-[1.02]`}
+                          >
+                            <i className={`${icono} ${colorIcono} text-4xl drop-shadow-md`}></i>
+                            {cantidadEnCarrito > 0 && (
+                              <span className="absolute top-2 right-2 bg-brand-yellow text-black text-xs font-black w-6 h-6 rounded-full flex items-center justify-center shadow-lg">
+                                {cantidadEnCarrito}
+                              </span>
+                            )}
                           </div>
+
+                          {/* Nombre del producto debajo de la imagen */}
+                          <h3 className="text-white font-bold text-sm leading-tight line-clamp-1 mb-1">
+                            {prod.nombre}
+                          </h3>
+
+                          {/* Descripción breve debajo del nombre */}
+                          <p className="text-slate-400 text-[11px] leading-relaxed line-clamp-2 min-h-[30px]">
+                            {prod.descripcion || "Snack fresco listo para disfrutar."}
+                          </p>
+
+                          {/* Precio debajo de la descripción */}
+                          <p className="text-brand-yellow font-extrabold text-base font-mono mt-2">
+                            S/ {precio.toFixed(2)}
+                          </p>
                         </div>
 
-                        {/* Botones de Cantidad + y - */}
-                        <div className="flex items-center justify-between bg-dark-900 rounded-full px-2 py-1 border border-white/10">
+                        {/* Botones de Cantidad + y - al fondo del card */}
+                        <div className="flex items-center justify-between bg-dark-900 rounded-xl px-2.5 py-1.5 border border-white/10 mt-1">
                           <button
                             type="button"
                             disabled={cantidadEnCarrito === 0}
                             onClick={() => modificarCantidad(prod, -1)}
-                            className="w-7 h-7 rounded-full bg-dark-700 text-white hover:bg-brand-red disabled:opacity-30 disabled:hover:bg-dark-700 flex items-center justify-center transition-colors"
+                            className="w-7 h-7 rounded-lg bg-dark-700 text-white hover:bg-brand-red disabled:opacity-30 disabled:hover:bg-dark-700 flex items-center justify-center text-xs font-bold transition-colors cursor-pointer disabled:cursor-not-allowed"
                           >
                             <i className="fa-solid fa-minus text-[10px]"></i>
                           </button>
@@ -344,7 +409,7 @@ export default function DulceriaView() {
                           <button
                             type="button"
                             onClick={() => modificarCantidad(prod, 1)}
-                            className="w-7 h-7 rounded-full bg-dark-700 text-white hover:bg-brand-yellow hover:text-black flex items-center justify-center transition-colors"
+                            className="w-7 h-7 rounded-lg bg-dark-700 text-white hover:bg-brand-yellow hover:text-black flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
                           >
                             <i className="fa-solid fa-plus text-[10px]"></i>
                           </button>

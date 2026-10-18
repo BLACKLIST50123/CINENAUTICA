@@ -24,7 +24,7 @@ export class CounterService {
   }
 
   /**
-   * Obtiene las funciones del día para una sede específica
+   * Obtiene las funciones del día para una sede específica con ocupación real de sala
    */
   static async obtenerFuncionesPorSedeYFecha(idSede: number, fechaIso?: string) {
     const fecha = fechaIso || new Date().toISOString().split("T")[0];
@@ -42,7 +42,7 @@ export class CounterService {
         hora_fin,
         idioma_audio,
         estado,
-        sala ( id_sala, numero_sala, nombre_sala ),
+        sala ( id_sala, numero_sala, nombre_sala, filas, columnas ),
         pelicula ( id_pelicula, titulo, url_poster, duracion_min, clasificacion ),
         formato_proyeccion ( id_formato, codigo, nombre )
       `)
@@ -51,16 +51,78 @@ export class CounterService {
       .neq("estado", "Cancelada")
       .order("hora_inicio", { ascending: true });
 
-    if (error) {
-      console.error("Error al obtener funciones de la sede:", error);
+    if (error || !data || data.length === 0) {
+      if (error) console.error("Error al obtener funciones de la sede:", error);
       return [];
     }
 
-    return (data || []).map((item: any) => ({
-      ...item,
-      hora_inicio: item.hora_inicio?.slice(0, 5) ?? item.hora_inicio,
-      hora_fin: item.hora_fin?.slice(0, 5) ?? item.hora_fin,
-    }));
+    const idsFunciones = data.map((f: any) => f.id_funcion);
+    const idsSalas = Array.from(new Set(data.map((f: any) => f.id_sala).filter(Boolean)));
+
+    // 1. Capacidad real por sala desde la tabla asiento
+    const mapaCapacidadSala = new Map<string, number>();
+    if (idsSalas.length > 0) {
+      const { data: asientosSalas } = await supabase
+        .from("asiento")
+        .select("id_sala")
+        .in("id_sala", idsSalas)
+        .eq("en_mantenimiento", false);
+
+      asientosSalas?.forEach((a: any) => {
+        mapaCapacidadSala.set(a.id_sala, (mapaCapacidadSala.get(a.id_sala) || 0) + 1);
+      });
+    }
+
+    // 2. Conteo de asientos vendidos / ocupados en asiento_funcion
+    const mapaOcupados = new Map<string, number>();
+    if (idsFunciones.length > 0) {
+      const { data: asientosOcupados } = await supabase
+        .from("asiento_funcion")
+        .select("id_funcion")
+        .in("id_funcion", idsFunciones)
+        .eq("estado", "Ocupado");
+
+      asientosOcupados?.forEach((af: any) => {
+        mapaOcupados.set(af.id_funcion, (mapaOcupados.get(af.id_funcion) || 0) + 1);
+      });
+
+      // 3. Bloqueos temporales activos (en selección actual)
+      const ahoraIso = new Date().toISOString();
+      const { data: bloqueosActivos } = await supabase
+        .from("bloqueo_temporal")
+        .select(`
+          id_asiento_funcion,
+          asiento_funcion!inner(id_funcion)
+        `)
+        .eq("estado", "Activo")
+        .gt("fecha_hora_expiracion", ahoraIso);
+
+      bloqueosActivos?.forEach((b: any) => {
+        const idFn = b.asiento_funcion?.id_funcion;
+        if (idFn && idsFunciones.includes(idFn)) {
+          mapaOcupados.set(idFn, (mapaOcupados.get(idFn) || 0) + 1);
+        }
+      });
+    }
+
+    return data.map((item: any) => {
+      const total =
+        mapaCapacidadSala.get(item.id_sala) ||
+        (item.sala?.filas && item.sala?.columnas ? item.sala.filas * item.sala.columnas : 84);
+      const ocupados = mapaOcupados.get(item.id_funcion) || 0;
+      const pct = total > 0 ? Math.round((ocupados / total) * 100) : 0;
+
+      return {
+        ...item,
+        hora_inicio: item.hora_inicio?.slice(0, 5) ?? item.hora_inicio,
+        hora_fin: item.hora_fin?.slice(0, 5) ?? item.hora_fin,
+        ocupacion: {
+          ocupados,
+          total,
+          pct,
+        },
+      };
+    });
   }
 
   /**
@@ -145,15 +207,20 @@ export class CounterService {
 
   /**
    * Bloquea temporalmente un asiento en Supabase para el Counter (en tiempo real)
+   * Asegura el registro en asiento_funcion y genera el bloqueo_temporal.
    */
   static async bloquearAsientoCounter(
     idFuncion: string,
     idAsiento: string,
     idSesion: string,
     idUsuario?: string
-  ): Promise<string> {
+  ): Promise<{ id_asiento_funcion: string; id_bloqueo: string }> {
     const idAsientoFuncion = await AsientoDao.asegurarAsientoFuncion(idFuncion, idAsiento);
-    return await AsientoDao.bloquearAsiento(idAsientoFuncion, idSesion, idUsuario);
+    const idBloqueo = await AsientoDao.bloquearAsiento(idAsientoFuncion, idSesion, idUsuario);
+    return {
+      id_asiento_funcion: idAsientoFuncion,
+      id_bloqueo: idBloqueo,
+    };
   }
 
   /**
@@ -375,35 +442,49 @@ export class CounterService {
 
     // 3. Registrar entradas en detalle_entrada
     if (input.entradas && input.entradas.length > 0) {
-      const detallesEntradas = input.entradas.map((e) => ({
-        id_orden: idOrden,
-        id_asiento_funcion: e.id_asiento_funcion,
-        id_tipo_entrada: e.id_tipo_entrada,
-        precio_lista: e.precio,
-        precio_unitario: e.precio,
-        codigo_validacion: `TKT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-      }));
+      const idsAsientoFuncion: string[] = [];
+      const detallesEntradas = [];
 
-      const { error: errEntradas } = await supabase
-        .from("detalle_entrada")
-        .insert(detallesEntradas as any);
-
-      if (errEntradas) {
-        console.warn("Fallo inserción en detalle_entrada:", errEntradas.message);
+      for (const e of input.entradas) {
+        let idAf = e.id_asiento_funcion;
+        if (!idAf && input.id_funcion && (e as any).id_asiento) {
+          idAf = await AsientoDao.asegurarAsientoFuncion(input.id_funcion, (e as any).id_asiento);
+        }
+        if (idAf) {
+          idsAsientoFuncion.push(idAf);
+          detallesEntradas.push({
+            id_orden: idOrden,
+            id_asiento_funcion: idAf,
+            id_tipo_entrada: e.id_tipo_entrada,
+            precio_lista: e.precio,
+            precio_unitario: e.precio,
+            codigo_validacion: `TKT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+          });
+        }
       }
 
-      // Marcar butacas a 'Ocupado'
-      const idsAsientoFuncion = input.entradas.map((e) => e.id_asiento_funcion);
-      await supabase
-        .from("asiento_funcion")
-        .update({ estado: "Ocupado" })
-        .in("id_asiento_funcion", idsAsientoFuncion);
+      if (detallesEntradas.length > 0) {
+        const { error: errEntradas } = await supabase
+          .from("detalle_entrada")
+          .insert(detallesEntradas as any);
 
-      // Eliminar bloqueos temporales
-      await supabase
-        .from("bloqueo_temporal")
-        .delete()
-        .in("id_asiento_funcion", idsAsientoFuncion);
+        if (errEntradas) {
+          console.error("Fallo inserción en detalle_entrada:", errEntradas.message);
+          throw new Error(`Error al registrar detalle de entradas: ${errEntradas.message}`);
+        }
+
+        // Marcar butacas a 'Ocupado'
+        await supabase
+          .from("asiento_funcion")
+          .update({ estado: "Ocupado" })
+          .in("id_asiento_funcion", idsAsientoFuncion);
+
+        // Eliminar bloqueos temporales
+        await supabase
+          .from("bloqueo_temporal")
+          .delete()
+          .in("id_asiento_funcion", idsAsientoFuncion);
+      }
     }
 
     // 4. Registrar productos en detalle_producto

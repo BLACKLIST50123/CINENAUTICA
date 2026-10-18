@@ -30,13 +30,14 @@ export default function Asientos({ idFuncionParam }: { idFuncionParam?: string }
     if (typeof window === "undefined") return "";
     try {
       let sid = sessionStorage.getItem("cinenautica_session_id") || "";
-      if (!sid) {
-        sid = crypto.randomUUID();
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sid);
+      if (!sid || !isUuid) {
+        sid = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : "a0000000-0000-0000-0000-000000000001";
         sessionStorage.setItem("cinenautica_session_id", sid);
       }
       return sid;
     } catch {
-      return "sesion-" + Math.random().toString(36).substring(2, 10);
+      return "a0000000-0000-0000-0000-000000000001";
     }
   });
   const [datosFuncion, setDatosFuncion] = useState<any>(null);

@@ -25,5 +25,7 @@ describe("TicketService - Desglose de Comprobantes e Impresión", () => {
   it("debe manejar órdenes no existentes retornando null de forma segura", async () => {
     const res = await TicketService.obtenerTicket("00000000-0000-0000-0000-000000000000");
     expect(res).toBeNull();
+    const resCodigo = await TicketService.obtenerTicket("ORD-20261018-NOEXISTE");
+    expect(resCodigo).toBeNull();
   });
 });

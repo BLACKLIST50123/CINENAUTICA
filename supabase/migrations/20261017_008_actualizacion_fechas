@@ -1,0 +1,41 @@
+-- Migración: Actualizar fechas de funciones activas a partir del 18 de octubre de 2026
+-- Fecha: 2026-10-18
+-- Archivo: supabase/migrations/20261018_008_actualizar_fechas_funciones.sql
+-- Descripción:
+--   1. Desplaza las funciones programadas de la cartelera para que inicien a partir del
+--      lunes 18 de octubre de 2026 (2026-10-18 para "Hoy" y 2026-10-19 para "Mañana").
+--   2. Actualiza tanto Sede 1 (Chimbote), Sede 2 (Costa Azul / Nuevo Chimbote) como Sede 3 (Lima).
+--   3. Limpia bloqueos temporales residuales o expirados en la tabla bloqueo_temporal.
+
+-- 1. Actualizar funciones del día inicial ("Hoy") hacia el 18 de octubre de 2026
+UPDATE funcion
+SET fecha = '2026-10-18'
+WHERE fecha IN ('2026-10-15', '2026-10-13');
+
+-- 2. Actualizar funciones del segundo día ("Mañana") hacia el 19 de octubre de 2026
+UPDATE funcion
+SET fecha = '2026-10-19'
+WHERE fecha IN ('2026-10-16', '2026-10-14');
+
+-- 3. Limpiar bloqueos temporales antiguos o expirados
+DELETE FROM bloqueo_temporal
+WHERE fecha_hora_expiracion < NOW() OR estado = 'Liberado';
+
+-- 4. Programar funciones adicionales para los días siguientes de la semana (20 y 21 de octubre)
+--    Garantiza disponibilidad multisede continua en la cartelera del cliente
+INSERT INTO funcion (id_funcion, id_sede, id_pelicula, id_sala, id_formato, fecha, hora_inicio, hora_fin, idioma_audio, estado)
+VALUES
+  -- Spider-Man: Un Nuevo Día (20 de octubre)
+  ('2b000000-0000-0000-0000-000000000010', 1, 'a0000000-0000-0000-0000-000000000002', '5a1a0000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000001', '2026-10-20', '16:00:00', '18:25:00', 'Doblada', 'Programada'),
+  ('2b000000-0000-0000-0000-000000000011', 1, 'a0000000-0000-0000-0000-000000000002', '5a1a0000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000004', '2026-10-20', '17:15:00', '19:40:00', 'Subtitulada', 'Programada'),
+  -- Avengers: Endgame Encore (20 de octubre)
+  ('2b000000-0000-0000-0000-000000000012', 1, 'a0000000-0000-0000-0000-000000000001', '5a1a0000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000001', '2026-10-20', '15:15:00', '18:35:00', 'Doblada', 'Programada'),
+  -- Coyote vs. Acme (20 de octubre)
+  ('2b000000-0000-0000-0000-000000000013', 1, 'a0000000-0000-0000-0000-000000000005', '5a1a0000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000001', '2026-10-20', '14:45:00', '16:30:00', 'Doblada', 'Programada'),
+  -- Spider-Man: Un Nuevo Día (21 de octubre)
+  ('2b000000-0000-0000-0000-000000000014', 1, 'a0000000-0000-0000-0000-000000000002', '5a1a0000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000001', '2026-10-21', '16:00:00', '18:25:00', 'Doblada', 'Programada'),
+  ('2b000000-0000-0000-0000-000000000015', 1, 'a0000000-0000-0000-0000-000000000002', '5a1a0000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000004', '2026-10-21', '17:15:00', '19:40:00', 'Subtitulada', 'Programada')
+ON CONFLICT (id_funcion) DO UPDATE
+SET fecha = EXCLUDED.fecha,
+    hora_inicio = EXCLUDED.hora_inicio,
+    hora_fin = EXCLUDED.hora_fin;

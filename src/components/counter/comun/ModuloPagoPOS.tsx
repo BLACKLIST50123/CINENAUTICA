@@ -316,7 +316,7 @@ export default function ModuloPagoPOS({
                     </span>
                     <input
                       type="number"
-                      step="0.5"
+                      step="any"
                       min={0}
                       value={montoRecibido}
                       onChange={(e) => setMontoRecibido(Number(e.target.value) || 0)}

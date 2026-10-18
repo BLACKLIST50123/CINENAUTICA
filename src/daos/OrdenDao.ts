@@ -15,24 +15,7 @@ export class OrdenDao {
   static async procesarCheckout(
     input: CrearOrdenInputDTO
   ): Promise<CheckoutResultadoDTO> {
-    try {
-      const { data: rpcData, error: rpcError } = await (supabase.rpc as any)(
-        "procesar_checkout_compra",
-        { p_datos: input }
-      );
-
-      if (!rpcError && rpcData && rpcData.ok) {
-        return rpcData as CheckoutResultadoDTO;
-      }
-
-      if (rpcError && !rpcError.message.includes("does not exist")) {
-        console.warn("RPC falló, ejecutando flujo directo:", rpcError.message);
-      }
-    } catch (e) {
-      console.warn("Excepción al invocar RPC checkout:", e);
-    }
-
-    // ── Flujo de persistencia directa vía PostgREST ──
+    // Ejecutar persistencia directa y completa vía PostgREST
     return await this.ejecutarCheckoutDirecto(input);
   }
 
@@ -166,16 +149,20 @@ export class OrdenDao {
       await supabase.from("detalle_producto").insert(detallesProd);
     }
 
-    // 7. Insertar Pago
-    await supabase.from("pago").insert({
+    const { error: errPago } = await supabase.from("pago").insert({
       id_pago: crypto.randomUUID(),
       id_orden: idOrden,
       metodo_pago: input.metodo_pago,
       monto: total,
       estado: "Completado",
+      fecha_pago: new Date().toISOString(),
       referencia_pasarela: `PASARELA-SIM-${Date.now()}`,
       clave_idempotencia: crypto.randomUUID(),
     });
+
+    if (errPago) {
+      console.error("Error al registrar pago:", errPago);
+    }
 
     // 8. Correlativo y Comprobante
     const prefijo = input.tipo_comprobante === "Factura" ? "F" : "B";
@@ -205,7 +192,7 @@ export class OrdenDao {
     const subtotalSinIgv = Number((total / 1.18).toFixed(2));
     const igv = Number((total - subtotalSinIgv).toFixed(2));
 
-    await supabase.from("comprobante").insert({
+    const { error: errComp } = await supabase.from("comprobante").insert({
       id_comprobante: crypto.randomUUID(),
       id_orden: idOrden,
       id_sede: input.id_sede,
@@ -218,7 +205,12 @@ export class OrdenDao {
       subtotal_sin_igv: subtotalSinIgv,
       igv: igv,
       total: total,
+      fecha_emision: new Date().toISOString(),
     });
+
+    if (errComp) {
+      console.error("Error al insertar comprobante:", errComp);
+    }
 
     // 9. Puntos ganados si es socio
     let puntosGanados = 0;
@@ -266,7 +258,7 @@ export class OrdenDao {
    * Obtiene la información completa de una orden para emitir el ticket
    */
   static async obtenerOrdenCompleta(idOrden: string): Promise<OrdenCompletaDTO | null> {
-    const { data: ord, error } = await supabase
+    const query = supabase
       .from("orden")
       .select(`
         id_orden,
@@ -325,12 +317,20 @@ export class OrdenDao {
           precio_unitario,
           producto ( nombre )
         )
-      `)
-      .eq("id_orden", idOrden)
-      .maybeSingle();
+      `);
 
-    if (error || !ord) {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrden);
+    const { data: ord, error } = await (isUuid
+      ? query.eq("id_orden", idOrden)
+      : query.eq("codigo_orden", idOrden)
+    ).maybeSingle();
+
+    if (error) {
       console.error("Error al obtener orden completa:", error);
+      return null;
+    }
+
+    if (!ord) {
       return null;
     }
 

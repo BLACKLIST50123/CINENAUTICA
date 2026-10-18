@@ -9,6 +9,7 @@ import ModalConfirmarSalidaCounter from "../comun/ModalConfirmarSalidaCounter";
 import TicketTermicoPOS from "../comun/TicketTermicoPOS";
 import CarteleraFuncionesPOS from "../comun/CarteleraFuncionesPOS";
 import ModalElegirTipoEntradaPOS from "../comun/ModalElegirTipoEntradaPOS";
+import { obtenerIconoProducto } from "../dulceria/DulceriaView";
 import { CounterService } from "@/src/services/counterService";
 import type {
   SocioCounterDTO,
@@ -32,17 +33,24 @@ export default function MixtoView() {
   // ── 2. Estados de Venta y Subvistas ──
   const [subvista, setSubvista] = useState<"cartelera" | "asientos" | "dulceria" | "cobro" | "exito">("cartelera");
   const [ventaSoloDulceria, setVentaSoloDulceria] = useState<boolean>(false);
-  // Sesion ID debe ser un UUID válido para PostgreSQL
-  const [sesionId] = useState<string>(() => {
-    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-      return crypto.randomUUID();
+  // Sesion ID diferido en useEffect para evitar conflicto con SSR / Turbopack
+  const [sesionId, setSesionId] = useState<string>("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+        setSesionId(crypto.randomUUID());
+      } else {
+        setSesionId(
+          "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+            const r = (Math.random() * 16) | 0;
+            const v = c === "x" ? r : (r & 0x3) | 0x8;
+            return v.toString(16);
+          })
+        );
+      }
     }
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-      const r = (Math.random() * 16) | 0;
-      const v = c === "x" ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
-  });
+  }, []);
 
   // Socio Activo
   const [socioActivo, setSocioActivo] = useState<SocioCounterDTO | null>(null);
@@ -58,6 +66,25 @@ export default function MixtoView() {
   const [asientosSala, setAsientosSala] = useState<any[]>([]);
   const [tarifasDisponibles, setTarifasDisponibles] = useState<any[]>([]);
   const [cargandoSala, setCargandoSala] = useState<boolean>(false);
+
+  // Agrupación estática de asientos por fila para conservar cuadrícula exacta
+  const filasNombres = useMemo(() => {
+    const setFilas = new Set<string>();
+    asientosSala.forEach((a) => {
+      if (a.fila) setFilas.add(a.fila);
+    });
+    return Array.from(setFilas).sort();
+  }, [asientosSala]);
+
+  const asientosPorFila = useMemo(() => {
+    const map: Record<string, any[]> = {};
+    filasNombres.forEach((f) => {
+      map[f] = asientosSala
+        .filter((a) => a.fila === f)
+        .sort((a, b) => Number(a.columna) - Number(b.columna));
+    });
+    return map;
+  }, [asientosSala, filasNombres]);
 
   // Entradas Seleccionadas
   const [entradasSeleccionadas, setEntradasSeleccionadas] = useState<ItemEntradaCounter[]>([]);
@@ -207,31 +234,62 @@ export default function MixtoView() {
 
   const handleConfirmarAsientoConTipo = async (asiento: any, tipo: any) => {
     setAsientoParaModalTipo(null);
+    const codigoAsiento = asiento.codigo;
+
+    // 1. OPTIMISTIC UI: Pintar inmediatamente en rojo en la pantalla (0 ms)
+    const entradaTemp: ItemEntradaCounter = {
+      id_asiento_funcion: asiento.id_asiento_funcion || "",
+      codigo_asiento: codigoAsiento,
+      fila: asiento.fila,
+      numero: asiento.columna,
+      id_tipo_entrada: tipo.id_tipo_entrada || "1",
+      tipo_nombre: tipo.nombre || "General",
+      precio: Number(tipo.precio || 18.0),
+    };
+
+    setEntradasSeleccionadas((prev) => [...prev, entradaTemp]);
+    setAsientosSala((prev) =>
+      prev.map((a) =>
+        a.codigo === codigoAsiento
+          ? { ...a, estado: "Bloqueado", id_sesion_bloqueo: sesionId }
+          : a
+      )
+    );
+
+    // 2. Persistir bloqueo en Supabase concurrentemente en segundo plano
     try {
-      const idBloqueo = await CounterService.bloquearAsientoCounter(
+      const res = await CounterService.bloquearAsientoCounter(
         funcionSeleccionada.id_funcion,
         asiento.id_asiento,
         sesionId
       );
 
-      const nuevaEntrada: ItemEntradaCounter = {
-        id_asiento_funcion: asiento.id_asiento_funcion || idBloqueo,
-        codigo_asiento: asiento.codigo,
-        fila: asiento.fila,
-        numero: asiento.columna,
-        id_tipo_entrada: tipo.id_tipo_entrada || "1",
-        tipo_nombre: tipo.nombre || "General",
-        precio: Number(tipo.precio || 18.0),
-      };
-
-      setEntradasSeleccionadas((prev) => [...prev, nuevaEntrada]);
+      // Sincronizar el id_asiento_funcion real y confirmado
+      setEntradasSeleccionadas((prev) =>
+        prev.map((e) =>
+          e.codigo_asiento === codigoAsiento
+            ? { ...e, id_asiento_funcion: res.id_asiento_funcion }
+            : e
+        )
+      );
       setAsientosSala((prev) =>
         prev.map((a) =>
-          a.codigo === asiento.codigo ? { ...a, estado: "Bloqueado", id_sesion_bloqueo: sesionId } : a
+          a.codigo === codigoAsiento
+            ? { ...a, id_asiento_funcion: res.id_asiento_funcion }
+            : a
         )
       );
     } catch (err: any) {
-      mostrarToast(err.message || "No se pudo seleccionar el asiento.");
+      // Revertir optimistic update en caso de colisión o fallo
+      setEntradasSeleccionadas((prev) => prev.filter((e) => e.codigo_asiento !== codigoAsiento));
+      setAsientosSala((prev) =>
+        prev.map((a) =>
+          a.codigo === codigoAsiento
+            ? { ...a, estado: "Disponible", id_sesion_bloqueo: null }
+            : a
+        )
+      );
+      mostrarToast(err.message || "El asiento no está disponible o fue tomado por otro usuario.");
     }
   };
 
@@ -465,43 +523,78 @@ export default function MixtoView() {
                       </span>
                     </div>
 
-                    <div className="flex flex-wrap justify-center gap-2 mb-6">
-                      {asientosSala.map((asiento) => {
-                        const estaEnCarrito = entradasSeleccionadas.some(
-                          (e) => e.codigo_asiento === asiento.codigo
-                        );
-                        const estaOcupado =
-                          asiento.estado === "Ocupado" ||
-                          (asiento.estado === "Bloqueado" && asiento.id_sesion_bloqueo !== sesionId);
+                    {/* Matriz Estática de Asientos agrupada por filas */}
+                    <div className="overflow-x-auto py-2 mb-6 custom-scrollbar">
+                      <div className="min-w-fit mx-auto flex flex-col items-center">
+                        {filasNombres.map((filaNombre) => {
+                          const butacasFila = asientosPorFila[filaNombre] || [];
 
-                        let claseColor = "bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer";
-                        if (estaEnCarrito) {
-                          // ROJO como en cliente
-                          claseColor =
-                            "bg-[#DC2026] hover:bg-[#b91c1c] text-white font-black border-black/50 ring-2 ring-[#DC2026] shadow-[0_0_15px_rgba(220,32,38,0.7)] scale-105 cursor-pointer";
-                        } else if (asiento.tipo?.toLowerCase() === "accesible") {
-                          claseColor = "bg-blue-600 hover:bg-blue-500 text-white border-black/50 cursor-pointer";
-                        } else if (estaOcupado) {
-                          claseColor = "bg-[#1f2937]/90 text-white/20 border-black/60 cursor-not-allowed";
-                        }
+                          return (
+                            <div
+                              key={filaNombre}
+                              className="flex items-center justify-center gap-1.5 md:gap-2 mb-2 flex-nowrap"
+                            >
+                              {/* Letra de fila a la izquierda */}
+                              <span className="w-5 md:w-6 text-center text-xs font-bold text-slate-500 font-mono select-none shrink-0">
+                                {filaNombre}
+                              </span>
 
-                        return (
-                          <button
-                            key={asiento.codigo}
-                            type="button"
-                            disabled={estaOcupado}
-                            onClick={() => handleToggleAsiento(asiento)}
-                            title={`${asiento.codigo} ${estaOcupado ? "(Ocupado)" : estaEnCarrito ? "(Seleccionado)" : "(Disponible)"}`}
-                            className={`w-9 h-9 md:w-10 md:h-10 rounded-t-lg rounded-b-sm border-b-4 border-black/40 flex items-center justify-center text-[10px] font-mono font-bold transition-all ${claseColor}`}
-                          >
-                            {asiento.tipo?.toLowerCase() === "accesible" ? (
-                              <i className="fa-solid fa-wheelchair text-[10px]"></i>
-                            ) : (
-                              asiento.codigo
-                            )}
-                          </button>
-                        );
-                      })}
+                              {/* Butacas de esta fila */}
+                              {butacasFila.map((asiento) => {
+                                const estaEnCarrito = entradasSeleccionadas.some(
+                                  (e) => e.codigo_asiento === asiento.codigo
+                                );
+                                const estaOcupado =
+                                  asiento.estado === "Ocupado" ||
+                                  (asiento.estado === "Bloqueado" &&
+                                    asiento.id_sesion_bloqueo !== sesionId);
+
+                                let claseColor =
+                                  "bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer hover:scale-105";
+                                if (estaEnCarrito) {
+                                  // ROJO vibrante
+                                  claseColor =
+                                    "bg-[#DC2026] hover:bg-[#b91c1c] text-white font-black border-black/50 ring-2 ring-[#DC2026] shadow-[0_0_15px_rgba(220,32,38,0.7)] scale-105 cursor-pointer";
+                                } else if (asiento.tipo?.toLowerCase() === "accesible") {
+                                  claseColor =
+                                    "bg-blue-600 hover:bg-blue-500 text-white border-black/50 cursor-pointer hover:scale-105";
+                                } else if (estaOcupado) {
+                                  claseColor =
+                                    "bg-[#1f2937]/90 text-white/20 border-black/60 cursor-not-allowed";
+                                }
+
+                                return (
+                                  <button
+                                    key={asiento.codigo}
+                                    type="button"
+                                    disabled={estaOcupado}
+                                    onClick={() => handleToggleAsiento(asiento)}
+                                    title={`${asiento.codigo} ${
+                                      estaOcupado
+                                        ? "(Ocupado)"
+                                        : estaEnCarrito
+                                        ? "(Seleccionado)"
+                                        : "(Disponible)"
+                                    }`}
+                                    className={`w-8 h-8 md:w-10 md:h-10 rounded-t-lg rounded-b-sm border-b-4 border-black/40 flex items-center justify-center text-[10px] md:text-xs font-mono font-bold transition-all shrink-0 ${claseColor}`}
+                                  >
+                                    {asiento.tipo?.toLowerCase() === "accesible" ? (
+                                      <i className="fa-solid fa-wheelchair text-[10px]"></i>
+                                    ) : (
+                                      asiento.codigo
+                                    )}
+                                  </button>
+                                );
+                              })}
+
+                              {/* Letra de fila a la derecha */}
+                              <span className="w-5 md:w-6 text-center text-xs font-bold text-slate-500 font-mono select-none shrink-0">
+                                {filaNombre}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
 
                     {/* Leyenda de Butacas */}
@@ -615,38 +708,52 @@ export default function MixtoView() {
                     const itemCarrito = carritoDulceria.get(prod.id_producto);
                     const cantidad = itemCarrito?.cantidad || 0;
                     const precio = Number(prod.precio_final || prod.precio_base || 0);
+                    const { icono, colorIcono, bgGradiente } = obtenerIconoProducto(
+                      prod.nombre,
+                      prod.nombre_categoria
+                    );
 
                     return (
                       <div
                         key={prod.id_producto}
-                        className="bg-[#0B1528] border border-slate-800 hover:border-slate-700 rounded-2xl p-4 flex flex-col justify-between transition-all shadow-md group"
+                        className={`bg-[#0B1528] border rounded-2xl p-4 flex flex-col justify-between transition-all shadow-md group ${
+                          cantidad > 0
+                            ? "border-cyan-500/80 bg-[#0B1528] shadow-lg shadow-cyan-950/40 ring-1 ring-cyan-500/40"
+                            : "border-slate-800 hover:border-slate-700"
+                        }`}
                       >
-                        <div className="relative mb-3 aspect-square bg-[#070D18] rounded-xl overflow-hidden flex items-center justify-center p-2">
-                          <img
-                            src={prod.url_imagen || "/img/dulceria/default.webp"}
-                            alt={prod.nombre}
-                            className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform"
-                          />
-                          {cantidad > 0 && (
-                            <span className="absolute top-2 right-2 bg-[#0284C7] text-white text-xs font-extrabold w-6 h-6 rounded-full flex items-center justify-center shadow-lg">
-                              {cantidad}
-                            </span>
-                          )}
-                        </div>
-
                         <div>
+                          {/* Espacio superior de la imagen: rectángulo a ancho completo con icono temático */}
+                          <div
+                            className={`w-full aspect-[4/3] rounded-xl flex items-center justify-center bg-gradient-to-br ${bgGradiente} border relative mb-2.5 overflow-hidden transition-transform group-hover:scale-[1.02]`}
+                          >
+                            <i className={`${icono} ${colorIcono} text-4xl drop-shadow-md`}></i>
+                            {cantidad > 0 && (
+                              <span className="absolute top-2 right-2 bg-[#0284C7] text-white text-xs font-extrabold w-6 h-6 rounded-full flex items-center justify-center shadow-lg">
+                                {cantidad}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Nombre del producto debajo de la imagen */}
                           <h3 className="font-bold text-white text-sm line-clamp-1 mb-1">
                             {prod.nombre}
                           </h3>
-                          <p className="text-[11px] text-slate-400 line-clamp-2 mb-3">
+
+                          {/* Descripción breve debajo del nombre */}
+                          <p className="text-[11px] text-slate-400 line-clamp-2 mb-2 min-h-[30px]">
                             {prod.descripcion || "Snack fresco preparado al momento."}
+                          </p>
+
+                          {/* Precio debajo de la descripción */}
+                          <p className="text-base font-extrabold text-cyan-400 font-mono mb-2">
+                            S/ {precio.toFixed(2)}
                           </p>
                         </div>
 
+                        {/* Botones de Cantidad + y - al fondo del card */}
                         <div className="flex items-center justify-between pt-3 border-t border-slate-800">
-                          <span className="text-base font-extrabold text-cyan-400 font-mono">
-                            S/ {precio.toFixed(2)}
-                          </span>
+                          <span className="text-xs text-slate-400 font-medium">Cantidad:</span>
 
                           <div className="flex items-center gap-1.5 bg-[#070D18] border border-slate-800 rounded-lg p-1">
                             <button
@@ -694,19 +801,7 @@ export default function MixtoView() {
           {/* SUBVISTA 5: ÉXITO */}
           {subvista === "exito" && resultadoVenta && (
             <div className="p-4 md:p-6 fade-in max-w-xl mx-auto">
-              <div className="bg-[#0B1528] border border-emerald-500/30 rounded-2xl p-6 shadow-2xl text-center mb-6">
-                <div className="w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
-                  <i className="fa-solid fa-check"></i>
-                </div>
-                <h2 className="text-xl font-extrabold text-white">¡Venta POS Completada!</h2>
-                <p className="text-xs text-slate-400 mt-1 font-mono">
-                  Comprobante: {resultadoVenta.numero_comprobante}
-                </p>
-
-                <div className="my-6 text-left">
-                  <TicketTermicoPOS venta={resultadoVenta} onNuevaVenta={iniciarNuevaVenta} />
-                </div>
-              </div>
+              <TicketTermicoPOS venta={resultadoVenta} onNuevaVenta={iniciarNuevaVenta} />
             </div>
           )}
         </main>
