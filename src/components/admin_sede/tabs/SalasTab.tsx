@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { AdminSedeDao } from "@/src/daos/AdminSedeDao";
 import type { SalaDetalleSedeDTO, AsientoAdminSedeDTO } from "@/src/dtos/adminSede";
 import ModalConfirmacion from "../comun/ModalConfirmacion";
@@ -12,6 +12,17 @@ interface SalasTabProps {
   onRecargarSalas: () => void;
 }
 
+interface FormatoGlobalItem {
+  id_formato: number | string;
+  codigo?: string;
+  nombre: string;
+}
+
+type SubTabTipo = "dimensiones" | "estados";
+
+// Letras para las filas (A, B, C...)
+const LETRAS_FILAS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
 export default function SalasTab({
   idSede,
   salas,
@@ -19,79 +30,256 @@ export default function SalasTab({
   onRecargarSalas,
 }: SalasTabProps) {
   const [salaIndex, setSalaIndex] = useState<number>(0);
-  const [asientoMantenimientoPendiente, setAsientoMantenimientoPendiente] = useState<AsientoAdminSedeDTO | null>(null);
-  const [eliminarSalaPendiente, setEliminarSalaPendiente] = useState<SalaDetalleSedeDTO | null>(null);
+  const [subtab, setSubtab] = useState<SubTabTipo>("dimensiones");
+
+  // Formatos globales disponibles en la plataforma
+  const [formatosGlobales, setFormatosGlobales] = useState<FormatoGlobalItem[]>([]);
+
+  // Estados locales editables para la sala seleccionada
+  const [filasInput, setFilasInput] = useState<number>(8);
+  const [columnasInput, setColumnasInput] = useState<number>(8);
+  const [pasillosLocales, setPasillosLocales] = useState<number[]>([]);
+  const [formatosSeleccionados, setFormatosSeleccionados] = useState<string[]>([]);
+  const [estadoOperativo, setEstadoOperativo] = useState<string>("ACTIVA");
+  const [asientosMatriz, setAsientosMatriz] = useState<
+    { fila: string; columna: number; tipo_asiento: string; en_mantenimiento: boolean }[]
+  >([]);
+
+  // Modales y feedback
   const [mensajeAlerta, setMensajeAlerta] = useState<{ tipo: "error" | "exito"; texto: string } | null>(null);
   const [cargandoAccion, setCargandoAccion] = useState<boolean>(false);
+  const [mostrarConfirmacionGuardar, setMostrarConfirmacionGuardar] = useState<boolean>(false);
+  const [mostrarConfirmacionRestablecer, setMostrarConfirmacionRestablecer] = useState<boolean>(false);
+  const [eliminarSalaPendiente, setEliminarSalaPendiente] = useState<SalaDetalleSedeDTO | null>(null);
 
   const salaActual: SalaDetalleSedeDTO | undefined = salas[salaIndex] || salas[0];
 
-  // Alternar mantenimiento de un asiento
-  const confirmarAlternarMantenimiento = async () => {
-    if (!asientoMantenimientoPendiente) return;
-    setCargandoAccion(true);
-
-    const nuevoEstado = !asientoMantenimientoPendiente.en_mantenimiento;
-    const ok = await AdminSedeDao.actualizarMantenimientoAsiento(
-      asientoMantenimientoPendiente.id_asiento,
-      nuevoEstado
-    );
-
-    setCargandoAccion(false);
-    setAsientoMantenimientoPendiente(null);
-
-    if (ok) {
-      onRecargarSalas();
-    } else {
-      setMensajeAlerta({ tipo: "error", texto: "No se pudo actualizar el estado de la butaca." });
+  // Cargar catálogo de formatos globales
+  useEffect(() => {
+    async function cargarFormatos() {
+      const data = await AdminSedeDao.obtenerFormatosGlobales();
+      setFormatosGlobales(data);
     }
+    cargarFormatos();
+  }, []);
+
+  // Sincronizar estados locales cuando cambia la sala seleccionada
+  const sincronizarSalaActual = (sala?: SalaDetalleSedeDTO) => {
+    if (!sala) return;
+    const f = sala.filas || 8;
+    const c = sala.columnas || 8;
+    setFilasInput(f);
+    setColumnasInput(c);
+    setPasillosLocales([...(sala.pasillos || [])]);
+    setEstadoOperativo(sala.estado || "ACTIVA");
+
+    // Formatos de la sala
+    const formatosIds = (sala.formatos_soportados || []).map((fmt) => String(fmt.id_formato));
+    setFormatosSeleccionados(formatosIds);
+
+    // Mapear asientos existentes o inicializar matriz
+    const mapaExistente = new Map<string, AsientoAdminSedeDTO>();
+    (sala.asientos || []).forEach((a) => {
+      mapaExistente.set(`${a.fila}-${a.columna}`, a);
+    });
+
+    const nuevaMatriz: { fila: string; columna: number; tipo_asiento: string; en_mantenimiento: boolean }[] = [];
+    for (let r = 0; r < f; r++) {
+      const letra = LETRAS_FILAS[r] || `F${r + 1}`;
+      for (let col = 1; col <= c; col++) {
+        const key = `${letra}-${col}`;
+        const previo = mapaExistente.get(key);
+        if (previo) {
+          nuevaMatriz.push({
+            fila: letra,
+            columna: col,
+            tipo_asiento: previo.tipo_asiento || "Normal",
+            en_mantenimiento: Boolean(previo.en_mantenimiento),
+          });
+        } else {
+          nuevaMatriz.push({
+            fila: letra,
+            columna: col,
+            tipo_asiento: "Normal",
+            en_mantenimiento: false,
+          });
+        }
+      }
+    }
+    setAsientosMatriz(nuevaMatriz);
   };
 
-  const [salaEstadoPendiente, setSalaEstadoPendiente] = useState<{
-    sala: SalaDetalleSedeDTO;
-    nuevoEstado: "ACTIVA" | "MANTENIMIENTO";
-  } | null>(null);
+  useEffect(() => {
+    if (salaActual) {
+      sincronizarSalaActual(salaActual);
+    }
+  }, [salaActual?.id_sala]);
 
-  // Alternar estado de la sala (ACTIVA <-> MANTENIMIENTO) con confirmación previa
-  const solicitarAlternarEstadoSala = () => {
-    if (!salaActual) return;
-    const nuevoEstado = salaActual.estado === "ACTIVA" ? "MANTENIMIENTO" : "ACTIVA";
-    setSalaEstadoPendiente({ sala: salaActual, nuevoEstado });
+  // Generar cuadrícula base con filas y columnas especificadas
+  const generarCuadriculaBase = () => {
+    const f = Math.max(1, Math.min(26, filasInput || 8));
+    const c = Math.max(1, Math.min(30, columnasInput || 8));
+    setFilasInput(f);
+    setColumnasInput(c);
+
+    // Filtrar pasillos que queden fuera de las nuevas columnas
+    const pasillosValidos = pasillosLocales.filter((col) => col <= c);
+    setPasillosLocales(pasillosValidos);
+
+    const mapaPrevio = new Map<string, { tipo_asiento: string; en_mantenimiento: boolean }>();
+    asientosMatriz.forEach((a) => {
+      mapaPrevio.set(`${a.fila}-${a.columna}`, {
+        tipo_asiento: a.tipo_asiento,
+        en_mantenimiento: a.en_mantenimiento,
+      });
+    });
+
+    const nuevaMatriz: { fila: string; columna: number; tipo_asiento: string; en_mantenimiento: boolean }[] = [];
+    for (let r = 0; r < f; r++) {
+      const letra = LETRAS_FILAS[r] || `F${r + 1}`;
+      for (let col = 1; col <= c; col++) {
+        const key = `${letra}-${col}`;
+        const prev = mapaPrevio.get(key);
+        nuevaMatriz.push({
+          fila: letra,
+          columna: col,
+          tipo_asiento: prev ? prev.tipo_asiento : "Normal",
+          en_mantenimiento: prev ? prev.en_mantenimiento : false,
+        });
+      }
+    }
+    setAsientosMatriz(nuevaMatriz);
   };
 
-  const confirmarAlternarEstadoSala = async () => {
-    if (!salaEstadoPendiente) return;
-    setCargandoAccion(true);
+  // Alternar columna como pasillo
+  const alternarColumnaPasillo = (col: number) => {
+    setPasillosLocales((prev) => {
+      if (prev.includes(col)) {
+        return prev.filter((p) => p !== col);
+      } else {
+        return [...prev, col].sort((a, b) => a - b);
+      }
+    });
+  };
 
-    const ok = await AdminSedeDao.actualizarConfiguracionSala(
-      salaEstadoPendiente.sala.id_sala,
-      salaEstadoPendiente.nuevoEstado
+  // En subtab de estados: ciclar estado de la butaca
+  // Normal (Disponible) -> En Mantenimiento -> Accesible / Silla de ruedas -> Normal
+  const ciclarEstadoButaca = (fila: string, columna: number) => {
+    if (pasillosLocales.includes(columna)) return;
+
+    setAsientosMatriz((prev) =>
+      prev.map((a) => {
+        if (a.fila === fila && a.columna === columna) {
+          const esAccesible = a.tipo_asiento.toLowerCase() === "discapacitado" || a.tipo_asiento.toLowerCase() === "accesible";
+          const esMantenimiento = a.en_mantenimiento;
+
+          // Ciclo:
+          // 1. Si era Normal y Disponible -> Pasa a En Mantenimiento
+          // 2. Si era Mantenimiento -> Pasa a Accesible (no mantenimiento)
+          // 3. Si era Accesible -> Vuelve a Normal Disponible
+          if (!esMantenimiento && !esAccesible) {
+            return { ...a, en_mantenimiento: true, tipo_asiento: "Normal" };
+          } else if (esMantenimiento) {
+            return { ...a, en_mantenimiento: false, tipo_asiento: "Discapacitado" };
+          } else {
+            return { ...a, en_mantenimiento: false, tipo_asiento: "Normal" };
+          }
+        }
+        return a;
+      })
     );
+  };
 
-    setCargandoAccion(false);
-    setSalaEstadoPendiente(null);
+  // Alternar selección de un formato
+  const alternarFormato = (idFormato: string) => {
+    setFormatosSeleccionados((prev) =>
+      prev.includes(idFormato) ? prev.filter((id) => id !== idFormato) : [...prev, idFormato]
+    );
+  };
 
-    if (ok) {
+  // Cálculo de estadísticas
+  const capacidadCalculada = useMemo(() => {
+    return asientosMatriz.filter((a) => !pasillosLocales.includes(a.columna)).length;
+  }, [asientosMatriz, pasillosLocales]);
+
+  const butacasMantenimientoCount = useMemo(() => {
+    return asientosMatriz.filter((a) => !pasillosLocales.includes(a.columna) && a.en_mantenimiento).length;
+  }, [asientosMatriz, pasillosLocales]);
+
+  const butacasAccesiblesCount = useMemo(() => {
+    return asientosMatriz.filter(
+      (a) =>
+        !pasillosLocales.includes(a.columna) &&
+        !a.en_mantenimiento &&
+        (a.tipo_asiento.toLowerCase() === "discapacitado" || a.tipo_asiento.toLowerCase() === "accesible")
+    ).length;
+  }, [asientosMatriz, pasillosLocales]);
+
+  // Guardar configuración completa en base de datos
+  const ejecutarGuardarCambios = async () => {
+    if (!salaActual) return;
+    setCargandoAccion(true);
+    setMensajeAlerta(null);
+
+    try {
+      // 1. Guardar estructura y asientos
+      const resEstructura = await AdminSedeDao.guardarEstructuraYAsientosSala(
+        salaActual.id_sala,
+        filasInput,
+        columnasInput,
+        pasillosLocales,
+        asientosMatriz
+      );
+
+      if (!resEstructura.exito) {
+        throw new Error(resEstructura.mensaje);
+      }
+
+      // 2. Guardar formatos soportados
+      const formatosOk = await AdminSedeDao.actualizarFormatosSala(
+        salaActual.id_sala,
+        formatosSeleccionados
+      );
+
+      if (!formatosOk) {
+        throw new Error("No se pudieron actualizar los formatos admitidos de la sala.");
+      }
+
+      // 3. Guardar estado operativo si cambió
+      if (estadoOperativo !== salaActual.estado) {
+        await AdminSedeDao.actualizarConfiguracionSala(salaActual.id_sala, estadoOperativo);
+      }
+
       setMensajeAlerta({
         tipo: "exito",
-        texto: `Sala '${salaEstadoPendiente.sala.nombre_sala}' actualizada a estado ${salaEstadoPendiente.nuevoEstado}.`,
+        texto: `Configuración de '${salaActual.nombre_sala}' guardada exitosamente.`,
       });
+      setMostrarConfirmacionGuardar(false);
       onRecargarSalas();
-    } else {
+    } catch (err: any) {
       setMensajeAlerta({
         tipo: "error",
-        texto: "No se pudo actualizar el estado de la sala en la base de datos.",
+        texto: err.message || "Ocurrió un error al guardar los cambios de la sala.",
       });
+      setMostrarConfirmacionGuardar(false);
+    } finally {
+      setCargandoAccion(false);
     }
   };
 
-  // Confirmar eliminación de sala con validación de seguridad
+  // Restablecer cambios sin guardar
+  const confirmarRestablecer = () => {
+    sincronizarSalaActual(salaActual);
+    setMostrarConfirmacionRestablecer(false);
+    setMensajeAlerta({ tipo: "exito", texto: "Cambios revertidos a la última versión guardada." });
+  };
+
+  // Eliminar sala con validación
   const confirmarEliminarSala = async () => {
     if (!eliminarSalaPendiente) return;
     setCargandoAccion(true);
 
     const res = await AdminSedeDao.eliminarSalaSede(eliminarSalaPendiente.id_sala);
-
     setCargandoAccion(false);
     setEliminarSalaPendiente(null);
 
@@ -106,8 +294,9 @@ export default function SalasTab({
 
   if (!salaActual) {
     return (
-      <div className="bg-dark-900 border border-white/10 rounded-2xl p-12 text-center">
-        <p className="text-slate-400 text-sm mb-4">No hay salas registradas en esta sede.</p>
+      <div className="bg-[#0D1627] border border-white/10 rounded-2xl p-12 text-center shadow-xl">
+        <i className="fa-solid fa-film text-4xl text-slate-600 mb-3"></i>
+        <p className="text-slate-300 font-medium text-sm mb-4">No hay salas registradas en esta sede.</p>
         <button
           type="button"
           onClick={onAbrirCrearSala}
@@ -119,30 +308,29 @@ export default function SalasTab({
     );
   }
 
-  // Agrupar asientos por fila
-  const asientosPorFila = new Map<string, AsientoAdminSedeDTO[]>();
-  (salaActual.asientos || []).forEach((a) => {
-    const list = asientosPorFila.get(a.fila) || [];
+  // Agrupar la matriz local por fila
+  const matrizPorFila = new Map<string, { fila: string; columna: number; tipo_asiento: string; en_mantenimiento: boolean }[]>();
+  asientosMatriz.forEach((a) => {
+    const list = matrizPorFila.get(a.fila) || [];
     list.push(a);
-    asientosPorFila.set(a.fila, list);
+    matrizPorFila.set(a.fila, list);
   });
-
-  const butacasMantenimientoCount = salaActual.asientos.filter((a) => a.en_mantenimiento).length;
 
   return (
     <div className="space-y-6">
+      {/* Header Superior */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl md:text-2xl font-bold text-white">Gestión de Salas y Butacas</h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Supervisión de aforo, formatos admitidos y control de butacas en mantenimiento
+            Configura la matriz de butacas, pasillos, formatos admitidos y estado operativo de cada sala
           </p>
         </div>
 
         <button
           type="button"
           onClick={onAbrirCrearSala}
-          className="px-4 py-2 bg-brand-yellow hover:bg-yellow-400 text-dark-950 font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5 shadow-sm self-start sm:self-auto"
+          className="px-4 py-2.5 bg-brand-yellow hover:bg-yellow-400 text-dark-950 font-bold rounded-xl text-xs transition-all flex items-center gap-1.5 shadow-md shadow-yellow-500/10 self-start sm:self-auto"
         >
           <i className="fa-solid fa-plus text-[11px]"></i>
           <span>Nueva Sala</span>
@@ -171,127 +359,356 @@ export default function SalasTab({
         </div>
       )}
 
-      {/* Pestañas de Salas de la Sede */}
+      {/* Selector Horizontal de Salas (Scroll horizontal) */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {salas.map((s, idx) => (
-          <button
-            key={s.id_sala}
-            type="button"
-            onClick={() => setSalaIndex(idx)}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border flex items-center gap-2 ${
-              salaIndex === idx
-                ? "bg-brand-blue text-white border-brand-blue font-bold shadow-lg shadow-sky-500/15"
-                : "bg-dark-900 border-white/10 text-slate-400 hover:text-white hover:bg-white/5"
-            }`}
-          >
-            <i className="fa-solid fa-door-open text-[11px]"></i>
-            <span>{s.nombre_sala}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Panel de Control de la Sala Actual */}
-      <div className="bg-dark-900 border border-white/10 rounded-2xl p-5 shadow-xl space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/10">
-          <div>
-            <div className="flex items-center gap-3">
-              <h3 className="text-xl font-bold text-white">{salaActual.nombre_sala}</h3>
+        {salas.map((s, idx) => {
+          const seleccionada = salaIndex === idx;
+          return (
+            <button
+              key={s.id_sala}
+              type="button"
+              onClick={() => {
+                setSalaIndex(idx);
+                sincronizarSalaActual(s);
+              }}
+              className={`px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border flex items-center gap-2.5 ${
+                seleccionada
+                  ? "bg-brand-blue text-white border-brand-blue font-bold shadow-lg shadow-sky-500/20"
+                  : "bg-[#0D1627] border-white/10 text-slate-400 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              <i className="fa-solid fa-door-open text-[11px]"></i>
+              <span>{s.nombre_sala}</span>
               <span
-                className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                  salaActual.estado === "ACTIVA"
-                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                    : "bg-amber-500/10 text-brand-yellow border border-amber-500/20"
+                className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+                  s.estado === "ACTIVA"
+                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                    : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
                 }`}
               >
-                {salaActual.estado === "ACTIVA" ? "Sala Activa" : "En Mantenimiento"}
+                {s.estado === "ACTIVA" ? "Activa" : "Mant."}
               </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Contenedor Principal de la Sala Seleccionada */}
+      <div className="bg-[#0D1627] border border-white/15 rounded-2xl p-5 md:p-6 shadow-2xl space-y-6">
+        {/* Barra Superior de la Sala: Estado, Formatos y Butacas */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-5 border-b border-white/10">
+          <div>
+            <div className="flex items-center gap-3">
+              <h3 className="text-xl font-extrabold text-white">{salaActual.nombre_sala}</h3>
+              {/* Badge Butacas */}
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs">
+                <span className="text-slate-400">Butacas:</span>
+                <span className="font-bold text-white">
+                  {butacasMantenimientoCount} / {capacidadCalculada}
+                </span>
+                {butacasMantenimientoCount > 0 && (
+                  <span className="text-[10px] text-amber-400 font-semibold">({butacasMantenimientoCount} mant.)</span>
+                )}
+              </div>
             </div>
-            <p className="text-xs text-slate-400 mt-1">
-              Capacidad: <b>{salaActual.capacidad_total} butacas</b> ({salaActual.filas} filas × {salaActual.columnas} columnas) · {butacasMantenimientoCount} butacas bloqueadas
+
+            {/* Chips de Formatos Admitidos */}
+            <div className="mt-3 flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">
+                Formatos:
+              </span>
+              {(formatosGlobales.length > 0
+                ? formatosGlobales
+                : [
+                    { id_formato: "1", nombre: "2D" },
+                    { id_formato: "2", nombre: "3D" },
+                    { id_formato: "3", nombre: "4DX" },
+                    { id_formato: "4", nombre: "XD" },
+                    { id_formato: "5", nombre: "VIP" },
+                    { id_formato: "6", nombre: "D-BOX" },
+                    { id_formato: "7", nombre: "IMAX" },
+                  ]
+              ).map((fmt) => {
+                const idStr = String(fmt.id_formato);
+                const activo = formatosSeleccionados.includes(idStr);
+                return (
+                  <button
+                    key={idStr}
+                    type="button"
+                    onClick={() => alternarFormato(idStr)}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all border ${
+                      activo
+                        ? "bg-brand-blue/20 text-brand-blue border-brand-blue/50 shadow-sm shadow-sky-500/20"
+                        : "bg-white/5 text-slate-400 border-white/10 hover:text-white hover:bg-white/10"
+                    }`}
+                  >
+                    {fmt.nombre}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Selector de Estado Operativo y Botón Eliminar */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-1.5">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2">
+                Estado Operativo:
+              </span>
+              <button
+                type="button"
+                onClick={() => setEstadoOperativo("ACTIVA")}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                  estadoOperativo === "ACTIVA"
+                    ? "bg-emerald-500 text-dark-950 font-extrabold shadow-sm"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                Activa
+              </button>
+              <button
+                type="button"
+                onClick={() => setEstadoOperativo("MANTENIMIENTO")}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                  estadoOperativo === "MANTENIMIENTO"
+                    ? "bg-amber-500 text-dark-950 font-extrabold shadow-sm"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                Mantenimiento
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setEliminarSalaPendiente(salaActual)}
+              className="px-3 py-2 rounded-xl text-xs font-semibold text-brand-red hover:bg-red-500/10 border border-brand-red/30 transition-colors flex items-center gap-1.5"
+              title="Eliminar Sala"
+            >
+              <i className="fa-solid fa-trash-can text-[11px]"></i>
+              <span className="hidden sm:inline">Eliminar</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Selector de Sub-Tabs: Dimensiones y Estructura vs Estado de Butacas */}
+        <div className="flex items-center gap-3 border-b border-white/10 pb-3">
+          <button
+            type="button"
+            onClick={() => setSubtab("dimensiones")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${
+              subtab === "dimensiones"
+                ? "bg-white/15 text-white border-white/30 shadow-md"
+                : "bg-transparent text-slate-400 border-transparent hover:text-white hover:bg-white/5"
+            }`}
+          >
+            <i className="fa-solid fa-table-cells text-brand-yellow"></i>
+            <span>Dimensiones y Estructura</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setSubtab("estados")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${
+              subtab === "estados"
+                ? "bg-white/15 text-white border-white/30 shadow-md"
+                : "bg-transparent text-slate-400 border-transparent hover:text-white hover:bg-white/5"
+            }`}
+          >
+            <i className="fa-solid fa-couch text-sky-400"></i>
+            <span>Estado de Butacas</span>
+          </button>
+        </div>
+
+        {/* Controles de Sub-Tab 1: Dimensiones y Estructura */}
+        {subtab === "dimensiones" && (
+          <div className="bg-white/5 p-4 rounded-xl border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-slate-300 font-semibold">Filas:</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="26"
+                  value={filasInput}
+                  onChange={(e) => setFilasInput(parseInt(e.target.value) || 1)}
+                  className="w-16 bg-[#070d18] border border-white/20 rounded-lg px-2.5 py-1 text-xs text-white text-center font-bold focus:outline-none focus:border-brand-yellow"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-slate-300 font-semibold">Columnas:</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="30"
+                  value={columnasInput}
+                  onChange={(e) => setColumnasInput(parseInt(e.target.value) || 1)}
+                  className="w-16 bg-[#070d18] border border-white/20 rounded-lg px-2.5 py-1 text-xs text-white text-center font-bold focus:outline-none focus:border-brand-yellow"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={generarCuadriculaBase}
+                className="px-3.5 py-1.5 bg-brand-yellow hover:bg-yellow-400 text-dark-950 font-bold rounded-lg text-xs transition-colors flex items-center gap-1.5 shadow-sm"
+              >
+                <i className="fa-solid fa-rotate text-[11px]"></i>
+                <span>Generar Cuadrícula Base</span>
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-400 flex items-center gap-1.5">
+              <i className="fa-solid fa-circle-info text-sky-400"></i>
+              <span>Haz clic en el número de columna o en una butaca para convertir la columna en <b>pasillo</b>.</span>
             </p>
           </div>
+        )}
 
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              disabled={cargandoAccion}
-              onClick={solicitarAlternarEstadoSala}
-              className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-dark-800 hover:bg-dark-700 text-white border border-white/10 transition-colors flex items-center gap-1.5"
-            >
-              <i className="fa-solid fa-power-off text-brand-yellow text-[10px]"></i>
-              <span>{salaActual.estado === "ACTIVA" ? "Pausar Sala" : "Activar Sala"}</span>
-            </button>
+        {/* Controles de Sub-Tab 2: Estado de Butacas */}
+        {subtab === "estados" && (
+          <div className="bg-white/5 p-4 rounded-xl border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs">
+            <div className="flex items-center gap-2 text-slate-300">
+              <i className="fa-solid fa-hand-pointer text-brand-yellow"></i>
+              <span>Haz clic en cada butaca para alternar: <b>Disponible</b> → <b>Mantenimiento</b> → <b>Accesible</b>.</span>
+            </div>
 
-            <button
-              type="button"
-              disabled={cargandoAccion}
-              onClick={() => setEliminarSalaPendiente(salaActual)}
-              className="px-3 py-1.5 rounded-xl text-xs font-semibold text-brand-red hover:bg-red-500/10 border border-brand-red/30 transition-colors flex items-center gap-1.5"
-            >
-              <i className="fa-solid fa-trash-can text-[10px]"></i>
-              <span>Eliminar Sala</span>
-            </button>
+            {/* Leyenda de Estados */}
+            <div className="flex flex-wrap items-center gap-4">
+              <span className="flex items-center gap-1.5 text-slate-300">
+                <span className="w-3.5 h-3.5 rounded bg-emerald-500/20 border border-emerald-400 inline-block"></span>
+                <span>Disponible ({capacidadCalculada - butacasMantenimientoCount - butacasAccesiblesCount})</span>
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-300">
+                <span className="w-3.5 h-3.5 rounded bg-rose-500/20 border border-rose-400 inline-block"></span>
+                <span>Mantenimiento ({butacasMantenimientoCount})</span>
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-300">
+                <span className="w-3.5 h-3.5 rounded bg-brand-blue/20 border border-brand-blue inline-block"></span>
+                <span>Accesible ({butacasAccesiblesCount})</span>
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-400">
+                <span className="w-3.5 h-3.5 rounded border border-dashed border-white/20 inline-block"></span>
+                <span>Pasillo</span>
+              </span>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Guía Visual y Leyenda */}
-        <div className="flex flex-wrap items-center justify-between gap-4 text-xs bg-dark-800/60 p-3 rounded-xl border border-white/5">
-          <span className="text-slate-400">
-            <i className="fa-solid fa-hand-pointer text-brand-yellow mr-1.5"></i>
-            Haz clic en una butaca para alternar su estado entre <b>Disponible</b> o <b>Mantenimiento</b>.
-          </span>
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5 text-slate-300">
-              <span className="w-3.5 h-3.5 rounded bg-brand-blue border border-sky-400 inline-block"></span>
-              <span>Disponible</span>
-            </span>
-            <span className="flex items-center gap-1.5 text-slate-300">
-              <span className="w-3.5 h-3.5 rounded bg-amber-500/20 border border-brand-yellow inline-block"></span>
-              <span>Mantenimiento</span>
+        {/* Representación Visual: Pantalla Curvada y Matriz */}
+        <div className="max-w-4xl mx-auto pt-2">
+          {/* Pantalla Curvada Brillante */}
+          <div className="relative mb-8 text-center">
+            <div className="w-3/4 mx-auto h-3 bg-gradient-to-r from-transparent via-cyan-400 to-transparent rounded-full shadow-[0_0_20px_rgba(6,182,212,0.6)]"></div>
+            <div className="w-full mx-auto h-1 bg-gradient-to-r from-transparent via-sky-300/40 to-transparent rounded-full -mt-1 blur-sm"></div>
+            <span className="block text-[11px] uppercase font-extrabold tracking-[0.25em] text-slate-400 mt-2">
+              P A N T A L L A
             </span>
           </div>
-        </div>
 
-        {/* Pantalla del Cine */}
-        <div className="max-w-2xl mx-auto pt-2">
-          <div className="w-full h-2.5 bg-gradient-to-r from-transparent via-brand-blue to-transparent rounded-full shadow-[0_0_15px_rgba(14,165,233,0.5)] mb-2"></div>
-          <span className="block text-center text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-8">
-            Pantalla de Proyección
-          </span>
+          {/* Selector de Pasillos por columna en Subtab Dimensiones */}
+          {subtab === "dimensiones" && (
+            <div className="overflow-x-auto pb-2 flex justify-center">
+              <div className="inline-flex items-center gap-2 min-w-max mb-1 pl-6 pr-6">
+                {Array.from({ length: columnasInput }).map((_, cIdx) => {
+                  const colNum = cIdx + 1;
+                  const esPasillo = pasillosLocales.includes(colNum);
+                  return (
+                    <button
+                      key={colNum}
+                      type="button"
+                      onClick={() => alternarColumnaPasillo(colNum)}
+                      title={`Columna ${colNum}: ${esPasillo ? "Pasillo (Clic para restaurar)" : "Butacas (Clic para hacer pasillo)"}`}
+                      className={`w-7 h-5 rounded text-[9px] font-bold font-mono transition-all flex items-center justify-center border ${
+                        esPasillo
+                          ? "bg-amber-500/20 text-amber-300 border-dashed border-amber-400/50"
+                          : "bg-white/5 text-slate-400 border-white/10 hover:border-brand-yellow hover:text-white"
+                      }`}
+                    >
+                      {esPasillo ? "PAS" : colNum}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Matriz interactiva de butacas */}
-          <div className="overflow-x-auto pb-4 flex justify-center">
+          <div className="overflow-x-auto pb-6 pt-2 flex justify-center">
             <div className="inline-flex flex-col gap-2 min-w-max">
-              {Array.from(asientosPorFila.entries()).map(([fila, listaAsientos]) => (
+              {Array.from(matrizPorFila.entries()).map(([fila, listaAsientos]) => (
                 <div key={fila} className="flex items-center gap-2">
-                  <span className="w-5 text-xs font-bold text-slate-500 font-mono text-center">
+                  {/* Letra izquierda */}
+                  <span className="w-6 text-xs font-bold text-slate-400 font-mono text-center select-none">
                     {fila}
                   </span>
-                  <div className="flex items-center gap-1.5">
+
+                  <div className="flex items-center gap-2">
                     {listaAsientos.map((asiento) => {
+                      const esPasillo = pasillosLocales.includes(asiento.columna);
                       const esMantenimiento = asiento.en_mantenimiento;
-                      const esPasillo = (salaActual.pasillos || []).includes(asiento.columna);
+                      const esAccesible =
+                        asiento.tipo_asiento.toLowerCase() === "discapacitado" ||
+                        asiento.tipo_asiento.toLowerCase() === "accesible";
+
+                      if (esPasillo) {
+                        return (
+                          <div
+                            key={`${asiento.fila}-${asiento.columna}`}
+                            onClick={() => {
+                              if (subtab === "dimensiones") {
+                                alternarColumnaPasillo(asiento.columna);
+                              }
+                            }}
+                            title={`Pasillo (Columna ${asiento.columna})`}
+                            className={`w-7 h-7 rounded border border-dashed border-white/15 bg-transparent flex items-center justify-center text-slate-600 text-[10px] ${
+                              subtab === "dimensiones" ? "cursor-pointer hover:border-brand-yellow/50" : "select-none opacity-40"
+                            }`}
+                          >
+                            <i className="fa-solid fa-shoe-prints text-[9px] opacity-40"></i>
+                          </div>
+                        );
+                      }
+
+                      // Estilos según subtab y estado
+                      let claseColor = "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30";
+                      let iconoInterno: React.ReactNode = asiento.columna;
+
+                      if (esMantenimiento) {
+                        claseColor = "bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30";
+                        iconoInterno = <i className="fa-solid fa-wrench text-[9px]"></i>;
+                      } else if (esAccesible) {
+                        claseColor = "bg-brand-blue/20 text-brand-blue border border-brand-blue/50 hover:bg-brand-blue/30";
+                        iconoInterno = <i className="fa-solid fa-wheelchair text-[10px]"></i>;
+                      }
 
                       return (
                         <button
-                          key={asiento.id_asiento}
+                          key={`${asiento.fila}-${asiento.columna}`}
                           type="button"
-                          onClick={() => setAsientoMantenimientoPendiente(asiento)}
-                          title={`Butaca ${asiento.fila}${asiento.columna} - ${esMantenimiento ? "En Mantenimiento" : "Disponible"}`}
-                          className={`w-7 h-7 rounded text-[10px] font-bold font-mono transition-all flex items-center justify-center ${
-                            esPasillo ? "mr-4" : ""
-                          } ${
+                          onClick={() => {
+                            if (subtab === "dimensiones") {
+                              alternarColumnaPasillo(asiento.columna);
+                            } else {
+                              ciclarEstadoButaca(asiento.fila, asiento.columna);
+                            }
+                          }}
+                          title={`Butaca ${asiento.fila}${asiento.columna} - ${
                             esMantenimiento
-                              ? "bg-amber-500/20 text-brand-yellow border border-brand-yellow hover:bg-amber-500/30"
-                              : "bg-dark-800 text-slate-300 border border-white/10 hover:border-brand-blue hover:text-white hover:bg-brand-blue/20"
+                              ? "En Mantenimiento"
+                              : esAccesible
+                              ? "Asiento Accesible"
+                              : "Disponible"
                           }`}
+                          className={`w-7 h-7 rounded text-[10px] font-bold font-mono transition-all flex items-center justify-center ${claseColor} active:scale-95`}
                         >
-                          {asiento.columna}
+                          {iconoInterno}
                         </button>
                       );
                     })}
                   </div>
-                  <span className="w-5 text-xs font-bold text-slate-500 font-mono text-center">
+
+                  {/* Letra derecha */}
+                  <span className="w-6 text-xs font-bold text-slate-400 font-mono text-center select-none">
                     {fila}
                   </span>
                 </div>
@@ -299,65 +716,76 @@ export default function SalasTab({
             </div>
           </div>
         </div>
+
+        {/* Botones Inferiores: Restablecer y Guardar Cambios */}
+        <div className="pt-5 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-xs text-slate-400">
+            <span>Aforo activo: </span>
+            <b className="text-white">{capacidadCalculada - butacasMantenimientoCount}</b>
+            <span> de </span>
+            <b className="text-white">{capacidadCalculada} butacas</b>
+          </div>
+
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <button
+              type="button"
+              disabled={cargandoAccion}
+              onClick={() => setMostrarConfirmacionRestablecer(true)}
+              className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition-colors flex items-center justify-center gap-2"
+            >
+              <i className="fa-solid fa-rotate-left text-[11px]"></i>
+              <span>Restablecer</span>
+            </button>
+
+            <button
+              type="button"
+              disabled={cargandoAccion}
+              onClick={() => setMostrarConfirmacionGuardar(true)}
+              className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl text-xs font-bold bg-brand-yellow hover:bg-yellow-400 text-dark-950 transition-colors flex items-center justify-center gap-2 shadow-md shadow-yellow-500/10"
+            >
+              <i className="fa-solid fa-floppy-disk text-[11px]"></i>
+              <span>Guardar Cambios</span>
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Modal de confirmación para alternar estado de butaca */}
+      {/* Modal de confirmación para Guardar Cambios */}
       <ModalConfirmacion
-        abierto={!!asientoMantenimientoPendiente}
-        titulo={
-          asientoMantenimientoPendiente?.en_mantenimiento
-            ? "¿Habilitar Butaca?"
-            : "¿Poner Butaca en Mantenimiento?"
-        }
-        mensaje={
-          asientoMantenimientoPendiente?.en_mantenimiento
-            ? `La butaca ${asientoMantenimientoPendiente?.fila}${asientoMantenimientoPendiente?.columna} volverá a estar disponible para la venta en todas las funciones futuras.`
-            : `La butaca ${asientoMantenimientoPendiente?.fila}${asientoMantenimientoPendiente?.columna} se marcará en mantenimiento y no podrá ser comprada por ningún cliente ni counter.`
-        }
-        tipo={asientoMantenimientoPendiente?.en_mantenimiento ? "info" : "advertencia"}
-        textoConfirmar="Confirmar"
+        abierto={mostrarConfirmacionGuardar}
+        titulo="¿Guardar Cambios en la Sala?"
+        mensaje={`Se actualizarán las dimensiones (${filasInput} filas × ${columnasInput} columnas), formatos admitidos (${formatosSeleccionados.length} seleccionados), estado operativo (${estadoOperativo}) y el aforo (${capacidadCalculada} butacas totales, ${butacasMantenimientoCount} en mantenimiento) de '${salaActual.nombre_sala}'.`}
+        tipo="info"
+        textoConfirmar="Sí, Guardar Cambios"
         textoCancelar="Cancelar"
         cargando={cargandoAccion}
-        onConfirmar={confirmarAlternarMantenimiento}
-        onCancelar={() => setAsientoMantenimientoPendiente(null)}
+        onConfirmar={ejecutarGuardarCambios}
+        onCancelar={() => setMostrarConfirmacionGuardar(false)}
       />
 
-      {/* Modal de confirmación para eliminar sala */}
+      {/* Modal de confirmación para Restablecer */}
+      <ModalConfirmacion
+        abierto={mostrarConfirmacionRestablecer}
+        titulo="¿Revertir Cambios sin Guardar?"
+        mensaje="Se descartarán las modificaciones realizadas en la cuadrícula, pasillos y estados de las butacas, volviendo a los datos guardados en el servidor."
+        tipo="advertencia"
+        textoConfirmar="Sí, Revertir"
+        textoCancelar="Cancelar"
+        onConfirmar={confirmarRestablecer}
+        onCancelar={() => setMostrarConfirmacionRestablecer(false)}
+      />
+
+      {/* Modal de confirmación para Eliminar Sala */}
       <ModalConfirmacion
         abierto={!!eliminarSalaPendiente}
         titulo="¿Eliminar Esta Sala?"
-        mensaje={`Se eliminará permanentemente la '${eliminarSalaPendiente?.nombre_sala}' y toda su distribución de butacas. El sistema validará que no tenga funciones activas programadas.`}
+        mensaje={`Se eliminará permanentemente '${eliminarSalaPendiente?.nombre_sala}' y toda su distribución de butacas. El sistema validará que no tenga funciones activas programadas.`}
         tipo="peligro"
         textoConfirmar="Sí, Eliminar Sala"
         textoCancelar="Cancelar"
         cargando={cargandoAccion}
         onConfirmar={confirmarEliminarSala}
         onCancelar={() => setEliminarSalaPendiente(null)}
-      />
-
-      {/* Modal de confirmación para pausar o activar sala */}
-      <ModalConfirmacion
-        abierto={!!salaEstadoPendiente}
-        titulo={
-          salaEstadoPendiente?.nuevoEstado === "MANTENIMIENTO"
-            ? "¿Pausar Operaciones en esta Sala?"
-            : "¿Activar Sala para Funciones?"
-        }
-        mensaje={
-          salaEstadoPendiente?.nuevoEstado === "MANTENIMIENTO"
-            ? `La '${salaEstadoPendiente?.sala.nombre_sala}' se pondrá en MANTENIMIENTO. No se podrán programar nuevas proyecciones en esta sala hasta que sea reactivada.`
-            : `La '${salaEstadoPendiente?.sala.nombre_sala}' pasará al estado ACTIVA y estará disponible para programar cartelera y proyecciones.`
-        }
-        tipo={salaEstadoPendiente?.nuevoEstado === "MANTENIMIENTO" ? "advertencia" : "info"}
-        textoConfirmar={
-          salaEstadoPendiente?.nuevoEstado === "MANTENIMIENTO"
-            ? "Sí, Pausar Sala"
-            : "Sí, Activar Sala"
-        }
-        textoCancelar="Cancelar"
-        cargando={cargandoAccion}
-        onConfirmar={confirmarAlternarEstadoSala}
-        onCancelar={() => setSalaEstadoPendiente(null)}
       />
     </div>
   );

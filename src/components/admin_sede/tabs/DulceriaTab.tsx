@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { AdminSedeDao } from "@/src/daos/AdminSedeDao";
 import type { ProductoDulceriaSedeDTO } from "@/src/dtos/adminSede";
 import ModalConfirmacion from "../comun/ModalConfirmacion";
+import { obtenerIconoProducto } from "@/src/components/counter/dulceria/DulceriaView";
 
 interface DulceriaTabProps {
   idSede: number;
@@ -106,58 +107,57 @@ export default function DulceriaTab({
       {/* Grilla de Productos */}
       {cargando ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-pulse">
-          <div className="h-64 bg-dark-900 rounded-2xl"></div>
-          <div className="h-64 bg-dark-900 rounded-2xl"></div>
-          <div className="h-64 bg-dark-900 rounded-2xl"></div>
-          <div className="h-64 bg-dark-900 rounded-2xl"></div>
+          <div className="h-64 bg-[#0D1627] border border-white/10 rounded-2xl"></div>
+          <div className="h-64 bg-[#0D1627] border border-white/10 rounded-2xl"></div>
+          <div className="h-64 bg-[#0D1627] border border-white/10 rounded-2xl"></div>
+          <div className="h-64 bg-[#0D1627] border border-white/10 rounded-2xl"></div>
         </div>
       ) : productosFiltrados.length === 0 ? (
-        <div className="bg-dark-900 border border-white/10 rounded-2xl p-10 text-center">
-          <i className="fa-solid fa-bowl-food text-3xl text-slate-600 mb-2"></i>
-          <p className="text-slate-400 text-sm">No se encontraron productos en esta categoría.</p>
+        <div className="bg-[#0D1627] border border-white/10 rounded-2xl p-10 text-center">
+          <i className="fa-solid fa-bowl-food text-4xl text-slate-600 mb-3"></i>
+          <p className="text-slate-300 font-medium text-sm">No se encontraron productos en esta categoría.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {productosFiltrados.map((prod) => {
             const tienePrecioPersonalizado = Math.abs(prod.precio_local - prod.precio_base) > 0.01;
+            const estiloIcono = obtenerIconoProducto(prod.nombre, prod.categoria_nombre);
 
             return (
               <div
                 key={prod.id_producto}
-                className={`bg-dark-900 border rounded-2xl p-4 shadow-xl flex flex-col justify-between transition-all ${
-                  prod.habilitado ? "border-white/10 hover:border-white/20" : "border-white/5 opacity-60 bg-dark-950/40"
+                className={`bg-[#0D1627] border rounded-2xl p-4 shadow-xl flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 ${
+                  prod.habilitado ? "border-white/15 hover:border-brand-yellow/40 hover:shadow-yellow-500/5" : "border-white/5 opacity-60 bg-[#070d18]"
                 }`}
               >
                 <div>
                   {/* Badge de visibilidad y Categoría */}
                   <div className="flex items-center justify-between gap-2 mb-3">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-dark-800 border border-white/10 px-2 py-0.5 rounded">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300 bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-full">
                       {prod.categoria_nombre}
                     </span>
                     <button
                       type="button"
                       onClick={() => setProductoAlternar(prod)}
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1.5 transition-colors ${
+                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1.5 transition-colors ${
                         prod.habilitado
-                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20"
+                          ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25"
                           : "bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10"
                       }`}
                     >
-                      <span className={`w-1.5 h-1.5 rounded-full ${prod.habilitado ? "bg-emerald-400" : "bg-slate-500"}`}></span>
+                      <span className={`w-1.5 h-1.5 rounded-full ${prod.habilitado ? "bg-emerald-400 animate-pulse" : "bg-slate-500"}`}></span>
                       <span>{prod.habilitado ? "Visible" : "Oculto"}</span>
                     </button>
                   </div>
 
-                  {/* Imagen */}
-                  <div className="h-32 flex items-center justify-center p-2 mb-3 bg-dark-800/40 rounded-xl">
-                    <img
-                      src={prod.url_imagen}
-                      alt={prod.nombre}
-                      className="max-h-full max-w-full object-contain drop-shadow-md"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "/img/dulceria/combo1.png";
-                      }}
-                    />
+                  {/* Icono Temático en vez de imagen rota */}
+                  <div
+                    className={`h-32 flex flex-col items-center justify-center p-3 mb-3.5 rounded-xl border bg-gradient-to-br ${estiloIcono.bgGradiente}`}
+                  >
+                    <i className={`${estiloIcono.icono} text-4xl ${estiloIcono.colorIcono} drop-shadow-md mb-1`}></i>
+                    <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                      {prod.categoria_nombre}
+                    </span>
                   </div>
 
                   {/* Nombre y Descripción */}
@@ -169,12 +169,12 @@ export default function DulceriaTab({
                   </p>
                 </div>
 
-                <div className="pt-3 border-t border-white/5">
+                <div className="pt-3 border-t border-white/10">
                   {/* Precios: Base vs Local */}
                   <div className="flex items-baseline justify-between mb-3">
                     <div>
-                      <span className="text-[10px] text-slate-400 block">Precio en Sede</span>
-                      <span className="text-base font-bold text-brand-yellow font-mono">
+                      <span className="text-[10px] text-slate-400 block font-medium">Precio en Sede</span>
+                      <span className="text-base font-extrabold text-brand-yellow font-mono tracking-tight">
                         S/ {prod.precio_local.toFixed(2)}
                       </span>
                     </div>
@@ -192,9 +192,9 @@ export default function DulceriaTab({
                   <button
                     type="button"
                     onClick={() => onEditarProducto(prod)}
-                    className="w-full py-2 bg-dark-800 hover:bg-dark-700 text-white font-semibold rounded-xl text-xs transition-colors border border-white/10 flex items-center justify-center gap-1.5 shadow-sm"
+                    className="w-full py-2 bg-white/5 hover:bg-white/10 text-white font-semibold rounded-xl text-xs transition-colors border border-white/15 flex items-center justify-center gap-2 shadow-sm"
                   >
-                    <i className="fa-solid fa-sliders text-brand-blue text-[10px]"></i>
+                    <i className="fa-solid fa-sliders text-brand-yellow text-xs"></i>
                     <span>Configurar Producto</span>
                   </button>
                 </div>

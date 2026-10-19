@@ -17,6 +17,8 @@ import type {
   SocioConsultaSedeDTO,
   PersonalSedeDTO,
   NuevoPersonalPayload,
+  EditarPersonalPayload,
+  VentaPersonalDTO,
 } from "@/src/dtos/adminSede";
 
 function getFechaLocalHoy(): string {
@@ -1200,6 +1202,9 @@ export class AdminSedeDao {
           telefono,
           id_rol,
           activo,
+          nota,
+          fecha_registro,
+          id_usuario_creador,
           rol:id_rol (
             id_rol,
             codigo,
@@ -1255,6 +1260,9 @@ export class AdminSedeDao {
         asignado_en: item.asignado_en || new Date().toISOString(),
         total_ordenes_mes: ventas.count,
         total_recaudado_mes: Number(ventas.total.toFixed(2)),
+        nota: u?.nota || "",
+        fecha_ingreso: u?.fecha_registro || item.asignado_en || new Date().toISOString(),
+        creado_por: u?.id_usuario_creador || undefined,
       };
     });
   }
@@ -1339,5 +1347,150 @@ export class AdminSedeDao {
       .eq("id_usuario", idUsuario);
 
     return !err1 && !err2;
+  }
+
+  /**
+   * 24. Obtiene todos los formatos de proyección del sistema.
+   */
+  static async obtenerFormatosGlobales(): Promise<{ id_formato: string; codigo: string; nombre: string }[]> {
+    const { data, error } = await supabase
+      .from("formato_proyeccion")
+      .select("id_formato, codigo, nombre")
+      .order("nombre");
+
+    if (error || !data) return [];
+    return data;
+  }
+
+  /**
+   * 25. Actualiza los formatos admitidos para una sala.
+   */
+  static async actualizarFormatosSala(idSala: string, formatosIds: string[]): Promise<boolean> {
+    await supabase.from("sala_formato").delete().eq("id_sala", idSala);
+    if (formatosIds.length === 0) return true;
+
+    const inserts = formatosIds.map((id_formato) => ({ id_sala: idSala, id_formato }));
+    const { error } = await supabase.from("sala_formato").insert(inserts);
+    return !error;
+  }
+
+  /**
+   * 26. Guarda la cuadrícula de dimensiones, pasillos y estado de butacas de una sala.
+   */
+  static async guardarEstructuraYAsientosSala(
+    idSala: string,
+    filas: number,
+    columnas: number,
+    pasillos: number[],
+    asientos: { fila: string; columna: number; tipo_asiento: string; en_mantenimiento: boolean }[]
+  ): Promise<{ exito: boolean; mensaje: string }> {
+    const capacidad = asientos.filter((a) => !pasillos.includes(a.columna)).length || filas * columnas;
+
+    // 1. Actualizar sala
+    const { error: errSala } = await supabase
+      .from("sala")
+      .update({
+        filas,
+        columnas,
+        capacidad_total: capacidad,
+        pasillos,
+        actualizado_en: new Date().toISOString(),
+      } as any)
+      .eq("id_sala", idSala);
+
+    if (errSala) {
+      return { exito: false, mensaje: `Error al actualizar la sala: ${errSala.message}` };
+    }
+
+    // 2. Sincronizar asientos de la sala
+    await supabase.from("asiento").delete().eq("id_sala", idSala);
+
+    if (asientos.length > 0) {
+      const rowsToInsert = asientos.map((a) => ({
+        id_asiento: crypto.randomUUID(),
+        id_sala: idSala,
+        fila: a.fila,
+        columna: a.columna,
+        tipo_asiento: a.tipo_asiento.toLowerCase() === "accesible" ? "accesible" : "estandar",
+        en_mantenimiento: a.en_mantenimiento,
+      }));
+
+      const batchSize = 100;
+      for (let i = 0; i < rowsToInsert.length; i += batchSize) {
+        const batch = rowsToInsert.slice(i, i + batchSize);
+        const { error: errAsientos } = await supabase.from("asiento").insert(batch);
+        if (errAsientos) {
+          console.error("Error al insertar asientos:", errAsientos);
+        }
+      }
+    }
+
+    return { exito: true, mensaje: "Estructura y distribución de butacas guardadas exitosamente." };
+  }
+
+  /**
+   * 27. Obtiene el historial de ventas recientes de un colaborador en counter.
+   */
+  static async obtenerHistorialVentasPersonal(idUsuario: string): Promise<VentaPersonalDTO[]> {
+    const { data, error } = await supabase
+      .from("orden")
+      .select("id_orden, codigo_orden, total, estado, creado_en, canal, detalle_entrada(id_detalle_entrada)")
+      .eq("id_vendedor", idUsuario)
+      .order("creado_en", { ascending: false })
+      .limit(15);
+
+    if (error || !data) {
+      return [];
+    }
+
+    return data.map((o: any) => ({
+      id_orden: o.id_orden,
+      codigo_orden: o.codigo_orden || o.id_orden.substring(0, 8).toUpperCase(),
+      total: Number(o.total || 0),
+      creado_en: o.creado_en,
+      estado: o.estado,
+      canal: o.canal || "Counter POS",
+      total_items: (o.detalle_entrada || []).length || 1,
+    }));
+  }
+
+  /**
+   * 28. Actualiza los datos de perfil de un colaborador de la sede.
+   */
+  static async actualizarDatosPersonal(
+    payload: EditarPersonalPayload
+  ): Promise<{ exito: boolean; mensaje: string }> {
+    // 1. Obtener id_rol
+    const { data: rolData, error: errRol } = await supabase
+      .from("rol")
+      .select("id_rol")
+      .eq("codigo", payload.rol_codigo)
+      .maybeSingle();
+
+    if (errRol || !rolData) {
+      return { exito: false, mensaje: "Rol no encontrado en el sistema." };
+    }
+
+    // 2. Actualizar usuario
+    const updateData: any = {
+      nombre: payload.nombre.trim(),
+      apellido: payload.apellido.trim(),
+      correo: payload.correo.trim().toLowerCase(),
+      dni: payload.dni.trim(),
+      telefono: payload.telefono.trim(),
+      nota: payload.nota ? payload.nota.trim() : null,
+      id_rol: rolData.id_rol,
+    };
+
+    const { error: errUser } = await supabase
+      .from("usuario")
+      .update(updateData)
+      .eq("id_usuario", payload.id_usuario);
+
+    if (errUser) {
+      return { exito: false, mensaje: `Error al actualizar perfil: ${errUser.message}` };
+    }
+
+    return { exito: true, mensaje: "Datos del colaborador actualizados exitosamente." };
   }
 }

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { AdminSedeDao } from "@/src/daos/AdminSedeDao";
 import type { ProductoDulceriaSedeDTO } from "@/src/dtos/adminSede";
 import ModalConfirmacion from "../comun/ModalConfirmacion";
+import { obtenerIconoProducto } from "@/src/components/counter/dulceria/DulceriaView";
 
 interface ModalPrecioDulceProps {
   abierto: boolean;
@@ -36,6 +37,8 @@ export default function ModalPrecioDulce({
   }, [producto, abierto]);
 
   if (!abierto || !producto) return null;
+
+  const estiloIcono = obtenerIconoProducto(producto.nombre, producto.categoria_nombre);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,7 +84,7 @@ export default function ModalPrecioDulce({
   return (
     <>
       <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-        <div className="relative w-full max-w-md bg-dark-900 border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl text-white">
+        <div className="relative w-full max-w-md bg-[#0D1627] border border-white/15 rounded-2xl p-6 md:p-8 shadow-2xl text-white">
           <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-brand-yellow/10 border border-brand-yellow/30 flex items-center justify-center text-brand-yellow text-lg">
@@ -101,15 +104,12 @@ export default function ModalPrecioDulce({
             </button>
           </div>
 
-          <div className="flex items-center gap-4 bg-dark-800 border border-white/10 rounded-xl p-3.5 mb-5">
-            <img
-              src={producto.url_imagen}
-              alt={producto.nombre}
-              className="w-14 h-14 object-contain rounded-lg bg-dark-900/50 p-1 flex-shrink-0"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = "/img/dulceria/combo1.png";
-              }}
-            />
+          <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-xl p-3.5 mb-5">
+            <div
+              className={`w-14 h-14 rounded-lg flex items-center justify-center border bg-gradient-to-br ${estiloIcono.bgGradiente} flex-shrink-0`}
+            >
+              <i className={`${estiloIcono.icono} text-2xl ${estiloIcono.colorIcono}`}></i>
+            </div>
             <div className="min-w-0">
               <h4 className="font-bold text-white text-sm truncate">{producto.nombre}</h4>
               <p className="text-xs text-slate-400">{producto.categoria_nombre}</p>

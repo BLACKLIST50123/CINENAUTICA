@@ -204,6 +204,9 @@ export interface PersonalSedeDTO {
   asignado_en: string;
   total_ordenes_mes: number;
   total_recaudado_mes: number;
+  nota?: string;
+  fecha_ingreso?: string;
+  creado_por?: string;
 }
 
 export interface NuevoPersonalPayload {
@@ -213,6 +216,31 @@ export interface NuevoPersonalPayload {
   correo: string;
   dni: string;
   telefono: string;
-  rol_codigo: 'counter_boleteria' | 'counter_dulceria' | 'counter_mixto';
+  rol_codigo: 'counter_boleteria' | 'counter_dulceria' | 'counter_mixto' | 'admin_sede';
+  nota?: string;
+  contrasena?: string;
   id_usuario_creador?: string;
+}
+
+export interface EditarPersonalPayload {
+  id_usuario: string;
+  nombre: string;
+  apellido: string;
+  correo: string;
+  dni: string;
+  telefono: string;
+  nota?: string;
+  rol_codigo: 'counter_boleteria' | 'counter_dulceria' | 'counter_mixto' | 'admin_sede';
+  contrasena?: string;
+  password?: string;
+}
+
+export interface VentaPersonalDTO {
+  id_orden: string;
+  codigo_orden: string;
+  total: number;
+  creado_en: string;
+  estado: string;
+  canal: string;
+  total_items: number;
 }
