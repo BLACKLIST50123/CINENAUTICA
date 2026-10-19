@@ -27,7 +27,11 @@ export class CounterService {
    * Obtiene las funciones del día para una sede específica con ocupación real de sala
    */
   static async obtenerFuncionesPorSedeYFecha(idSede: number, fechaIso?: string) {
-    const fecha = fechaIso || new Date().toISOString().split("T")[0];
+    let fecha = fechaIso;
+    if (!fecha) {
+      const d = new Date();
+      fecha = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }
 
     const { data, error } = await supabase
       .from("funcion")

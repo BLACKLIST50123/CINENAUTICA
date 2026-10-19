@@ -14,11 +14,12 @@ Memoria del proyecto entre sesiones. Máximo ~50 líneas: resume o elimina lo qu
 - **Fase 9 — Historial de Compras (Órdenes, Invitados, Detalles Expandibles, Tickets): ✅ COMPLETADA** (2026-10-14)
 - **Fase 10 — Vistas Estáticas con Datos Reales (Ubicación, Promociones, Contacto): ✅ COMPLETADA** (2026-10-14)
 - **Fase 11 — Módulo Counter POS (Boletería, Dulcería, Mixto & Hub Admin Sede): ✅ COMPLETADA** (2026-10-15)
+- **Fase 12 — Acceso Corporativo Seguro, Roles Supabase y Hub Admin Sede: ✅ COMPLETADA** (2026-10-18)
 
 ## Suite de Pruebas y Cobertura
 - **45 de 45 pruebas unitarias e integración pasando en verde** (`npx vitest run` en 10 suites de pruebas).
 - **TypeScript 0 errores** (`npx tsc --noEmit`).
-- Todas las rutas activas y operativas en HTTP 200 OK (`/`, `/asientos`, `/dulceria`, `/pago`, `/ticket`, `/socio`, `/historial`, `/promociones`, `/ubicacion`, `/contacto`, `/counter`, `/counter/boleteria`, `/counter/dulceria`, `/counter/mixto`).
+- Todas las rutas activas y operativas en HTTP 200 OK (`/`, `/asientos`, `/dulceria`, `/pago`, `/ticket`, `/socio`, `/historial`, `/promociones`, `/ubicacion`, `/contacto`, `/acceso`, `/counter`, `/counter/boleteria`, `/counter/dulceria`, `/counter/mixto`, `/admin_sede`, `/admin_general`).
 
 ## Archivos clave de Fases 7 a 11
 - `src/services/ticketService.ts`, `socioService.ts`, `historialService.ts`, `counterService.ts` — Servicios de ticket, fidelización, historial y POS Counter

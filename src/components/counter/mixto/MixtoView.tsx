@@ -11,6 +11,7 @@ import CarteleraFuncionesPOS from "../comun/CarteleraFuncionesPOS";
 import ModalElegirTipoEntradaPOS from "../comun/ModalElegirTipoEntradaPOS";
 import { obtenerIconoProducto } from "../dulceria/DulceriaView";
 import { CounterService } from "@/src/services/counterService";
+import { supabase } from "@/src/lib/supabase/cliente";
 import type {
   SocioCounterDTO,
   ItemEntradaCounter,
@@ -50,6 +51,77 @@ export default function MixtoView() {
         );
       }
     }
+  }, []);
+
+  // ── Usuario Autenticado Real ──
+  const [usuarioActivo, setUsuarioActivo] = useState<{
+    idUsuario: string;
+    nombreCompleto: string;
+    rolCodigo: string;
+  }>(() => {
+    if (typeof window !== "undefined") {
+      const storedNombre = localStorage.getItem("cinenautica_usuario_nombre");
+      const storedRol = localStorage.getItem("cinenautica_rol_personal");
+      const storedId = localStorage.getItem("cinenautica_usuario_id");
+      if (storedNombre && storedId) {
+        return {
+          idUsuario: storedId,
+          nombreCompleto: storedNombre,
+          rolCodigo: storedRol || "counter_mixto",
+        };
+      }
+    }
+    return {
+      idUsuario: "",
+      nombreCompleto: "Cajero",
+      rolCodigo: "counter_mixto",
+    };
+  });
+
+  useEffect(() => {
+    async function cargarUsuarioSesion() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const { data: usuarioData } = await supabase
+            .from("usuario")
+            .select("id_usuario, nombre, apellido, correo, rol:id_rol (codigo, nombre_rol)")
+            .eq("id_usuario", session.user.id)
+            .maybeSingle();
+
+          if (usuarioData) {
+            const nombre = `${usuarioData.nombre || ""} ${usuarioData.apellido || ""}`.trim() || usuarioData.correo;
+            const rol = (usuarioData.rol as any)?.codigo || "counter_mixto";
+            setUsuarioActivo({
+              idUsuario: usuarioData.id_usuario,
+              nombreCompleto: nombre,
+              rolCodigo: rol,
+            });
+
+            try {
+              localStorage.setItem("cinenautica_usuario_nombre", nombre);
+              localStorage.setItem("cinenautica_rol_personal", rol);
+              localStorage.setItem("cinenautica_usuario_id", usuarioData.id_usuario);
+            } catch {}
+          }
+
+          // Cargar sede asignada en personal_sede
+          const { data: psData } = await supabase
+            .from("personal_sede")
+            .select("id_sede")
+            .eq("id_usuario", session.user.id)
+            .eq("activo", true)
+            .maybeSingle();
+
+          if (psData?.id_sede) {
+            setIdSede(psData.id_sede);
+          }
+        }
+      } catch (e) {
+        console.warn("No se pudo cargar el perfil de usuario activo en caja mixta:", e);
+      }
+    }
+    cargarUsuarioSesion();
   }, []);
 
   // Socio Activo
@@ -121,33 +193,165 @@ export default function MixtoView() {
   useEffect(() => {
     CounterService.obtenerSedesActivas()
       .then((res) => {
-        if (res && res.length > 0) setSedes(res);
+        if (res && res.length > 0) {
+          setSedes(res);
+          try {
+            const sedeGuardada = localStorage.getItem("cinenautica_sede_personal");
+            if (sedeGuardada && res.some((s) => s.id_sede === Number(sedeGuardada))) {
+              setIdSede(Number(sedeGuardada));
+            }
+          } catch {}
+        }
       })
       .catch((e) => console.warn("Error al cargar sedes:", e));
   }, []);
 
-  // ── 4. Cargar Funciones ──
-  const cargarFuncionesSede = useCallback(async (sedeId: number, dia: "hoy" | "manana") => {
-    setCargandoFunciones(true);
-    try {
-      const hoy = new Date();
-      if (dia === "manana") {
-        hoy.setDate(hoy.getDate() + 1);
+  const cargarFuncionesSede = useCallback(
+    async (sedeId: number, dia: "hoy" | "manana", mostrarSpinner = true) => {
+      if (mostrarSpinner) setCargandoFunciones(true);
+      try {
+        const hoy = new Date();
+        if (dia === "manana") {
+          hoy.setDate(hoy.getDate() + 1);
+        }
+        const yyyy = hoy.getFullYear();
+        const mm = String(hoy.getMonth() + 1).padStart(2, "0");
+        const dd = String(hoy.getDate()).padStart(2, "0");
+        const fechaIso = `${yyyy}-${mm}-${dd}`;
+        const data = await CounterService.obtenerFuncionesPorSedeYFecha(sedeId, fechaIso);
+        setFunciones(data || []);
+      } catch (err) {
+        console.error("Error al cargar funciones en mixto:", err);
+        setFunciones([]);
+      } finally {
+        if (mostrarSpinner) setCargandoFunciones(false);
       }
-      const fechaIso = hoy.toISOString().split("T")[0];
-      const data = await CounterService.obtenerFuncionesPorSedeYFecha(sedeId, fechaIso);
-      setFunciones(data || []);
-    } catch (err) {
-      console.error("Error al cargar funciones:", err);
-      setFunciones([]);
-    } finally {
-      setCargandoFunciones(false);
-    }
-  }, []);
+    },
+    []
+  );
 
+  // Carga inicial y reactiva al volver a cartelera o cambiar filtros/sede
   useEffect(() => {
-    cargarFuncionesSede(idSede, filtroDia);
-  }, [idSede, filtroDia, cargarFuncionesSede]);
+    if (subvista === "cartelera") {
+      cargarFuncionesSede(idSede, filtroDia, funciones.length === 0);
+    }
+  }, [subvista, idSede, filtroDia, cargarFuncionesSede]);
+
+  // ── Suscripción en Tiempo Real para Ocupación de Funciones (Cartelera en Caja Mixta) ──
+  useEffect(() => {
+    let timerDebounce: NodeJS.Timeout | null = null;
+
+    const refrescarFuncionesSilencioso = () => {
+      if (timerDebounce) clearTimeout(timerDebounce);
+      timerDebounce = setTimeout(() => {
+        if (subvista === "cartelera") {
+          cargarFuncionesSede(idSede, filtroDia, false);
+        }
+      }, 300);
+    };
+
+    const canalCartelera = supabase
+      .channel(`realtime_cartelera_mixto_${idSede}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "asiento_funcion",
+        },
+        () => {
+          refrescarFuncionesSilencioso();
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "bloqueo_temporal",
+        },
+        () => {
+          refrescarFuncionesSilencioso();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      if (timerDebounce) clearTimeout(timerDebounce);
+      supabase.removeChannel(canalCartelera);
+    };
+  }, [idSede, filtroDia, subvista, cargarFuncionesSede]);
+
+  // ── Suscripción en Tiempo Real para Matriz de Sala (Concurrencia en Caja Mixta) ──
+  useEffect(() => {
+    if (!funcionSeleccionada?.id_funcion || subvista !== "asientos") return;
+
+    let timerDebounce: NodeJS.Timeout | null = null;
+
+    const canalSala = supabase
+      .channel(`realtime_sala_mixto_${funcionSeleccionada.id_funcion}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "asiento_funcion",
+          filter: `id_funcion=eq.${funcionSeleccionada.id_funcion}`,
+        },
+        () => {
+          if (timerDebounce) clearTimeout(timerDebounce);
+          timerDebounce = setTimeout(async () => {
+            try {
+              const mapa = await CounterService.obtenerMapaAsientos(funcionSeleccionada.id_funcion);
+              setAsientosSala((prev) => {
+                const codigosMios = new Set(entradasSeleccionadas.map((e) => e.codigo_asiento));
+                return (mapa.asientos || []).map((a: any) => {
+                  if (codigosMios.has(a.codigo)) {
+                    return { ...a, estado: "Bloqueado", id_sesion_bloqueo: sesionId };
+                  }
+                  return a;
+                });
+              });
+            } catch (e) {
+              console.warn("Error al sincronizar sala en tiempo real en mixto:", e);
+            }
+          }, 250);
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "bloqueo_temporal",
+        },
+        () => {
+          if (timerDebounce) clearTimeout(timerDebounce);
+          timerDebounce = setTimeout(async () => {
+            try {
+              const mapa = await CounterService.obtenerMapaAsientos(funcionSeleccionada.id_funcion);
+              setAsientosSala((prev) => {
+                const codigosMios = new Set(entradasSeleccionadas.map((e) => e.codigo_asiento));
+                return (mapa.asientos || []).map((a: any) => {
+                  if (codigosMios.has(a.codigo)) {
+                    return { ...a, estado: "Bloqueado", id_sesion_bloqueo: sesionId };
+                  }
+                  return a;
+                });
+              });
+            } catch (e) {
+              console.warn("Error al sincronizar bloqueos de sala en mixto:", e);
+            }
+          }, 250);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      if (timerDebounce) clearTimeout(timerDebounce);
+      supabase.removeChannel(canalSala);
+    };
+  }, [funcionSeleccionada?.id_funcion, subvista, entradasSeleccionadas, sesionId]);
 
   // ── 5. Cargar Dulcería ──
   const cargarDulceriaSede = useCallback(async (sedeId: number) => {
@@ -359,6 +563,7 @@ export default function MixtoView() {
     setFuncionSeleccionada(null);
     setVentaSoloDulceria(false);
     setSubvista("cartelera");
+    cargarFuncionesSede(idSede, filtroDia, false);
   };
 
   const handleSolicitarCancelarVenta = () => {
@@ -404,6 +609,7 @@ export default function MixtoView() {
         formato: funcionSeleccionada?.formato_proyeccion?.nombre,
         sala: funcionSeleccionada?.sala?.nombre_sala,
         hora: funcionSeleccionada?.hora_inicio,
+        id_vendedor: usuarioActivo.idUsuario,
         entradas: entradasSeleccionadas,
         productos: itemsDulceriaArray,
       });
@@ -412,6 +618,8 @@ export default function MixtoView() {
       setSubvista("exito");
       setEntradasSeleccionadas([]);
       setCarritoDulceria(new Map());
+      // Refresco proactivo silencioso de funciones para reflejar nueva ocupación de inmediato
+      cargarFuncionesSede(idSede, filtroDia, false);
     } catch (err: any) {
       mostrarToast(err.message || "Error al procesar la venta en caja mixta.");
     } finally {
@@ -427,6 +635,8 @@ export default function MixtoView() {
     setVentaSoloDulceria(false);
     setSubvista("cartelera");
     setSocioActivo(null);
+    // Garantiza actualización instantánea al volver al inicio
+    cargarFuncionesSede(idSede, filtroDia, false);
   };
 
   return (
@@ -449,7 +659,8 @@ export default function MixtoView() {
         onAbrirModalSocio={() => setModalSocioAbierto(true)}
         onAbrirModalOrden={() => setModalOrdenAbierto(true)}
         onIniciarSoloDulceria={handleIniciarSoloDulceria}
-        cajeroNombre="Marcos Caja Mixta"
+        cajeroNombre={usuarioActivo.nombreCompleto}
+        rolUsuario={usuarioActivo.rolCodigo}
       />
 
       {/* Layout Principal: Contenido (1fr) + Panel lateral combinado (380px) */}

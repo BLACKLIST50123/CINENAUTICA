@@ -463,7 +463,7 @@ export default function CarteleraFuncionesPOS({
                                 <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden mt-1.5">
                                   <div
                                     className={`h-full rounded-full transition-all ${barColor}`}
-                                    style={{ width: `${Math.min(pct, 100)}%` }}
+                                    style={{ width: `${ocupados > 0 ? Math.max(pct, 4) : 0}%` }}
                                   ></div>
                                 </div>
                               </button>
@@ -539,7 +539,7 @@ export default function CarteleraFuncionesPOS({
                   <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all ${barColor}`}
-                      style={{ width: `${Math.min(pct, 100)}%` }}
+                      style={{ width: `${ocupados > 0 ? Math.max(pct, 4) : 0}%` }}
                     ></div>
                   </div>
                 </div>

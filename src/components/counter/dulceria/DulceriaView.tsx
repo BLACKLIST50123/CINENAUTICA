@@ -8,6 +8,7 @@ import ModalBuscarOrden from "../comun/ModalBuscarOrden";
 import ModalConfirmarSalidaCounter from "../comun/ModalConfirmarSalidaCounter";
 import TicketTermicoPOS from "../comun/TicketTermicoPOS";
 import { CounterService } from "@/src/services/counterService";
+import { supabase } from "@/src/lib/supabase/cliente";
 import type {
   SocioCounterDTO,
   ItemProductoCounter,
@@ -84,6 +85,77 @@ export default function DulceriaView() {
   // ── 2. Estados de Venta y Subvistas ──
   const [subvista, setSubvista] = useState<"catalogo" | "cobro" | "exito">("catalogo");
 
+  // ── Usuario Autenticado Real ──
+  const [usuarioActivo, setUsuarioActivo] = useState<{
+    idUsuario: string;
+    nombreCompleto: string;
+    rolCodigo: string;
+  }>(() => {
+    if (typeof window !== "undefined") {
+      const storedNombre = localStorage.getItem("cinenautica_usuario_nombre");
+      const storedRol = localStorage.getItem("cinenautica_rol_personal");
+      const storedId = localStorage.getItem("cinenautica_usuario_id");
+      if (storedNombre && storedId) {
+        return {
+          idUsuario: storedId,
+          nombreCompleto: storedNombre,
+          rolCodigo: storedRol || "counter_dulceria",
+        };
+      }
+    }
+    return {
+      idUsuario: "",
+      nombreCompleto: "Cajero",
+      rolCodigo: "counter_dulceria",
+    };
+  });
+
+  useEffect(() => {
+    async function cargarUsuarioSesion() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const { data: usuarioData } = await supabase
+            .from("usuario")
+            .select("id_usuario, nombre, apellido, correo, rol:id_rol (codigo, nombre_rol)")
+            .eq("id_usuario", session.user.id)
+            .maybeSingle();
+
+          if (usuarioData) {
+            const nombre = `${usuarioData.nombre || ""} ${usuarioData.apellido || ""}`.trim() || usuarioData.correo;
+            const rol = (usuarioData.rol as any)?.codigo || "counter_dulceria";
+            setUsuarioActivo({
+              idUsuario: usuarioData.id_usuario,
+              nombreCompleto: nombre,
+              rolCodigo: rol,
+            });
+
+            try {
+              localStorage.setItem("cinenautica_usuario_nombre", nombre);
+              localStorage.setItem("cinenautica_rol_personal", rol);
+              localStorage.setItem("cinenautica_usuario_id", usuarioData.id_usuario);
+            } catch {}
+          }
+
+          // Cargar sede asignada en personal_sede
+          const { data: psData } = await supabase
+            .from("personal_sede")
+            .select("id_sede")
+            .eq("id_usuario", session.user.id)
+            .eq("activo", true)
+            .maybeSingle();
+
+          if (psData?.id_sede) {
+            setIdSede(psData.id_sede);
+          }
+        }
+      } catch (e) {
+        console.warn("No se pudo cargar el perfil de usuario activo en dulcería:", e);
+      }
+    }
+    cargarUsuarioSesion();
+  }, []);
+
   // Socio Activo
   const [socioActivo, setSocioActivo] = useState<SocioCounterDTO | null>(null);
 
@@ -118,7 +190,15 @@ export default function DulceriaView() {
   useEffect(() => {
     CounterService.obtenerSedesActivas()
       .then((res) => {
-        if (res && res.length > 0) setSedes(res);
+        if (res && res.length > 0) {
+          setSedes(res);
+          try {
+            const sedeGuardada = localStorage.getItem("cinenautica_sede_personal");
+            if (sedeGuardada && res.some((s) => s.id_sede === Number(sedeGuardada))) {
+              setIdSede(Number(sedeGuardada));
+            }
+          } catch {}
+        }
       })
       .catch((e) => console.warn("Error al cargar sedes:", e));
   }, []);
@@ -216,7 +296,7 @@ export default function DulceriaView() {
       const res = await CounterService.procesarVentaCounter({
         modo: "dulceria",
         id_sede: idSede,
-        id_vendedor: "33333333-2222-4444-2222-222222222222", // Carlos Dulcería
+        id_vendedor: usuarioActivo.idUsuario,
         socio: socioActivo,
         tipo_comprobante: datosCobro.tipo_comprobante,
         numero_documento: datosCobro.numero_documento,
@@ -271,7 +351,8 @@ export default function DulceriaView() {
         socioActivo={socioActivo}
         onAbrirModalSocio={() => setModalSocioAbierto(true)}
         onAbrirModalOrden={() => setModalOrdenAbierto(true)}
-        cajeroNombre="Carlos Dulcería"
+        cajeroNombre={usuarioActivo.nombreCompleto}
+        rolUsuario={usuarioActivo.rolCodigo}
       />
 
       {/* Layout Principal: Contenido (1fr) + Panel lateral de pedido (380px) */}

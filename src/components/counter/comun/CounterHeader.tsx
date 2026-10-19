@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { supabase } from "@/src/lib/supabase/cliente";
 import type { ModoCounter, SocioCounterDTO } from "@/src/dtos/counter";
 
 interface CounterHeaderProps {
@@ -13,6 +15,7 @@ interface CounterHeaderProps {
   onAbrirModalOrden: () => void;
   onIniciarSoloDulceria?: () => void;
   cajeroNombre?: string;
+  rolUsuario?: string;
   onCerrarSesion?: () => void;
 }
 
@@ -26,6 +29,7 @@ export default function CounterHeader({
   onAbrirModalOrden,
   onIniciarSoloDulceria,
   cajeroNombre = "Personal POS",
+  rolUsuario,
   onCerrarSesion,
 }: CounterHeaderProps) {
   const [relojHora, setRelojHora] = useState("");
@@ -73,22 +77,10 @@ export default function CounterHeader({
           <span>{badgeRol.texto}</span>
         </span>
 
-        {/* Selector de Sede (Temporal para pruebas en vivo) */}
-        <div className="hidden lg:flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-3 py-1 text-xs">
+        {/* Indicador de Sede Asignada Fija */}
+        <div className="hidden sm:flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-3 py-1 text-xs">
           <i className="fa-solid fa-location-dot text-brand-yellow"></i>
-          <select
-            value={sedeActual.id_sede}
-            onChange={(e) => onCambiarSede(Number(e.target.value))}
-            className="bg-transparent text-white font-bold outline-none cursor-pointer pr-1 text-xs"
-            title="Cambiar sede para pruebas de funciones y dulcería"
-          >
-            {sedesDisponibles.map((s) => (
-              <option key={s.id_sede} value={s.id_sede} className="bg-dark-900 text-white">
-                {s.nombre}
-              </option>
-            ))}
-          </select>
-          <span className="text-[10px] text-slate-500 uppercase font-semibold">Demo</span>
+          <span className="font-bold text-white text-xs">{sedeActual.nombre}</span>
         </div>
       </div>
 
@@ -152,18 +144,41 @@ export default function CounterHeader({
           <button
             type="button"
             onClick={() => setMenuUsuarioAbierto(!menuUsuarioAbierto)}
-            className="w-9 h-9 rounded-full bg-dark-800 border-2 border-green-500/60 flex items-center justify-center hover:border-green-400 transition-colors"
-            title="Menú de cajero"
+            className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full bg-dark-800 border border-white/10 hover:border-brand-blue/50 transition-colors"
+            title="Perfil de sesión"
           >
-            <i className="fa-solid fa-user text-green-300 text-sm"></i>
+            <div className="w-8 h-8 rounded-full bg-brand-blue/20 border border-brand-blue/50 flex items-center justify-center">
+              <i className="fa-solid fa-user text-brand-blue text-xs"></i>
+            </div>
+            <div className="text-left hidden md:block">
+              <p className="text-white text-xs font-bold leading-none truncate max-w-[120px]">{cajeroNombre}</p>
+              <p className="text-[10px] text-slate-400 leading-none mt-1">
+                {rolUsuario === "admin_sede" ? "Admin Sede" : "Cajero"}
+              </p>
+            </div>
+            <i className="fa-solid fa-chevron-down text-[10px] text-slate-400 ml-0.5"></i>
           </button>
 
           {menuUsuarioAbierto && (
             <div className="absolute right-0 top-12 w-64 bg-dark-800 border border-white/10 rounded-xl shadow-2xl p-2 z-50 animate-fade-in">
               <div className="px-3 py-2 border-b border-white/5 mb-1">
                 <p className="text-white font-bold text-sm truncate">{cajeroNombre}</p>
-                <p className="text-slate-400 text-xs">Cajero en {sedeActual.nombre}</p>
+                <p className="text-slate-400 text-xs">
+                  {rolUsuario === "admin_sede"
+                    ? `Admin de Sede · ${sedeActual.nombre}`
+                    : `Cajero en ${sedeActual.nombre}`}
+                </p>
               </div>
+
+              {rolUsuario === "admin_sede" && (
+                <Link
+                  href="/counter"
+                  className="w-full text-left px-3 py-2 rounded-lg text-sm text-purple-300 hover:bg-purple-950/40 hover:text-purple-200 flex items-center gap-2 transition-colors mb-1"
+                >
+                  <i className="fa-solid fa-store w-5 text-purple-400"></i>
+                  <span>Volver al Hub de Sede</span>
+                </Link>
+              )}
 
               <button
                 type="button"
@@ -174,14 +189,21 @@ export default function CounterHeader({
                 Buscar orden
               </button>
 
-              <a
-                href="/acceso"
-                onClick={onCerrarSesion}
-                className="block px-3 py-2 rounded-lg text-sm text-brand-red hover:bg-dark-700 transition-colors"
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await supabase.auth.signOut();
+                    localStorage.removeItem("cinenautica_rol_personal");
+                  } catch {}
+                  if (onCerrarSesion) onCerrarSesion();
+                  window.location.href = "/acceso";
+                }}
+                className="w-full text-left px-3 py-2 rounded-lg text-sm text-brand-red hover:bg-dark-700 transition-colors flex items-center gap-2 cursor-pointer"
               >
                 <i className="fa-solid fa-right-from-bracket w-5"></i>
-                Cerrar sesión
-              </a>
+                <span>Cerrar sesión</span>
+              </button>
             </div>
           )}
         </div>

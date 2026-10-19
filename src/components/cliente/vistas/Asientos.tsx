@@ -148,7 +148,10 @@ export default function Asientos({ idFuncionParam }: { idFuncionParam?: string }
         const [matrizData, tarifaData, tiposData] = await Promise.all([
           AsientoService.obtenerMatrizSala(info.id_sala, info.id_funcion, sid),
           AsientoService.obtenerTarifaVigente(
-            info.fecha || new Date().toISOString().split("T")[0],
+            info.fecha || (() => {
+              const d = new Date();
+              return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+            })(),
             info.formato || "2D",
             Number(info.id_sede) || 1,
             Boolean(info.es_prestreno)

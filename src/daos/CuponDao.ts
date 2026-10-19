@@ -45,7 +45,8 @@ export class CuponDao {
 
     if (!data) return null;
 
-    const hoy = new Date().toISOString().split("T")[0];
+    const d = new Date();
+    const hoy = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     if (data.fecha_inicio > hoy || data.fecha_fin < hoy) {
       return null;
     }
@@ -75,7 +76,8 @@ export class CuponDao {
    * Obtiene todos los cupones activos vigentes para la cartelera / promociones
    */
   static async obtenerCuponesActivos(): Promise<CuponDTO[]> {
-    const hoy = new Date().toISOString().split("T")[0];
+    const d = new Date();
+    const hoy = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     const { data, error } = await supabase
       .from("cupon")
       .select("id_cupon, codigo, descripcion, tipo_descuento, valor, usos_maximos, usos_actuales, activo, fecha_fin")
