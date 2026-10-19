@@ -1,15 +1,7 @@
-import AdminSedeView from "@/src/components/admin_sede/AdminSedeView";
-import UiRuntime from "@/src/components/UiRuntime";
-import MontarVista from "@/src/components/MontarVista";
+import AdminSedeContainer from "@/src/components/admin_sede/AdminSedeContainer";
 
-export const metadata = { title: "Cine Náutica — Admin de Sede" };
+export const metadata = { title: "Cine Náutica — Panel de Admin de Sede" };
 
 export default function Page() {
-  return (
-    <>
-      <AdminSedeView />
-      <UiRuntime area="admin" />
-      <MontarVista area="admin" />
-    </>
-  );
+  return <AdminSedeContainer />;
 }

@@ -15,14 +15,17 @@ Memoria del proyecto entre sesiones. Máximo ~50 líneas: resume o elimina lo qu
 - **Fase 10 — Vistas Estáticas con Datos Reales (Ubicación, Promociones, Contacto): ✅ COMPLETADA** (2026-10-14)
 - **Fase 11 — Módulo Counter POS (Boletería, Dulcería, Mixto & Hub Admin Sede): ✅ COMPLETADA** (2026-10-15)
 - **Fase 12 — Acceso Corporativo Seguro, Roles Supabase y Hub Admin Sede: ✅ COMPLETADA** (2026-10-18)
+- **Fase 13 — Admin de Sede con Datos Reales y Confirmaciones de Seguridad: ✅ COMPLETADA** (2026-10-18)
 
 ## Suite de Pruebas y Cobertura
-- **45 de 45 pruebas unitarias e integración pasando en verde** (`npx vitest run` en 10 suites de pruebas).
+- **49 de 49 pruebas unitarias e integración pasando en verde** (`npx vitest run` en 11 suites de pruebas).
 - **TypeScript 0 errores** (`npx tsc --noEmit`).
 - Todas las rutas activas y operativas en HTTP 200 OK (`/`, `/asientos`, `/dulceria`, `/pago`, `/ticket`, `/socio`, `/historial`, `/promociones`, `/ubicacion`, `/contacto`, `/acceso`, `/counter`, `/counter/boleteria`, `/counter/dulceria`, `/counter/mixto`, `/admin_sede`, `/admin_general`).
 
-## Archivos clave de Fases 7 a 11
-- `src/services/ticketService.ts`, `socioService.ts`, `historialService.ts`, `counterService.ts` — Servicios de ticket, fidelización, historial y POS Counter
+## Archivos clave de Fases 11 a 13
+- `src/services/adminSedeService.ts`, `counterService.ts`, `ticketService.ts`, `socioService.ts`
+- `src/daos/AdminSedeDao.ts` (23 métodos Supabase), `OrdenDao.ts`, `SocioDao.ts`, `CuponDao.ts`
+- `src/components/admin_sede/` (modular: `tabs/` 9 módulos, `modales/` 7 modales, `comun/ModalConfirmacion.tsx`)
 - `src/daos/SocioDao.ts`, `OrdenDao.ts`, `CuponDao.ts`, `ContactoDao.ts` — DAOs conectados a Supabase
 - `src/components/cliente/vistas/` (`Ticket.tsx`, `Socio.tsx`, `Historial.tsx`, `Promociones.tsx`, `Ubicacion.tsx`, `Contacto.tsx`)
 - `src/components/counter/` (`boleteria/BoleteriaView.tsx`, `dulceria/DulceriaView.tsx`, `mixto/MixtoView.tsx`, `comun/`)
