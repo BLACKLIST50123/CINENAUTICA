@@ -35,6 +35,7 @@ import ModalCrearSala from "./modales/ModalCrearSala";
 import ModalCrearCuponLocal from "./modales/ModalCrearCuponLocal";
 import ModalNuevoPersonal from "./modales/ModalNuevoPersonal";
 import ModalFichaPersonal from "./modales/ModalFichaPersonal";
+import ModalConfirmacion from "./comun/ModalConfirmacion";
 
 export default function AdminSedeContainer() {
   const router = useRouter();
@@ -47,6 +48,19 @@ export default function AdminSedeContainer() {
   const [tabActivo, setTabActivo] = useState<AdminSedeTab>("dashboard");
   const [recargarTrigger, setRecargarTrigger] = useState<number>(0);
   const [cargandoInicial, setCargandoInicial] = useState<boolean>(true);
+
+  // Guardia de cambios no guardados en Salas
+  const [hayCambiosSalas, setHayCambiosSalas] = useState<boolean>(false);
+  const [tabDestinoPendiente, setTabDestinoPendiente] = useState<AdminSedeTab | null>(null);
+
+  const handleCambiarTab = (tab: AdminSedeTab) => {
+    if (tab === tabActivo) return;
+    if (tabActivo === "salas" && hayCambiosSalas) {
+      setTabDestinoPendiente(tab);
+      return;
+    }
+    setTabActivo(tab);
+  };
 
   // Estados de Modales
   const [modalCrearFuncionAbierto, setModalCrearFuncionAbierto] = useState<boolean>(false);
@@ -106,8 +120,22 @@ export default function AdminSedeContainer() {
     setRecargarTrigger((prev) => prev + 1);
   };
 
+  const [paramsCrearFuncion, setParamsCrearFuncion] = useState<{
+    idPelicula?: string;
+    fecha?: string;
+    hora?: string;
+    idSala?: string;
+  }>({});
+
   const handleProgramarFuncionDesdeCartelera = (idPelicula: string) => {
+    setParamsCrearFuncion({ idPelicula });
     setPeliculaPreseleccionadaId(idPelicula);
+    setModalCrearFuncionAbierto(true);
+  };
+
+  const handleAbrirCrearFuncion = (params?: { fecha?: string; hora?: string; idSala?: string; idPelicula?: string }) => {
+    setParamsCrearFuncion(params || {});
+    setPeliculaPreseleccionadaId(params?.idPelicula);
     setModalCrearFuncionAbierto(true);
   };
 
@@ -143,7 +171,7 @@ export default function AdminSedeContainer() {
 
         {/* Layout en 2 columnas: Sidebar + Contenido del Tab Activo */}
         <div className="flex flex-col lg:flex-row gap-8">
-          <AdminSedeSidebar tabActivo={tabActivo} onCambiarTab={setTabActivo} />
+          <AdminSedeSidebar tabActivo={tabActivo} onCambiarTab={handleCambiarTab} />
 
           <div className="flex-1 min-w-0">
             {tabActivo === "dashboard" && <DashboardTab idSede={idSede} />}
@@ -151,6 +179,7 @@ export default function AdminSedeContainer() {
             {tabActivo === "cartelera" && (
               <CarteleraTab
                 idSede={idSede}
+                onIrAHorarios={() => handleCambiarTab("horarios")}
                 onProgramarFuncion={handleProgramarFuncionDesdeCartelera}
               />
             )}
@@ -159,10 +188,7 @@ export default function AdminSedeContainer() {
               <HorariosTab
                 idSede={idSede}
                 salas={salas}
-                onAbrirCrearFuncion={() => {
-                  setPeliculaPreseleccionadaId(undefined);
-                  setModalCrearFuncionAbierto(true);
-                }}
+                onAbrirCrearFuncion={handleAbrirCrearFuncion}
                 onAbrirCancelarFuncion={(fn) => setFuncionCancelar(fn)}
                 recargarTrigger={recargarTrigger}
               />
@@ -182,6 +208,7 @@ export default function AdminSedeContainer() {
                 salas={salas}
                 onAbrirCrearSala={() => setModalCrearSalaAbierto(true)}
                 onRecargarSalas={dispararRecarga}
+                onCambiosSinGuardarChange={setHayCambiosSalas}
               />
             )}
 
@@ -215,7 +242,10 @@ export default function AdminSedeContainer() {
         idSede={idSede}
         peliculas={peliculas}
         salas={salas}
-        peliculaPreseleccionadaId={peliculaPreseleccionadaId}
+        peliculaPreseleccionadaId={paramsCrearFuncion.idPelicula || peliculaPreseleccionadaId}
+        fechaPreseleccionada={paramsCrearFuncion.fecha}
+        horaPreseleccionada={paramsCrearFuncion.hora}
+        salaPreseleccionadaId={paramsCrearFuncion.idSala}
         onCerrar={() => setModalCrearFuncionAbierto(false)}
         onGuardadoExitoso={dispararRecarga}
       />
@@ -262,6 +292,23 @@ export default function AdminSedeContainer() {
         personal={personalFicha}
         onCerrar={() => setPersonalFicha(null)}
         onEstadoCambiado={dispararRecarga}
+      />
+
+      {/* Modal de confirmación para Descartar Cambios en Salas al cambiar de tab */}
+      <ModalConfirmacion
+        abierto={tabDestinoPendiente !== null}
+        titulo="¿Descartar cambios no guardados?"
+        mensaje="Tienes modificaciones pendientes en la configuración de la sala actual. Si cambias de pestaña ahora, perderás todos los cambios no guardados."
+        tipo="advertencia"
+        textoConfirmar="Salir"
+        textoCancelar="Volver"
+        onConfirmar={() => {
+          const tab = tabDestinoPendiente!;
+          setTabDestinoPendiente(null);
+          setHayCambiosSalas(false);
+          setTabActivo(tab);
+        }}
+        onCancelar={() => setTabDestinoPendiente(null)}
       />
     </div>
   );

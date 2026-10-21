@@ -11,6 +11,9 @@ interface ModalCrearFuncionProps {
   peliculas: PeliculaCatalogoSedeDTO[];
   salas: SalaDetalleSedeDTO[];
   peliculaPreseleccionadaId?: string;
+  fechaPreseleccionada?: string;
+  horaPreseleccionada?: string;
+  salaPreseleccionadaId?: string;
   onCerrar: () => void;
   onGuardadoExitoso: () => void;
 }
@@ -21,6 +24,9 @@ export default function ModalCrearFuncion({
   peliculas,
   salas,
   peliculaPreseleccionadaId,
+  fechaPreseleccionada,
+  horaPreseleccionada,
+  salaPreseleccionadaId,
   onCerrar,
   onGuardadoExitoso,
 }: ModalCrearFuncionProps) {
@@ -38,20 +44,25 @@ export default function ModalCrearFuncion({
     if (abierto) {
       const hoy = new Date();
       const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-${String(hoy.getDate()).padStart(2, "0")}`;
-      setFecha(hoyStr);
+      const horaActualStr = `${String(hoy.getHours()).padStart(2, "0")}:${String(hoy.getMinutes()).padStart(2, "0")}`;
+
+      setFecha(fechaPreseleccionada || hoyStr);
+      setHoraInicio(horaPreseleccionada || horaActualStr);
 
       if (peliculaPreseleccionadaId) {
         setIdPelicula(peliculaPreseleccionadaId);
-      } else if (peliculas.length > 0 && !idPelicula) {
+      } else if (peliculas.length > 0) {
         setIdPelicula(peliculas[0].id_pelicula);
       }
 
-      if (salas.length > 0 && !idSala) {
+      if (salaPreseleccionadaId) {
+        setIdSala(salaPreseleccionadaId);
+      } else if (salas.length > 0) {
         setIdSala(salas[0].id_sala);
       }
       setErrorValidacion(null);
     }
-  }, [abierto, peliculaPreseleccionadaId, peliculas, salas]);
+  }, [abierto, peliculaPreseleccionadaId, fechaPreseleccionada, horaPreseleccionada, salaPreseleccionadaId, peliculas, salas]);
 
   // Formatos soportados por la sala seleccionada
   const salaActual = salas.find((s) => s.id_sala === idSala);

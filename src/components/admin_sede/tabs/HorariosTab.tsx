@@ -7,7 +7,7 @@ import type { FuncionAdminSedeDTO, SalaDetalleSedeDTO } from "@/src/dtos/adminSe
 interface HorariosTabProps {
   idSede: number;
   salas: SalaDetalleSedeDTO[];
-  onAbrirCrearFuncion: () => void;
+  onAbrirCrearFuncion: (params?: { fecha?: string; hora?: string; idSala?: string }) => void;
   onAbrirCancelarFuncion: (funcion: FuncionAdminSedeDTO) => void;
   recargarTrigger: number;
 }
@@ -43,6 +43,28 @@ export default function HorariosTab({
   const [salaFiltro, setSalaFiltro] = useState<string>("");
   const [funciones, setFunciones] = useState<FuncionAdminSedeDTO[]>([]);
   const [cargando, setCargando] = useState<boolean>(true);
+  const [alertaToast, setAlertaToast] = useState<string | null>(null);
+
+  // Minuto actual en vivo (actualizado cada 30s)
+  const [horaActualMinutos, setHoraActualMinutos] = useState<number>(() => {
+    const d = new Date();
+    return d.getHours() * 60 + d.getMinutes();
+  });
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const d = new Date();
+      setHoraActualMinutos(d.getHours() * 60 + d.getMinutes());
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const mostrarToast = (mensaje: string) => {
+    setAlertaToast(mensaje);
+    setTimeout(() => {
+      setAlertaToast(null);
+    }, 3500);
+  };
 
   const cargarFunciones = useCallback(async () => {
     setCargando(true);
@@ -96,8 +118,72 @@ export default function HorariosTab({
     return (h || 0) * 60 + (m || 0);
   };
 
+  // Validación y acción al hacer clic en un slot vacío
+  const handleSlotClick = (sala: SalaDetalleSedeDTO, franjaMinutos: number, franjaHoraStr: string) => {
+    const hoyLocal = getFechaLocalHoy();
+    if (fecha < hoyLocal) {
+      mostrarToast("No se pueden programar funciones en fechas pasadas.");
+      return;
+    }
+
+    const ahora = new Date();
+    const minutosAhora = ahora.getHours() * 60 + ahora.getMinutes();
+    if (fecha === hoyLocal && franjaMinutos < minutosAhora) {
+      mostrarToast("No se pueden programar funciones en horarios pasados de hoy.");
+      return;
+    }
+
+    const funcionesDeSala = funcionesPorSala.get(sala.id_sala) || [];
+    // Verificar si cae dentro de otra función existente o su tiempo de limpieza (30m)
+    const colisiona = funcionesDeSala.some((f) => {
+      if (f.estado === "Cancelada" || f.estado === "CANCELADA") return false;
+      const inicio = horaMinutos(f.hora_inicio);
+      const finConLimpieza = horaMinutos(f.hora_fin) + 30;
+      return franjaMinutos >= inicio && franjaMinutos < finConLimpieza;
+    });
+
+    if (colisiona) {
+      mostrarToast("El espacio seleccionado colisiona con otra función o su tiempo de limpieza.");
+      return;
+    }
+
+    // Verificar si hay espacio suficiente antes de la siguiente función programada
+    const siguienteFuncion = funcionesDeSala
+      .filter((f) => f.estado !== "Cancelada" && f.estado !== "CANCELADA" && horaMinutos(f.hora_inicio) > franjaMinutos)
+      .sort((a, b) => horaMinutos(a.hora_inicio) - horaMinutos(b.hora_inicio))[0];
+
+    if (siguienteFuncion) {
+      const espacioDisponibleMinutos = horaMinutos(siguienteFuncion.hora_inicio) - franjaMinutos;
+      if (espacioDisponibleMinutos < 90) { // Al menos 90 min de función
+        mostrarToast("El espacio disponible antes de la siguiente función es insuficiente.");
+        return;
+      }
+    }
+
+    // Todo válido: abrir modal con datos precargados
+    onAbrirCrearFuncion({
+      fecha,
+      hora: franjaHoraStr,
+      idSala: sala.id_sala,
+    });
+  };
+
+  // Cálculo de línea de tiempo actual
+  const hoyIso = getFechaLocalHoy();
+  const esHoy = fecha === hoyIso;
+  const lineaTiempoTopPx = (horaActualMinutos - HORA_BASE_MINUTOS) * 2;
+  const mostrarLineaTiempo = esHoy && lineaTiempoTopPx >= 0 && lineaTiempoTopPx <= (FRANJAS_HORARIAS.length - 1) * 60;
+
   return (
     <div className="space-y-6">
+      {/* Toast flotante de validación */}
+      {alertaToast && (
+        <div className="fixed bottom-6 right-6 z-[120] bg-rose-600/95 text-white text-xs font-bold px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 border border-white/20 animate-bounce">
+          <i className="fa-solid fa-triangle-exclamation text-sm"></i>
+          <span>{alertaToast}</span>
+        </div>
+      )}
+
       {/* Barra de Controles y Filtros */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-[#0D1627] border border-white/15 rounded-2xl p-4 shadow-xl">
         <div className="flex flex-wrap items-center gap-3">
@@ -142,10 +228,10 @@ export default function HorariosTab({
           </select>
         </div>
 
-        {/* Botón Principal: + Añadir Función */}
+        {/* Botón Principal: + Añadir Función (Precargando la fecha seleccionada) */}
         <button
           type="button"
-          onClick={onAbrirCrearFuncion}
+          onClick={() => onAbrirCrearFuncion({ fecha })}
           className="px-4 py-2.5 rounded-xl text-xs font-bold bg-brand-yellow hover:bg-yellow-400 text-dark-950 shadow-md shadow-yellow-500/10 transition-all flex items-center justify-center gap-2 self-start lg:self-auto"
         >
           <i className="fa-solid fa-plus text-[11px]"></i>
@@ -199,7 +285,7 @@ export default function HorariosTab({
           <p className="text-slate-400 text-sm">No hay salas disponibles para mostrar el cronograma.</p>
         </div>
       ) : (
-        <div className="grid-horarios-wrapper border border-white/15 bg-[#070d18] rounded-2xl shadow-2xl overflow-x-auto">
+        <div className="grid-horarios-wrapper border border-white/15 bg-[#070d18] rounded-2xl shadow-2xl overflow-x-auto relative">
           <div
             className="grid-horarios"
             style={{
@@ -233,6 +319,19 @@ export default function HorariosTab({
                   </span>
                 </div>
               ))}
+
+              {/* Badge flotante de la hora actual en el eje izquierdo */}
+              {mostrarLineaTiempo && (
+                <div
+                  className="absolute right-1 z-30 pointer-events-none transform -translate-y-1/2 bg-red-600 text-white font-mono font-bold text-[9px] px-1.5 py-0.5 rounded shadow-lg flex items-center gap-1"
+                  style={{ top: `${lineaTiempoTopPx}px` }}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                  <span>
+                    {String(Math.floor(horaActualMinutos / 60)).padStart(2, "0")}:{String(horaActualMinutos % 60).padStart(2, "0")}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Columnas de Salas con sus Funciones */}
@@ -245,12 +344,22 @@ export default function HorariosTab({
                   className="grid-sala-columna relative bg-[#080e1c]/60"
                   style={{ height: `${(FRANJAS_HORARIAS.length - 1) * 60}px` }}
                 >
+                  {/* Línea horizontal en vivo de la hora actual en cada columna */}
+                  {mostrarLineaTiempo && (
+                    <div
+                      className="absolute left-0 right-0 z-20 pointer-events-none"
+                      style={{ top: `${lineaTiempoTopPx}px` }}
+                    >
+                      <div className="border-t-2 border-red-500 shadow-[0_0_8px_rgba(239,68,68,0.9)] w-full"></div>
+                    </div>
+                  )}
+
                   {/* Líneas horizontales de 30 min de fondo */}
                   {FRANJAS_HORARIAS.slice(0, -1).map((franja) => (
                     <div
                       key={franja.label}
                       className="grid-fila-hora group cursor-pointer"
-                      onClick={() => onAbrirCrearFuncion()}
+                      onClick={() => handleSlotClick(sala, franja.minutos, franja.label)}
                       title={`Clic para programar en ${sala.nombre_sala} a las ${franja.label}`}
                     >
                       {/* Botón fantasma "+" visible en hover de slot vacío */}
@@ -274,15 +383,15 @@ export default function HorariosTab({
                     const estaCancelada = fn.estado === "Cancelada" || fn.estado === "CANCELADA";
                     const porcentaje =
                       fn.asientos_capacidad > 0
-                        ? Math.round((fn.asientos_ocupados / fn.asientos_capacidad) * 100)
+                        ? Math.min(100, Math.round((fn.asientos_ocupados / fn.asientos_capacidad) * 100))
                         : 0;
 
-                    // Clase de tipo de función
+                    // Clase de tipo de función de acuerdo al tipo_lanzamiento de la base de datos
+                    const tipoNorm = (fn.tipo_lanzamiento || "Regular").toLowerCase().replace("_", "-");
                     let claseTipo = "tipo-regular";
-                    const tituloLower = (fn.pelicula_titulo || "").toLowerCase();
-                    if (tituloLower.includes("estreno")) claseTipo = "tipo-estreno";
-                    else if (tituloLower.includes("pre-estreno")) claseTipo = "tipo-pre-estreno";
-                    else if (tituloLower.includes("re-estreno")) claseTipo = "tipo-re-estreno";
+                    if (tipoNorm.includes("pre-estreno")) claseTipo = "tipo-pre-estreno";
+                    else if (tipoNorm.includes("re-estreno")) claseTipo = "tipo-re-estreno";
+                    else if (tipoNorm.includes("estreno")) claseTipo = "tipo-estreno";
 
                     return (
                       <React.Fragment key={fn.id_funcion}>
@@ -317,7 +426,7 @@ export default function HorariosTab({
                               </div>
                             </div>
 
-                            {/* Ocupación */}
+                            {/* Ocupación real */}
                             {!estaCancelada && (
                               <div className="mt-1 pt-1 border-t border-white/10">
                                 <div className="flex items-center justify-between text-[9px] text-slate-300">
@@ -326,8 +435,14 @@ export default function HorariosTab({
                                 </div>
                                 <div className="w-full bg-black/40 rounded-full h-1 mt-0.5 overflow-hidden">
                                   <div
-                                    className="bg-brand-blue h-full rounded-full"
-                                    style={{ width: `${porcentaje}%` }}
+                                    className={`h-full rounded-full transition-all duration-300 ${
+                                      porcentaje >= 85
+                                        ? "bg-rose-500"
+                                        : porcentaje >= 50
+                                        ? "bg-amber-400"
+                                        : "bg-brand-blue"
+                                    }`}
+                                    style={{ width: `${Math.max(4, porcentaje)}%` }}
                                   ></div>
                                 </div>
                               </div>
@@ -352,9 +467,9 @@ export default function HorariosTab({
                           )}
                         </div>
 
-                        {/* Bloque de Limpieza de 30 minutos (60px) posterior a la función */}
+                        {/* Bloque de Limpieza de 30 minutos (60px) pegado contiguo a la función */}
                         <div
-                          className="grid-funcion-limpieza absolute left-1 right-1 rounded-md"
+                          className="grid-funcion-limpieza"
                           style={{
                             top: `${topPx + heightPx}px`,
                             height: "60px",

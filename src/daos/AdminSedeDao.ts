@@ -91,9 +91,10 @@ export class AdminSedeDao {
       for (const fn of funcionesData) {
         const cap = salaCapacidadMap.get(fn.id_sala) || 84;
         totalCapacidad += cap;
-        const ocupados = (fn.asiento_funcion || []).filter(
-          (af: any) => af.estado === "OCUPADO" || af.estado === "VENDIDO"
-        ).length;
+        const ocupados = (fn.asiento_funcion || []).filter((af: any) => {
+          const est = (af.estado || "").toLowerCase();
+          return est === "ocupado" || est === "vendido";
+        }).length;
         totalOcupados += ocupados;
       }
     }
@@ -173,19 +174,50 @@ export class AdminSedeDao {
     const hoyIso = getFechaLocalHoy();
     const fechaMin = periodo === 'hoy' ? hoyIso : fechaInicioFiltro.toISOString().split('T')[0];
 
+    // Obtener salas de la sede con sus asientos y formatos admitidos
+    const { data: salasData } = await supabase
+      .from("sala")
+      .select(`
+        id_sala,
+        numero_sala,
+        nombre_sala,
+        filas,
+        columnas,
+        asiento (
+          id_asiento,
+          en_mantenimiento,
+          tipo_asiento
+        ),
+        sala_formato (
+          formato_proyeccion ( nombre, codigo )
+        )
+      `)
+      .eq("id_sede", idSede)
+      .order("numero_sala", { ascending: true });
+
     const { data: funcionesData } = await supabase
       .from("funcion")
       .select(`
         id_funcion,
         id_pelicula,
         id_sala,
+        fecha,
+        hora_inicio,
+        hora_fin,
+        idioma_audio,
         pelicula ( id_pelicula, titulo, url_poster ),
         sala ( id_sala, numero_sala, nombre_sala, filas, columnas ),
-        asiento_funcion ( id_asiento_funcion, estado )
+        formato_proyeccion ( id_formato, nombre, codigo ),
+        asiento_funcion (
+          id_asiento_funcion,
+          estado,
+          detalle_entrada ( precio_unitario, estado )
+        )
       `)
       .eq("id_sede", idSede)
       .gte("fecha", fechaMin)
-      .neq("estado", "Cancelada");
+      .neq("estado", "Cancelada")
+      .order("hora_inicio", { ascending: true });
 
     // Calcular ocupación y desglose de salas
     let totalCap = 0;
@@ -200,7 +232,7 @@ export class AdminSedeDao {
       recaudacion: number;
     }>();
 
-    // Mapeo de películas
+    // Mapeo de películas para Top Películas
     const peliMap = new Map<string, {
       id_pelicula: string;
       titulo: string;
@@ -212,9 +244,18 @@ export class AdminSedeDao {
     (funcionesData || []).forEach((fn: any) => {
       const sala = fn.sala;
       const capSala = (sala?.filas || 7) * (sala?.columnas || 12);
-      const ocupados = (fn.asiento_funcion || []).filter(
-        (af: any) => af.estado === "OCUPADO" || af.estado === "VENDIDO"
-      ).length;
+      const ocupadosList = (fn.asiento_funcion || []).filter((af: any) => {
+        const est = (af.estado || "").toLowerCase();
+        return est === "ocupado" || est === "vendido";
+      });
+      const ocupados = ocupadosList.length;
+
+      let fnRecaudacion = 0;
+      ocupadosList.forEach((af: any) => {
+        const de = af.detalle_entrada?.[0];
+        const precio = Number(de?.precio_unitario || 0);
+        fnRecaudacion += precio > 0 ? precio : 18;
+      });
 
       totalCap += capSala;
       totalOcup += ocupados;
@@ -232,7 +273,7 @@ export class AdminSedeDao {
         item.funciones_count += 1;
         item.capacidad += capSala;
         item.ocupados += ocupados;
-        item.recaudacion += ocupados * 18; // Estimado promedio
+        item.recaudacion += fnRecaudacion;
         salaMap.set(sala.id_sala, item);
       }
 
@@ -246,7 +287,7 @@ export class AdminSedeDao {
           recaudacion: 0,
         };
         itemP.entradas_vendidas += ocupados;
-        itemP.recaudacion += ocupados * 18;
+        itemP.recaudacion += fnRecaudacion;
         peliMap.set(peli.id_pelicula, itemP);
       }
     });
@@ -261,6 +302,95 @@ export class AdminSedeDao {
       ocupacion_pct: s.capacidad > 0 ? Math.round((s.ocupados / s.capacidad) * 100) : 0,
       recaudacion: s.recaudacion,
     }));
+
+    // Construir estructura jerárquica: Sala -> Fechas -> Funciones
+    const rendimientoSalasDetalle = (salasData || []).map((s: any) => {
+      const asientos = s.asiento || [];
+      const buenEstado = asientos.filter(
+        (a: any) => !a.en_mantenimiento && (a.tipo_asiento || "").toLowerCase() !== "pasillo"
+      ).length;
+      const mantenimiento = asientos.filter((a: any) => a.en_mantenimiento).length;
+      const accesibles = asientos.filter(
+        (a: any) => (a.tipo_asiento || "").toLowerCase() === "accesible"
+      ).length;
+      const capacidadTotal = (s.filas || 7) * (s.columnas || 12);
+
+      const formatos = Array.from(
+        new Set(
+          (s.sala_formato || [])
+            .map((sf: any) => sf.formato_proyeccion?.nombre || sf.formato_proyeccion?.codigo)
+            .filter(Boolean)
+        )
+      );
+      const formatosStr = formatos.length > 0 ? formatos.join(" / ") : "2D";
+
+      // Funciones de esta sala en el periodo
+      const funcionesDeSala = (funcionesData || []).filter((fn: any) => fn.id_sala === s.id_sala);
+
+      // Agrupar funciones de esta sala por fecha
+      const fechaMap = new Map<string, any[]>();
+      funcionesDeSala.forEach((fn: any) => {
+        const fKey = fn.fecha;
+        const list = fechaMap.get(fKey) || [];
+        list.push(fn);
+        fechaMap.set(fKey, list);
+      });
+
+      // Ordenar fechas cronológicamente
+      const fechasSorted = Array.from(fechaMap.keys()).sort();
+      const fechasDTO = fechasSorted.map((fKey) => {
+        const fnList = fechaMap.get(fKey) || [];
+        const partes = fKey.split("-");
+        const fObj = new Date(Number(partes[0]), Number(partes[1]) - 1, Number(partes[2]));
+        const fStr = fObj.toLocaleDateString("es-PE", {
+          weekday: "long",
+          day: "numeric",
+          month: "short",
+        }).toUpperCase();
+
+        const funcionesDTO = fnList.map((fn: any) => {
+          const ocupadosList = (fn.asiento_funcion || []).filter((af: any) => {
+            const est = (af.estado || "").toLowerCase();
+            return est === "ocupado" || est === "vendido";
+          });
+          const ocupados = ocupadosList.length;
+          const cap = capacidadTotal > 0 ? capacidadTotal : 84;
+          const pct = Math.min(100, Math.round((ocupados / cap) * 100));
+
+          return {
+            id_funcion: fn.id_funcion,
+            titulo_pelicula: fn.pelicula?.titulo || "Película",
+            hora_inicio: (fn.hora_inicio || "").substring(0, 5),
+            hora_fin: (fn.hora_fin || "").substring(0, 5),
+            formato_nombre: fn.formato_proyeccion?.nombre || fn.formato_proyeccion?.codigo || "2D",
+            idioma: fn.idioma_audio || "Doblada",
+            capacidad: cap,
+            ocupados: ocupados,
+            ocupacion_pct: pct,
+          };
+        });
+
+        return {
+          fecha: fKey,
+          fecha_formateada: fStr,
+          total_funciones: funcionesDTO.length,
+          funciones: funcionesDTO,
+        };
+      });
+
+      return {
+        id_sala: s.id_sala,
+        numero_sala: s.numero_sala || 1,
+        nombre_sala: s.nombre_sala || `Sala ${s.numero_sala || 1}`,
+        formatos_str: formatosStr,
+        capacidad_total: capacidadTotal,
+        asientos_buen_estado: buenEstado > 0 ? buenEstado : capacidadTotal,
+        asientos_mantenimiento: mantenimiento,
+        asientos_accesibles: accesibles,
+        total_funciones: funcionesDeSala.length,
+        fechas: fechasDTO,
+      };
+    });
 
     const topPeliculas = Array.from(peliMap.values())
       .sort((a, b) => b.entradas_vendidas - a.entradas_vendidas)
@@ -285,6 +415,7 @@ export class AdminSedeDao {
       total_transacciones: ordenesList.length,
       top_peliculas: topPeliculas,
       rendimiento_salas: rendimientoSalas,
+      rendimiento_salas_detalle: rendimientoSalasDetalle,
       ultimas_ventas: ultimasVentas,
     };
   }
@@ -427,7 +558,7 @@ export class AdminSedeDao {
         hora_fin,
         idioma_audio,
         estado,
-        pelicula ( id_pelicula, titulo, duracion_min, url_poster ),
+        pelicula ( id_pelicula, titulo, duracion_min, url_poster, tipo_lanzamiento ),
         sala ( id_sala, numero_sala, nombre_sala, filas, columnas ),
         formato_proyeccion ( id_formato, nombre, codigo ),
         asiento_funcion ( id_asiento_funcion, estado )
@@ -451,9 +582,10 @@ export class AdminSedeDao {
     return data.map((item: any) => {
       const sala = item.sala;
       const capacidad = (sala?.filas || 7) * (sala?.columnas || 12);
-      const ocupados = (item.asiento_funcion || []).filter(
-        (af: any) => af.estado === "OCUPADO" || af.estado === "VENDIDO"
-      ).length;
+      const ocupados = (item.asiento_funcion || []).filter((af: any) => {
+        const est = (af.estado || "").toLowerCase();
+        return est === "ocupado" || est === "vendido";
+      }).length;
 
       return {
         id_funcion: item.id_funcion,
@@ -462,6 +594,7 @@ export class AdminSedeDao {
         pelicula_titulo: item.pelicula?.titulo || "Película",
         pelicula_duracion_min: item.pelicula?.duracion_min || 120,
         pelicula_poster: item.pelicula?.url_poster || "",
+        tipo_lanzamiento: item.pelicula?.tipo_lanzamiento || "Regular",
         id_sala: item.id_sala,
         sala_numero: item.sala?.numero_sala || 1,
         sala_nombre: item.sala?.nombre_sala || `Sala ${item.sala?.numero_sala || 1}`,

@@ -12,13 +12,43 @@ export default function DashboardTab({ idSede }: DashboardTabProps) {
   const [periodo, setPeriodo] = useState<PeriodoDashboard>("hoy");
   const [metricas, setMetricas] = useState<MetricasDashboardDTO | null>(null);
   const [cargando, setCargando] = useState<boolean>(true);
+  const [salasExpandidas, setSalasExpandidas] = useState<Set<string>>(new Set());
+  const [fechasExpandidas, setFechasExpandidas] = useState<Set<string>>(new Set());
 
   const cargarMetricas = useCallback(async () => {
     setCargando(true);
     const data = await AdminSedeDao.obtenerMetricasDashboard(idSede, periodo);
     setMetricas(data);
+    // Auto-expandir la primera sala con funciones para buena experiencia inicial
+    if (data?.rendimiento_salas_detalle?.length) {
+      const primeraConFunciones = data.rendimiento_salas_detalle.find(s => s.total_funciones > 0) || data.rendimiento_salas_detalle[0];
+      if (primeraConFunciones) {
+        setSalasExpandidas(new Set([primeraConFunciones.id_sala]));
+        if (primeraConFunciones.fechas.length > 0) {
+          setFechasExpandidas(new Set([`${primeraConFunciones.id_sala}_${primeraConFunciones.fechas[0].fecha}`]));
+        }
+      }
+    }
     setCargando(false);
   }, [idSede, periodo]);
+
+  const toggleSala = (idSala: string) => {
+    setSalasExpandidas((prev) => {
+      const next = new Set(prev);
+      if (next.has(idSala)) next.delete(idSala);
+      else next.add(idSala);
+      return next;
+    });
+  };
+
+  const toggleFecha = (fechaKey: string) => {
+    setFechasExpandidas((prev) => {
+      const next = new Set(prev);
+      if (next.has(fechaKey)) next.delete(fechaKey);
+      else next.add(fechaKey);
+      return next;
+    });
+  };
 
   useEffect(() => {
     cargarMetricas();
@@ -182,44 +212,203 @@ export default function DashboardTab({ idSede }: DashboardTabProps) {
           )}
         </div>
 
-        {/* Rendimiento por Sala */}
+        {/* Rendimiento por Sala (Acordeón Jerárquico: Sala -> Fechas -> Funciones) */}
         <div className="bg-dark-900 border border-white/10 rounded-2xl p-5 shadow-xl">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
             <h3 className="font-bold text-white text-base flex items-center gap-2">
-              <i className="fa-solid fa-door-open text-brand-blue"></i>
+              <i className="fa-solid fa-table-cells-large text-brand-blue"></i>
               <span>Rendimiento por Sala</span>
             </h3>
-            <span className="text-xs text-slate-400">Ocupación y funciones</span>
+            {/* Leyenda Visual de Estados */}
+            <div className="flex items-center gap-3 text-[11px]">
+              <span className="flex items-center gap-1.5 text-slate-300">
+                <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block"></span>
+                <span>Buen estado</span>
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-300">
+                <span className="w-2.5 h-2.5 rounded-sm bg-rose-500 inline-block"></span>
+                <span>Mantenimiento</span>
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-300">
+                <span className="w-2.5 h-2.5 rounded-sm bg-brand-blue inline-block"></span>
+                <span>Accesible</span>
+              </span>
+            </div>
           </div>
 
           {cargando ? (
             <div className="space-y-3 animate-pulse">
-              <div className="h-12 bg-white/5 rounded-xl"></div>
-              <div className="h-12 bg-white/5 rounded-xl"></div>
+              <div className="h-14 bg-white/5 rounded-xl"></div>
+              <div className="h-14 bg-white/5 rounded-xl"></div>
+              <div className="h-14 bg-white/5 rounded-xl"></div>
             </div>
-          ) : !metricas?.rendimiento_salas.length ? (
-            <p className="text-sm text-slate-500 italic py-6 text-center">No hay funciones registradas en este periodo.</p>
+          ) : !metricas?.rendimiento_salas_detalle?.length ? (
+            <p className="text-sm text-slate-500 italic py-6 text-center">No hay salas disponibles en la sede.</p>
           ) : (
-            <div className="space-y-3">
-              {metricas.rendimiento_salas.map((s) => (
-                <div key={s.id_sala} className="p-3 bg-dark-800 border border-white/5 rounded-xl space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-bold text-white">{s.nombre_sala}</span>
-                    <span className="text-xs text-slate-400 font-mono">{s.funciones_count} funciones</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 bg-dark-950 rounded-full h-2 overflow-hidden border border-white/5">
-                      <div
-                        className="bg-brand-blue h-full rounded-full transition-all duration-500"
-                        style={{ width: `${Math.max(4, s.ocupacion_pct)}%` }}
-                      ></div>
+            <div className="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
+              {metricas.rendimiento_salas_detalle.map((sala) => {
+                const estaExpandida = salasExpandidas.has(sala.id_sala);
+
+                return (
+                  <div
+                    key={sala.id_sala}
+                    className={`border rounded-xl transition-all duration-200 overflow-hidden ${
+                      estaExpandida
+                        ? "bg-[#0c1527] border-brand-blue/60 shadow-lg shadow-sky-500/10"
+                        : "bg-dark-800/80 border-white/5 hover:border-white/10"
+                    }`}
+                  >
+                    {/* Cabecera de Sala (Nivel 1) */}
+                    <div
+                      onClick={() => toggleSala(sala.id_sala)}
+                      className="p-3.5 flex flex-wrap items-center justify-between gap-3 cursor-pointer select-none"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <i
+                          className={`fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200 ${
+                            estaExpandida ? "rotate-180 text-brand-blue" : ""
+                          }`}
+                        ></i>
+                        <span className="font-bold text-white text-sm">{sala.nombre_sala}</span>
+                        <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] font-mono text-slate-300 font-bold">
+                          {sala.formatos_str}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2.5 flex-wrap">
+                        {/* Capacidad Total */}
+                        <span className="text-xs text-slate-300 font-mono font-semibold">
+                          {sala.capacidad_total} asit.
+                        </span>
+
+                        {/* Badges de Estados de Butacas */}
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-[11px] font-bold text-emerald-400 font-mono"
+                            title="Butacas en Buen Estado"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span>
+                            {sala.asientos_buen_estado}
+                          </span>
+
+                          <span
+                            className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose-500/10 border border-rose-500/30 text-[11px] font-bold text-rose-400 font-mono"
+                            title="Butacas en Mantenimiento"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-400 inline-block"></span>
+                            {sala.asientos_mantenimiento}
+                          </span>
+
+                          <span
+                            className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-sky-500/10 border border-sky-500/30 text-[11px] font-bold text-sky-400 font-mono"
+                            title="Butacas Accesibles"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-sky-400 inline-block"></span>
+                            {sala.asientos_accesibles}
+                          </span>
+                        </div>
+
+                        {/* Conteo de funciones */}
+                        <span className="text-xs text-slate-400 font-mono font-medium">
+                          {sala.total_funciones} {sala.total_funciones === 1 ? "func." : "funcs."}
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-xs font-bold text-brand-yellow font-mono w-10 text-right">
-                      {s.ocupacion_pct}%
-                    </span>
+
+                    {/* Desglose de Fechas de la Sala (Nivel 2) */}
+                    {estaExpandida && (
+                      <div className="px-3.5 pb-3.5 pt-1 space-y-2 border-t border-white/5 bg-[#090f1d]/50">
+                        {sala.fechas.length === 0 ? (
+                          <p className="text-xs text-slate-500 italic py-2 text-center">
+                            Sin funciones programadas en este periodo.
+                          </p>
+                        ) : (
+                          sala.fechas.map((fecha) => {
+                            const fKey = `${sala.id_sala}_${fecha.fecha}`;
+                            const fechaExpandida = fechasExpandidas.has(fKey);
+
+                            return (
+                              <div key={fecha.fecha} className="space-y-1.5">
+                                {/* Fila de Fecha Desplegable */}
+                                <div
+                                  onClick={() => toggleFecha(fKey)}
+                                  className="flex items-center justify-between p-2 rounded-lg bg-dark-800/60 hover:bg-dark-800 border border-white/5 cursor-pointer transition-colors"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <i
+                                      className={`fa-solid fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200 ${
+                                        fechaExpandida ? "rotate-180 text-brand-blue" : ""
+                                      }`}
+                                    ></i>
+                                    <span className="font-bold text-xs text-slate-200 tracking-wide uppercase">
+                                      {fecha.fecha_formateada}
+                                    </span>
+                                  </div>
+                                  <span className="text-[11px] text-slate-400 font-mono">
+                                    {fecha.total_funciones} {fecha.total_funciones === 1 ? "función" : "funciones"}
+                                  </span>
+                                </div>
+
+                                {/* Funciones de la Fecha (Nivel 3) */}
+                                {fechaExpandida && (
+                                  <div className="space-y-2 pl-3 pt-1">
+                                    {fecha.funciones.map((fn) => (
+                                      <div
+                                        key={fn.id_funcion}
+                                        className="bg-[#070d18] border border-white/5 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-white/10 transition-colors"
+                                      >
+                                        <div>
+                                          <h4 className="font-bold text-white text-xs truncate max-w-[220px]">
+                                            {fn.titulo_pelicula}
+                                          </h4>
+                                          <div className="mt-1">
+                                            <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] text-slate-300 font-mono">
+                                              {fn.hora_inicio} - {fn.hora_fin}
+                                            </span>
+                                          </div>
+                                        </div>
+
+                                        <div className="flex flex-col sm:items-end gap-1.5">
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[11px] font-mono font-bold text-white">
+                                              {fn.ocupados} / {fn.capacidad}
+                                            </span>
+                                            <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] font-mono font-bold text-slate-300">
+                                              {fn.formato_nombre}
+                                            </span>
+                                          </div>
+
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-xs font-bold font-mono text-white">
+                                              {fn.ocupacion_pct}%
+                                            </span>
+                                            <div className="w-24 bg-dark-950 rounded-full h-1.5 overflow-hidden border border-white/5">
+                                              <div
+                                                className={`h-full rounded-full transition-all duration-500 ${
+                                                  fn.ocupacion_pct >= 85
+                                                    ? "bg-rose-500"
+                                                    : fn.ocupacion_pct >= 50
+                                                    ? "bg-amber-500"
+                                                    : "bg-emerald-500"
+                                                }`}
+                                                style={{ width: `${Math.max(4, fn.ocupacion_pct)}%` }}
+                                              ></div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

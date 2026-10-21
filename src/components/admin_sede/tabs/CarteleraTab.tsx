@@ -7,10 +7,11 @@ import ModalConfirmacion from "../comun/ModalConfirmacion";
 
 interface CarteleraTabProps {
   idSede: number;
-  onProgramarFuncion: (idPelicula: string) => void;
+  onIrAHorarios?: (idPelicula?: string) => void;
+  onProgramarFuncion?: (idPelicula: string) => void;
 }
 
-export default function CarteleraTab({ idSede, onProgramarFuncion }: CarteleraTabProps) {
+export default function CarteleraTab({ idSede, onIrAHorarios, onProgramarFuncion }: CarteleraTabProps) {
   const [peliculas, setPeliculas] = useState<PeliculaCatalogoSedeDTO[]>([]);
   const [cargando, setCargando] = useState<boolean>(true);
   const [busqueda, setBusqueda] = useState<string>("");
@@ -149,14 +150,17 @@ export default function CarteleraTab({ idSede, onProgramarFuncion }: CarteleraTa
                     </span>
                   </label>
 
-                  {/* Botón Programar Función */}
+                  {/* Botón Ir a Horarios */}
                   <button
                     type="button"
-                    onClick={() => onProgramarFuncion(peli.id_pelicula)}
-                    className="px-3 py-1.5 bg-brand-yellow hover:bg-yellow-400 text-dark-950 font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5 shadow-sm"
+                    onClick={() => {
+                      if (onIrAHorarios) onIrAHorarios(peli.id_pelicula);
+                      else if (onProgramarFuncion) onProgramarFuncion(peli.id_pelicula);
+                    }}
+                    className="px-3.5 py-1.5 bg-brand-yellow hover:bg-yellow-400 text-dark-950 font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5 shadow-sm"
                   >
-                    <i className="fa-solid fa-plus text-[10px]"></i>
-                    <span>Programar</span>
+                    <i className="fa-regular fa-calendar-days text-[11px]"></i>
+                    <span>Horarios</span>
                   </button>
                 </div>
               </div>

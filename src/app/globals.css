@@ -1105,14 +1105,19 @@ body {
 
 /* --- Bloque de limpieza (patrón rayado más notorio) --- */
 .grid-funcion-limpieza {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  z-index: 5;
+  pointer-events: none;
+  border-radius: 6px;
   background: repeating-linear-gradient(-45deg,
-      rgba(0, 0, 0, 0.5),
-      rgba(0, 0, 0, 0.5) 5px,
-      rgba(255, 255, 255, 0.08) 5px,
-      rgba(255, 255, 255, 0.08) 10px);
-  border-top: 1px dashed rgba(255, 255, 255, 0.3);
-  position: relative;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+      rgba(0, 0, 0, 0.6),
+      rgba(0, 0, 0, 0.6) 5px,
+      rgba(255, 255, 255, 0.12) 5px,
+      rgba(255, 255, 255, 0.12) 10px);
+  border: 1px dashed rgba(255, 255, 255, 0.25);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .grid-funcion-limpieza-label {

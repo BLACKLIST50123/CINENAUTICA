@@ -15,6 +15,38 @@ export interface ContextoSedeDTO {
   ocupacion_hoy_pct: number;
 }
 
+export interface FuncionRendimientoItemDTO {
+  id_funcion: string;
+  titulo_pelicula: string;
+  hora_inicio: string;
+  hora_fin: string;
+  formato_nombre: string;
+  idioma: string;
+  capacidad: number;
+  ocupados: number;
+  ocupacion_pct: number;
+}
+
+export interface FechaRendimientoItemDTO {
+  fecha: string;
+  fecha_formateada: string;
+  total_funciones: number;
+  funciones: FuncionRendimientoItemDTO[];
+}
+
+export interface RendimientoSalaJerarquicoDTO {
+  id_sala: string;
+  numero_sala: number;
+  nombre_sala: string;
+  formatos_str: string;
+  capacidad_total: number;
+  asientos_buen_estado: number;
+  asientos_mantenimiento: number;
+  asientos_accesibles: number;
+  total_funciones: number;
+  fechas: FechaRendimientoItemDTO[];
+}
+
 export interface MetricasDashboardDTO {
   periodo: PeriodoDashboard;
   ingresos_totales: number;
@@ -37,6 +69,7 @@ export interface MetricasDashboardDTO {
     ocupacion_pct: number;
     recaudacion: number;
   }[];
+  rendimiento_salas_detalle: RendimientoSalaJerarquicoDTO[];
   ultimas_ventas: {
     id_orden: string;
     codigo_orden: string;
@@ -72,6 +105,7 @@ export interface FuncionAdminSedeDTO {
   pelicula_titulo: string;
   pelicula_duracion_min: number;
   pelicula_poster: string;
+  tipo_lanzamiento: string;
   id_sala: string;
   sala_numero: number;
   sala_nombre: string;

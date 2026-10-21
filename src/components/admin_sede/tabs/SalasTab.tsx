@@ -10,6 +10,7 @@ interface SalasTabProps {
   salas: SalaDetalleSedeDTO[];
   onAbrirCrearSala: () => void;
   onRecargarSalas: () => void;
+  onCambiosSinGuardarChange?: (hayCambios: boolean) => void;
 }
 
 interface FormatoGlobalItem {
@@ -28,6 +29,7 @@ export default function SalasTab({
   salas,
   onAbrirCrearSala,
   onRecargarSalas,
+  onCambiosSinGuardarChange,
 }: SalasTabProps) {
   const [salaIndex, setSalaIndex] = useState<number>(0);
   const [subtab, setSubtab] = useState<SubTabTipo>("dimensiones");
@@ -45,6 +47,10 @@ export default function SalasTab({
     { fila: string; columna: number; tipo_asiento: string; en_mantenimiento: boolean }[]
   >([]);
 
+  // Snapshot limpio y control de cambios no guardados
+  const [snapshotLimpio, setSnapshotLimpio] = useState<string>("");
+  const [salaDestinoPendiente, setSalaDestinoPendiente] = useState<number | null>(null);
+
   // Modales y feedback
   const [mensajeAlerta, setMensajeAlerta] = useState<{ tipo: "error" | "exito"; texto: string } | null>(null);
   const [cargandoAccion, setCargandoAccion] = useState<boolean>(false);
@@ -53,6 +59,38 @@ export default function SalasTab({
   const [eliminarSalaPendiente, setEliminarSalaPendiente] = useState<SalaDetalleSedeDTO | null>(null);
 
   const salaActual: SalaDetalleSedeDTO | undefined = salas[salaIndex] || salas[0];
+
+  const crearSnapshot = (filas: number, cols: number, estado: string, pasillos: number[], formatos: string[], asientos: any[]) => {
+    return JSON.stringify({
+      filas,
+      cols,
+      estado,
+      pasillos: [...pasillos].sort((a, b) => a - b),
+      formatos: [...formatos].sort(),
+      asientos: asientos.map((a) => `${a.fila}:${a.columna}:${a.tipo_asiento}:${Boolean(a.en_mantenimiento)}`).sort(),
+    });
+  };
+
+  const hayCambiosSinGuardar = useMemo(() => {
+    if (!snapshotLimpio) return false;
+    const actual = crearSnapshot(filasInput, columnasInput, estadoOperativo, pasillosLocales, formatosSeleccionados, asientosMatriz);
+    return actual !== snapshotLimpio;
+  }, [snapshotLimpio, filasInput, columnasInput, estadoOperativo, pasillosLocales, formatosSeleccionados, asientosMatriz]);
+
+  useEffect(() => {
+    onCambiosSinGuardarChange?.(hayCambiosSinGuardar);
+  }, [hayCambiosSinGuardar, onCambiosSinGuardarChange]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hayCambiosSinGuardar) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hayCambiosSinGuardar]);
 
   // Cargar catálogo de formatos globales
   useEffect(() => {
@@ -107,6 +145,17 @@ export default function SalasTab({
       }
     }
     setAsientosMatriz(nuevaMatriz);
+    setSnapshotLimpio(crearSnapshot(f, c, sala.estado || "ACTIVA", sala.pasillos || [], formatosIds, nuevaMatriz));
+  };
+
+  const handleSeleccionarSala = (idx: number) => {
+    if (idx === salaIndex) return;
+    if (hayCambiosSinGuardar) {
+      setSalaDestinoPendiente(idx);
+      return;
+    }
+    setSalaIndex(idx);
+    sincronizarSalaActual(salas[idx]);
   };
 
   useEffect(() => {
@@ -254,6 +303,7 @@ export default function SalasTab({
         tipo: "exito",
         texto: `Configuración de '${salaActual.nombre_sala}' guardada exitosamente.`,
       });
+      setSnapshotLimpio(crearSnapshot(filasInput, columnasInput, estadoOperativo, pasillosLocales, formatosSeleccionados, asientosMatriz));
       setMostrarConfirmacionGuardar(false);
       onRecargarSalas();
     } catch (err: any) {
@@ -367,10 +417,7 @@ export default function SalasTab({
             <button
               key={s.id_sala}
               type="button"
-              onClick={() => {
-                setSalaIndex(idx);
-                sincronizarSalaActual(s);
-              }}
+              onClick={() => handleSeleccionarSala(idx)}
               className={`px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border flex items-center gap-2.5 ${
                 seleccionada
                   ? "bg-brand-blue text-white border-brand-blue font-bold shadow-lg shadow-sky-500/20"
@@ -660,7 +707,7 @@ export default function SalasTab({
                               }
                             }}
                             title={`Pasillo (Columna ${asiento.columna})`}
-                            className={`w-7 h-7 rounded border border-dashed border-white/15 bg-transparent flex items-center justify-center text-slate-600 text-[10px] ${
+                            className={`w-8 h-8 md:w-9 md:h-9 rounded border border-dashed border-white/15 bg-transparent flex items-center justify-center text-slate-600 text-[10px] shrink-0 ${
                               subtab === "dimensiones" ? "cursor-pointer hover:border-brand-yellow/50" : "select-none opacity-40"
                             }`}
                           >
@@ -669,16 +716,19 @@ export default function SalasTab({
                         );
                       }
 
-                      // Estilos según subtab y estado
-                      let claseColor = "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30";
+                      // Estilos idénticos a Counter POS
+                      let claseColor =
+                        "bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer hover:scale-105 border-b-4 border-black/40";
                       let iconoInterno: React.ReactNode = asiento.columna;
 
                       if (esMantenimiento) {
-                        claseColor = "bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30";
-                        iconoInterno = <i className="fa-solid fa-wrench text-[9px]"></i>;
+                        claseColor =
+                          "bg-rose-600 hover:bg-rose-500 text-white font-bold cursor-pointer hover:scale-105 border-b-4 border-black/60";
+                        iconoInterno = <i className="fa-solid fa-wrench text-[10px]"></i>;
                       } else if (esAccesible) {
-                        claseColor = "bg-brand-blue/20 text-brand-blue border border-brand-blue/50 hover:bg-brand-blue/30";
-                        iconoInterno = <i className="fa-solid fa-wheelchair text-[10px]"></i>;
+                        claseColor =
+                          "bg-blue-600 hover:bg-blue-500 text-white font-bold cursor-pointer hover:scale-105 border-b-4 border-black/50";
+                        iconoInterno = <i className="fa-solid fa-wheelchair text-[11px]"></i>;
                       }
 
                       return (
@@ -694,12 +744,12 @@ export default function SalasTab({
                           }}
                           title={`Butaca ${asiento.fila}${asiento.columna} - ${
                             esMantenimiento
-                              ? "En Mantenimiento"
+                              ? "En Mantenimiento (Clic para cambiar)"
                               : esAccesible
-                              ? "Asiento Accesible"
-                              : "Disponible"
+                              ? "Asiento Accesible (Clic para cambiar)"
+                              : "Disponible (Clic para cambiar)"
                           }`}
-                          className={`w-7 h-7 rounded text-[10px] font-bold font-mono transition-all flex items-center justify-center ${claseColor} active:scale-95`}
+                          className={`w-8 h-8 md:w-9 md:h-9 rounded-t-lg rounded-b-sm flex items-center justify-center text-[10px] md:text-xs font-mono font-bold transition-all shrink-0 active:scale-95 shadow-sm ${claseColor}`}
                         >
                           {iconoInterno}
                         </button>
@@ -786,6 +836,23 @@ export default function SalasTab({
         cargando={cargandoAccion}
         onConfirmar={confirmarEliminarSala}
         onCancelar={() => setEliminarSalaPendiente(null)}
+      />
+
+      {/* Modal de confirmación para Descartar Cambios no guardados al cambiar de sala */}
+      <ModalConfirmacion
+        abierto={salaDestinoPendiente !== null}
+        titulo="¿Descartar cambios no guardados?"
+        mensaje="Has realizado modificaciones en la estructura o butacas de la sala actual. Si sales ahora, se perderán todos los cambios que hayas hecho."
+        tipo="advertencia"
+        textoConfirmar="Salir"
+        textoCancelar="Volver"
+        onConfirmar={() => {
+          const idx = salaDestinoPendiente!;
+          setSalaDestinoPendiente(null);
+          setSalaIndex(idx);
+          sincronizarSalaActual(salas[idx]);
+        }}
+        onCancelar={() => setSalaDestinoPendiente(null)}
       />
     </div>
   );
