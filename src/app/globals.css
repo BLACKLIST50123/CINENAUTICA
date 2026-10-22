@@ -33,6 +33,40 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ============================================================
+   PUNTERO (cursor: pointer) GLOBAL PARA ELEMENTOS INTERACTIVOS
+   ============================================================ */
+@layer base {
+  button,
+  button *,
+  [type="button"],
+  [type="button"] *,
+  [type="reset"],
+  [type="submit"],
+  [role="button"],
+  select,
+  summary,
+  a,
+  a *,
+  input[type="checkbox"],
+  input[type="radio"],
+  .cursor-pointer,
+  .clickable,
+  [onclick] {
+    cursor: pointer !important;
+  }
+
+  button:disabled,
+  button:disabled *,
+  [type="button"]:disabled,
+  [type="submit"]:disabled,
+  [role="button"][aria-disabled="true"],
+  input:disabled,
+  .cursor-not-allowed {
+    cursor: not-allowed !important;
+  }
+}
+
 
 /* ============================================================
    CINERAMA — HOJA DE ESTILOS
@@ -2206,4 +2240,16 @@ body {
 
 .sticky-bar-bottom {
   box-shadow: 0 -10px 30px rgba(0, 0, 0, .8);
+}
+
+/* Ocultar barra de desplazamiento manteniendo funcionalidad completa de scroll */
+.scrollbar-none,
+.salas-tabs-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar,
+.salas-tabs-scrollbar::-webkit-scrollbar {
+  display: none;
 }

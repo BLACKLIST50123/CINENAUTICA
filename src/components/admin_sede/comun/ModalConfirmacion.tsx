@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 interface ModalConfirmacionProps {
   abierto: boolean;
@@ -25,7 +26,14 @@ export default function ModalConfirmacion({
   onConfirmar,
   onCancelar,
 }: ModalConfirmacionProps) {
-  if (!abierto) return null;
+  const [montado, setMontado] = useState<boolean>(false);
+  const [sacudir, setSacudir] = useState<boolean>(false);
+
+  useEffect(() => {
+    setMontado(true);
+  }, []);
+
+  if (!abierto || !montado) return null;
 
   const coloresIcono = {
     peligro: "bg-red-500/10 text-brand-red border-brand-red/30",
@@ -48,11 +56,51 @@ export default function ModalConfirmacion({
     exito: "fa-circle-check",
   }[tipo];
 
-  return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-      <div className="relative w-full max-w-md bg-dark-900 border border-white/10 rounded-2xl p-6 shadow-2xl text-white transform transition-all animate-scaleUp">
-        <div className="flex items-start gap-4">
-          <div className={`w-12 h-12 rounded-xl flex items-center justify-center border text-xl flex-shrink-0 ${coloresIcono}`}>
+  // Backdrop estático / bloqueante: Clic afuera en el overlay oscuro no cierra el modal,
+  // sino que genera una suave pulsación para indicar que se debe confirmar o cancelar.
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      setSacudir(true);
+      setTimeout(() => setSacudir(false), 260);
+    }
+  };
+
+  const modalContent = (
+    <div
+      onClick={handleBackdropClick}
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
+      style={{
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: "100vw",
+        height: "100vh",
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className={`relative w-full max-w-md bg-dark-900 border border-white/10 rounded-2xl p-6 shadow-2xl text-white transform transition-transform duration-150 ${
+          sacudir
+            ? "scale-[1.03] border-brand-yellow/50 shadow-[0_0_30px_rgba(220,158,63,0.25)]"
+            : "scale-100"
+        }`}
+      >
+        {/* Botón X de cerrar accesible */}
+        <button
+          type="button"
+          disabled={cargando}
+          onClick={onCancelar}
+          title="Cerrar modal"
+          className="absolute top-4 right-4 w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-40"
+        >
+          <i className="fa-solid fa-xmark text-sm"></i>
+        </button>
+
+        <div className="flex items-start gap-4 pr-6">
+          <div
+            className={`w-12 h-12 rounded-xl flex items-center justify-center border text-xl flex-shrink-0 ${coloresIcono}`}
+          >
             <i className={`fa-solid ${icono}`}></i>
           </div>
           <div className="flex-1 min-w-0">
@@ -66,7 +114,7 @@ export default function ModalConfirmacion({
             type="button"
             disabled={cargando}
             onClick={onCancelar}
-            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-50"
+            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-50"
           >
             {textoCancelar}
           </button>
@@ -74,7 +122,7 @@ export default function ModalConfirmacion({
             type="button"
             disabled={cargando}
             onClick={onConfirmar}
-            className={`px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg transition-all flex items-center gap-2 ${coloresBoton} disabled:opacity-50`}
+            className={`px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg transition-all flex items-center gap-2 cursor-pointer ${coloresBoton} disabled:opacity-50`}
           >
             {cargando ? (
               <>
@@ -89,4 +137,6 @@ export default function ModalConfirmacion({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }

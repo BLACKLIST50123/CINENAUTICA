@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { AdminSedeDao } from "@/src/daos/AdminSedeDao";
 import type { SalaDetalleSedeDTO, AsientoAdminSedeDTO } from "@/src/dtos/adminSede";
 import ModalConfirmacion from "../comun/ModalConfirmacion";
@@ -50,6 +50,43 @@ export default function SalasTab({
   // Snapshot limpio y control de cambios no guardados
   const [snapshotLimpio, setSnapshotLimpio] = useState<string>("");
   const [salaDestinoPendiente, setSalaDestinoPendiente] = useState<number | null>(null);
+
+  // Control de desplazamiento horizontal y botones para las pestañas de salas
+  const salasScrollRef = useRef<HTMLDivElement>(null);
+  const [puedeScrollIzq, setPuedeScrollIzq] = useState<boolean>(false);
+  const [puedeScrollDer, setPuedeScrollDer] = useState<boolean>(false);
+
+  const verificarScrollSalas = useCallback(() => {
+    const el = salasScrollRef.current;
+    if (!el) return;
+    setPuedeScrollIzq(el.scrollLeft > 6);
+    setPuedeScrollDer(el.scrollLeft < el.scrollWidth - el.clientWidth - 6);
+  }, []);
+
+  useEffect(() => {
+    verificarScrollSalas();
+    const handleResize = () => verificarScrollSalas();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [verificarScrollSalas, salas.length]);
+
+  const scrollSalas = (direccion: "izq" | "der") => {
+    const el = salasScrollRef.current;
+    if (!el) return;
+    const desplazamiento = 260;
+    el.scrollBy({
+      left: direccion === "izq" ? -desplazamiento : desplazamiento,
+      behavior: "smooth",
+    });
+    setTimeout(verificarScrollSalas, 350);
+  };
+
+  const handleWheelSalas = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (salasScrollRef.current && e.deltaY !== 0) {
+      salasScrollRef.current.scrollLeft += e.deltaY;
+      verificarScrollSalas();
+    }
+  };
 
   // Modales y feedback
   const [mensajeAlerta, setMensajeAlerta] = useState<{ tipo: "error" | "exito"; texto: string } | null>(null);
@@ -409,35 +446,67 @@ export default function SalasTab({
         </div>
       )}
 
-      {/* Selector Horizontal de Salas (Scroll horizontal) */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {salas.map((s, idx) => {
-          const seleccionada = salaIndex === idx;
-          return (
-            <button
-              key={s.id_sala}
-              type="button"
-              onClick={() => handleSeleccionarSala(idx)}
-              className={`px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border flex items-center gap-2.5 ${
-                seleccionada
-                  ? "bg-brand-blue text-white border-brand-blue font-bold shadow-lg shadow-sky-500/20"
-                  : "bg-[#0D1627] border-white/10 text-slate-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <i className="fa-solid fa-door-open text-[11px]"></i>
-              <span>{s.nombre_sala}</span>
-              <span
-                className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
-                  s.estado === "ACTIVA"
-                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                    : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+      {/* Selector Horizontal de Salas con Botones de Navegación y Barra Deslizable */}
+      <div className="relative flex items-center gap-2">
+        {/* Botón Scroll Izquierda */}
+        <button
+          type="button"
+          onClick={() => scrollSalas("izq")}
+          disabled={!puedeScrollIzq}
+          aria-label="Desplazar salas a la izquierda"
+          title="Desplazar salas a la izquierda"
+          className="w-8 h-8 rounded-xl bg-[#0D1627] border border-white/10 text-slate-300 hover:text-white hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center shrink-0 shadow-md transition-all active:scale-95"
+        >
+          <i className="fa-solid fa-chevron-left text-xs"></i>
+        </button>
+
+        {/* Contenedor Horizontal con Scroll Limpio (Barra oculta) */}
+        <div
+          ref={salasScrollRef}
+          onScroll={verificarScrollSalas}
+          onWheel={handleWheelSalas}
+          className="flex-1 flex items-center gap-2 overflow-x-auto py-1 scrollbar-none select-none"
+        >
+          {salas.map((s, idx) => {
+            const seleccionada = salaIndex === idx;
+            return (
+              <button
+                key={s.id_sala}
+                type="button"
+                onClick={() => handleSeleccionarSala(idx)}
+                className={`px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border flex items-center gap-2.5 shrink-0 ${
+                  seleccionada
+                    ? "bg-brand-blue text-white border-brand-blue font-bold shadow-lg shadow-sky-500/20"
+                    : "bg-[#0D1627] border-white/10 text-slate-400 hover:text-white hover:bg-white/5"
                 }`}
               >
-                {s.estado === "ACTIVA" ? "Activa" : "Mant."}
-              </span>
-            </button>
-          );
-        })}
+                <i className="fa-solid fa-door-open text-[11px]"></i>
+                <span>{s.nombre_sala}</span>
+                <span
+                  className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+                    s.estado === "ACTIVA"
+                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                      : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                  }`}
+                >
+                  {s.estado === "ACTIVA" ? "Activa" : "Mant."}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Botón Scroll Derecha */}
+        <button
+          type="button"
+          onClick={() => scrollSalas("der")}
+          disabled={!puedeScrollDer}
+          aria-label="Desplazar salas a la derecha"
+          title="Desplazar salas a la derecha"
+          className="w-8 h-8 rounded-xl bg-[#0D1627] border border-white/10 text-slate-300 hover:text-white hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center shrink-0 shadow-md transition-all active:scale-95"
+        >
+          <i className="fa-solid fa-chevron-right text-xs"></i>
+        </button>
       </div>
 
       {/* Contenedor Principal de la Sala Seleccionada */}
@@ -652,40 +721,46 @@ export default function SalasTab({
             </span>
           </div>
 
-          {/* Selector de Pasillos por columna en Subtab Dimensiones */}
-          {subtab === "dimensiones" && (
-            <div className="overflow-x-auto pb-2 flex justify-center">
-              <div className="inline-flex items-center gap-2 min-w-max mb-1 pl-6 pr-6">
-                {Array.from({ length: columnasInput }).map((_, cIdx) => {
-                  const colNum = cIdx + 1;
-                  const esPasillo = pasillosLocales.includes(colNum);
-                  return (
-                    <button
-                      key={colNum}
-                      type="button"
-                      onClick={() => alternarColumnaPasillo(colNum)}
-                      title={`Columna ${colNum}: ${esPasillo ? "Pasillo (Clic para restaurar)" : "Butacas (Clic para hacer pasillo)"}`}
-                      className={`w-7 h-5 rounded text-[9px] font-bold font-mono transition-all flex items-center justify-center border ${
-                        esPasillo
-                          ? "bg-amber-500/20 text-amber-300 border-dashed border-amber-400/50"
-                          : "bg-white/5 text-slate-400 border-white/10 hover:border-brand-yellow hover:text-white"
-                      }`}
-                    >
-                      {esPasillo ? "PAS" : colNum}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
           {/* Matriz interactiva de butacas */}
           <div className="overflow-x-auto pb-6 pt-2 flex justify-center">
             <div className="inline-flex flex-col gap-2 min-w-max">
+              {/* Selector / Encabezado de Columnas en Subtab Dimensiones (Alineado exactamente con cada columna) */}
+              {subtab === "dimensiones" && (
+                <div className="flex items-center gap-2 mb-1">
+                  {/* Espaciador izquierdo que calza exactamente con la letra de fila */}
+                  <span className="w-6 shrink-0 select-none"></span>
+
+                  <div className="flex items-center gap-2">
+                    {Array.from({ length: columnasInput }).map((_, cIdx) => {
+                      const colNum = cIdx + 1;
+                      const esPasillo = pasillosLocales.includes(colNum);
+                      return (
+                        <button
+                          key={colNum}
+                          type="button"
+                          onClick={() => alternarColumnaPasillo(colNum)}
+                          title={`Columna ${colNum}: ${esPasillo ? "Pasillo (Clic para restaurar)" : "Butacas (Clic para hacer pasillo)"}`}
+                          className={`w-10 md:w-11 h-6 md:h-7 rounded text-[10px] md:text-xs font-bold font-mono transition-all flex items-center justify-center border shrink-0 ${
+                            esPasillo
+                              ? "bg-amber-500/20 text-amber-300 border-dashed border-amber-400/50"
+                              : "bg-white/5 text-slate-400 border-white/10 hover:border-brand-yellow hover:text-white"
+                          }`}
+                        >
+                          {esPasillo ? "PAS" : colNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Espaciador derecho que calza con la letra de fila derecha */}
+                  <span className="w-6 shrink-0 select-none"></span>
+                </div>
+              )}
+
               {Array.from(matrizPorFila.entries()).map(([fila, listaAsientos]) => (
                 <div key={fila} className="flex items-center gap-2">
                   {/* Letra izquierda */}
-                  <span className="w-6 text-xs font-bold text-slate-400 font-mono text-center select-none">
+                  <span className="w-6 text-xs font-bold text-slate-400 font-mono text-center select-none shrink-0">
                     {fila}
                   </span>
 
@@ -707,11 +782,11 @@ export default function SalasTab({
                               }
                             }}
                             title={`Pasillo (Columna ${asiento.columna})`}
-                            className={`w-8 h-8 md:w-9 md:h-9 rounded border border-dashed border-white/15 bg-transparent flex items-center justify-center text-slate-600 text-[10px] shrink-0 ${
+                            className={`w-10 md:w-11 h-9 md:h-10 rounded border border-dashed border-white/15 bg-transparent flex items-center justify-center text-slate-600 text-[10px] shrink-0 ${
                               subtab === "dimensiones" ? "cursor-pointer hover:border-brand-yellow/50" : "select-none opacity-40"
                             }`}
                           >
-                            <i className="fa-solid fa-shoe-prints text-[9px] opacity-40"></i>
+                            <i className="fa-solid fa-shoe-prints text-[10px] opacity-40"></i>
                           </div>
                         );
                       }
@@ -719,16 +794,30 @@ export default function SalasTab({
                       // Estilos idénticos a Counter POS
                       let claseColor =
                         "bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer hover:scale-105 border-b-4 border-black/40";
-                      let iconoInterno: React.ReactNode = asiento.columna;
+                      let contenidoButaca: React.ReactNode = `${asiento.fila}${asiento.columna}`;
 
                       if (esMantenimiento) {
                         claseColor =
                           "bg-rose-600 hover:bg-rose-500 text-white font-bold cursor-pointer hover:scale-105 border-b-4 border-black/60";
-                        iconoInterno = <i className="fa-solid fa-wrench text-[10px]"></i>;
+                        contenidoButaca = (
+                          <div className="flex flex-col items-center justify-center leading-none">
+                            <i className="fa-solid fa-wrench text-[9px] mb-0.5"></i>
+                            <span className="text-[9px] md:text-[10px] font-mono font-extrabold tracking-tighter">
+                              {asiento.fila}{asiento.columna}
+                            </span>
+                          </div>
+                        );
                       } else if (esAccesible) {
                         claseColor =
                           "bg-blue-600 hover:bg-blue-500 text-white font-bold cursor-pointer hover:scale-105 border-b-4 border-black/50";
-                        iconoInterno = <i className="fa-solid fa-wheelchair text-[11px]"></i>;
+                        contenidoButaca = (
+                          <div className="flex flex-col items-center justify-center leading-none">
+                            <i className="fa-solid fa-wheelchair text-[10px] mb-0.5"></i>
+                            <span className="text-[9px] md:text-[10px] font-mono font-extrabold tracking-tighter">
+                              {asiento.fila}{asiento.columna}
+                            </span>
+                          </div>
+                        );
                       }
 
                       return (
@@ -749,16 +838,16 @@ export default function SalasTab({
                               ? "Asiento Accesible (Clic para cambiar)"
                               : "Disponible (Clic para cambiar)"
                           }`}
-                          className={`w-8 h-8 md:w-9 md:h-9 rounded-t-lg rounded-b-sm flex items-center justify-center text-[10px] md:text-xs font-mono font-bold transition-all shrink-0 active:scale-95 shadow-sm ${claseColor}`}
+                          className={`w-10 md:w-11 h-9 md:h-10 rounded-t-lg rounded-b-sm flex items-center justify-center text-[10px] md:text-xs font-mono font-extrabold tracking-tight transition-all shrink-0 active:scale-95 shadow-sm ${claseColor}`}
                         >
-                          {iconoInterno}
+                          {contenidoButaca}
                         </button>
                       );
                     })}
                   </div>
 
                   {/* Letra derecha */}
-                  <span className="w-6 text-xs font-bold text-slate-400 font-mono text-center select-none">
+                  <span className="w-6 text-xs font-bold text-slate-400 font-mono text-center select-none shrink-0">
                     {fila}
                   </span>
                 </div>

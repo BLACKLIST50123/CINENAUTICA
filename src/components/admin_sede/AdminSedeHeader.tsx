@@ -32,7 +32,8 @@ export default function AdminSedeHeader({
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-dark-950/90 backdrop-blur-md border-b border-white/10 px-4 md:px-8 flex items-center justify-between gap-4">
+    <>
+      <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-dark-950/90 backdrop-blur-md border-b border-white/10 px-4 md:px-8 flex items-center justify-between gap-4">
       {/* Logo y Badge de Rol */}
       <div className="flex items-center gap-3 min-w-0">
         <Link href="/admin_sede" className="flex items-center gap-2.5">
@@ -113,6 +114,7 @@ export default function AdminSedeHeader({
         </div>
       </div>
 
+      </header>
       <ModalConfirmacion
         abierto={confirmarLogout}
         titulo="¿Cerrar Sesión Corporativa?"
@@ -123,6 +125,6 @@ export default function AdminSedeHeader({
         onConfirmar={handleCerrarSesion}
         onCancelar={() => setConfirmarLogout(false)}
       />
-    </header>
+    </>
   );
 }
