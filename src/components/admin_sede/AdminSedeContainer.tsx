@@ -37,11 +37,19 @@ import ModalNuevoPersonal from "./modales/ModalNuevoPersonal";
 import ModalFichaPersonal from "./modales/ModalFichaPersonal";
 import ModalConfirmacion from "./comun/ModalConfirmacion";
 
-export default function AdminSedeContainer() {
+export interface AdminSedeContainerProps {
+  idSedeInicial?: number;
+  onVolverAdminGeneral?: () => void;
+}
+
+export default function AdminSedeContainer({
+  idSedeInicial,
+  onVolverAdminGeneral,
+}: AdminSedeContainerProps = {}) {
   const router = useRouter();
   const { usuario, cargando: cargandoSesion } = useSesion();
 
-  const [idSede, setIdSede] = useState<number>(1);
+  const [idSede, setIdSede] = useState<number>(idSedeInicial || 1);
   const [contextoSede, setContextoSede] = useState<ContextoSedeDTO | null>(null);
   const [salas, setSalas] = useState<SalaDetalleSedeDTO[]>([]);
   const [peliculas, setPeliculas] = useState<PeliculaCatalogoSedeDTO[]>([]);
@@ -72,9 +80,14 @@ export default function AdminSedeContainer() {
   const [modalNuevoPersonalAbierto, setModalNuevoPersonalAbierto] = useState<boolean>(false);
   const [personalFicha, setPersonalFicha] = useState<PersonalSedeDTO | null>(null);
 
-  // 1. Obtener la sede asignada al colaborador
+  // 1. Obtener la sede asignada al colaborador o usar idSedeInicial
   useEffect(() => {
     async function resolverSede() {
+      if (idSedeInicial) {
+        setIdSede(idSedeInicial);
+        return;
+      }
+
       let sedeEncontrada = 1;
 
       if (usuario?.id_usuario) {
@@ -95,7 +108,7 @@ export default function AdminSedeContainer() {
     if (!cargandoSesion) {
       resolverSede();
     }
-  }, [usuario, cargandoSesion]);
+  }, [usuario, cargandoSesion, idSedeInicial]);
 
   // 2. Cargar contexto y recursos de la sede
   const cargarRecursosSede = useCallback(async () => {
@@ -166,6 +179,28 @@ export default function AdminSedeContainer() {
 
       {/* Contenedor Principal */}
       <main className="max-w-[1500px] mx-auto px-4 md:px-8 pt-24 pb-12">
+        {onVolverAdminGeneral && (
+          <div className="mb-4 bg-purple-950/70 border border-purple-500/30 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-purple-300">
+                <i className="fa-solid fa-user-shield"></i>
+              </div>
+              <div>
+                <p className="text-xs font-bold text-white uppercase tracking-wider">Modo Vista Corporativa</p>
+                <p className="text-xs text-purple-200">Administrando sede individual como Super Administrador General</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onVolverAdminGeneral}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-md hover:shadow-purple-500/25 cursor-pointer"
+            >
+              <i className="fa-solid fa-arrow-left"></i>
+              <span>Volver a Gestión de Sedes</span>
+            </button>
+          </div>
+        )}
+
         {/* Barra de Contexto en Vivo */}
         <AdminSedeContextBar contexto={contextoSede} />
 

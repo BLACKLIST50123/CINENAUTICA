@@ -2,23 +2,19 @@
 Memoria del proyecto entre sesiones. Máximo ~50 líneas: resume o elimina lo que ya no aporte.
 
 ## Estado Actual del Proyecto
-- **Fase 0 — Infraestructura Base: ✅ COMPLETADA**
-- **Fase 1 — Autenticación Real: ✅ COMPLETADA** (2026-10-13)
-- **Fase 2 — Cartelera e Inicio: ✅ COMPLETADA** (2026-10-13)
-- **Fase 3 — Detalle de Película y Selección de Función: ✅ COMPLETADA** (2026-10-14)
-- **Fase 4 — Mapa de Asientos y Motor de Tarifas: ✅ COMPLETADA** (2026-10-14)
-- **Fase 5 — Dulcería (Productos, Combos, Stock y Precios Locales): ✅ COMPLETADA** (2026-10-14)
-- **Fase 6 — Pago y Comprobante (Pasarela, Cupones, Puntos, Boleta/Factura): ✅ COMPLETADA** (2026-10-14)
-- **Fase 7 — Ticket / Boleta (QR, Desglose SUNAT 18% IGV, Impresión Térmica): ✅ COMPLETADA** (2026-10-14)
-- **Fase 8 — Perfil Socio (Nivel, Puntos, Beneficio Cumpleaños, Carnet Digital): ✅ COMPLETADA** (2026-10-14)
-- **Fase 9 — Historial de Compras (Órdenes, Invitados, Detalles Expandibles, Tickets): ✅ COMPLETADA** (2026-10-14)
-- **Fase 10 — Vistas Estáticas con Datos Reales (Ubicación, Promociones, Contacto): ✅ COMPLETADA** (2026-10-14)
-- **Fase 11 — Módulo Counter POS (Boletería, Dulcería, Mixto & Hub Admin Sede): ✅ COMPLETADA** (2026-10-15)
-- **Fase 12 — Acceso Corporativo Seguro, Roles Supabase y Hub Admin Sede: ✅ COMPLETADA** (2026-10-18)
-- **Fase 13 — Admin de Sede con Datos Reales y Confirmaciones de Seguridad: ✅ COMPLETADA** (2026-10-18)
+- **Fases 0 a 10 — Plataforma Cliente MVP (Cartelera, Butacas, Dulcería, Pagos, Tickets, Perfil, Historial): ✅ COMPLETADAS**
+- **Fase 11 — Módulo Counter POS (Boletería, Dulcería, Mixto & Hub Admin Sede): ✅ COMPLETADA**
+- **Fases 12 y 13 — Acceso Corporativo Seguro y Admin de Sede (9 Tabs Modulares con Datos Reales): ✅ COMPLETADAS**
+- **Fase 14 — Admin General (Modularización + Datos Reales Supabase + Rediseño Visual): ✅ COMPLETADA** (2026-10-21)
+  - Fase 14.1 — Scaffolding (DTOs, DAO, Container, Header, NavBar, page.tsx): ✅ COMPLETADA
+  - Fase 14.2 — Dashboard General (8 KPIs, gráfico barras pico, Donut SVG % attach, matriz 7x7 mapa ocupación, ranking sedes, top películas): ✅ COMPLETADA
+  - Fase 14.3 — Datos Globales (Películas con formatos y trailer, Dulcería con tarjetas Admin_Sede, Tarifas en 3 secciones, Descuentos): ✅ COMPLETADA
+  - Fase 14.4 — Gestión de Sedes (acordeón desplegable por ciudad con drill-down a Admin_Sede): ✅ COMPLETADA
+  - Fase 14.5 — Suite de Pruebas y Limpieza (0 errores 400/404, 56 tests verdes, TS 0 errores): ✅ COMPLETADA
+  - Fase 14.6 — Modales de Confirmación CRUD Centralizados (Portal) y Validaciones Inline Robustas en todos los formularios: ✅ COMPLETADA
 
 ## Suite de Pruebas y Cobertura
-- **49 de 49 pruebas unitarias e integración pasando en verde** (`npx vitest run` en 11 suites de pruebas).
+- **56 de 56 pruebas unitarias e integración pasando en verde** (`npx vitest run` en 12 suites de pruebas).
 - **TypeScript 0 errores** (`npx tsc --noEmit`).
 - Todas las rutas activas y operativas en HTTP 200 OK (`/`, `/asientos`, `/dulceria`, `/pago`, `/ticket`, `/socio`, `/historial`, `/promociones`, `/ubicacion`, `/contacto`, `/acceso`, `/counter`, `/counter/boleteria`, `/counter/dulceria`, `/counter/mixto`, `/admin_sede`, `/admin_general`).
 
@@ -33,13 +29,13 @@ Memoria del proyecto entre sesiones. Máximo ~50 líneas: resume o elimina lo qu
 
 ## PATRONES USADOS EN EL PROYECTO, RAZON Y UBICACION (No borrar, excluir de la longitud maxima de MEMORY )
 - **DAO Pattern (Data Access Object):**
-  - *Ubicación:* `src/daos/` (`PeliculaDao.ts`, `SedeDao.ts`, `FuncionDao.ts`, `TarifaDao.ts`, `AsientoDao.ts`, `ProductoDao.ts`, `CuponDao.ts`, `OrdenDao.ts`, `SocioDao.ts`, `ContactoDao.ts`).
+  - *Ubicación:* `src/daos/` (`AdminGeneralDao.ts`, `AdminSedeDao.ts`, `PeliculaDao.ts`, `SedeDao.ts`, `FuncionDao.ts`, `TarifaDao.ts`, `AsientoDao.ts`, `ProductoDao.ts`, `CuponDao.ts`, `OrdenDao.ts`, `SocioDao.ts`, `ContactoDao.ts`).
   - *Razón:* Desacopla y encapsula todas las consultas directas a Supabase PostgREST, abstrayendo la persistencia del resto del sistema.
 - **Service Layer Pattern:**
   - *Ubicación:* `src/services/` (`carteleraService.ts`, `funcionService.ts`, `asientoService.ts`, `dulceriaService.ts`, `pagoService.ts`, `ticketService.ts`, `socioService.ts`, `historialService.ts`).
   - *Razón:* Centraliza las reglas de negocio complejas (tarifas en 3 capas, expiración de bloqueos, canje de puntos, validación SUNAT) comprobables con Vitest.
 - **DTO Pattern (Data Transfer Object):**
-  - *Ubicación:* `src/dtos/` (`cartelera.ts`, `funcion.ts`, `asiento.ts`, `producto.ts`, `orden.ts`, `socio.ts`).
+  - *Ubicación:* `src/dtos/` (`adminGeneral.ts`, `adminSede.ts`, `cartelera.ts`, `funcion.ts`, `asiento.ts`, `producto.ts`, `orden.ts`, `socio.ts`).
   - *Razón:* Define contratos inmutables de datos entre la base de datos, servicios y componentes React, previniendo acoplamiento a tablas crudas.
 - **Observer / Pub-Sub Pattern:**
   - *Ubicación:* `bloqueo_temporal` en Supabase Realtime (`Asientos.tsx`) y eventos del temporizador (`temporizador-compra-tick`).
