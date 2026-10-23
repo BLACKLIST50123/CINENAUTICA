@@ -39,20 +39,45 @@ function getFechaLocalHoy(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-function getFechaInicioPeriodo(periodo: string): Date {
+function getRangoFechas(filtros: FiltrosDashboardGeneral): { inicio: Date; fin: Date; duracionMs: number } {
   const ahora = new Date();
-  switch (periodo) {
-    case "hoy":
-      return new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 0, 0, 0);
-    case "7d":
-      return new Date(ahora.getTime() - 7 * 24 * 60 * 60 * 1000);
-    case "30d":
-      return new Date(ahora.getTime() - 30 * 24 * 60 * 60 * 1000);
-    case "anio":
-      return new Date(ahora.getFullYear(), 0, 1, 0, 0, 0);
-    default:
-      return new Date(ahora.getTime() - 30 * 24 * 60 * 60 * 1000);
+  if (filtros.periodo === "personalizado" && filtros.fecha_inicio && filtros.fecha_fin) {
+    const [yI, mI, dI] = filtros.fecha_inicio.split("-").map(Number);
+    const [yF, mF, dF] = filtros.fecha_fin.split("-").map(Number);
+    const inicio = new Date(yI, mI - 1, dI, 0, 0, 0, 0);
+    const fin = new Date(yF, mF - 1, dF, 23, 59, 59, 999);
+    const duracionMs = Math.max(fin.getTime() - inicio.getTime(), 24 * 60 * 60 * 1000);
+    return { inicio, fin, duracionMs };
   }
+
+  const fin = ahora;
+  let inicio: Date;
+  switch (filtros.periodo) {
+    case "hoy":
+      inicio = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 0, 0, 0, 0);
+      break;
+    case "7d":
+      inicio = new Date(ahora.getTime() - 7 * 24 * 60 * 60 * 1000);
+      break;
+    case "30d":
+      inicio = new Date(ahora.getTime() - 30 * 24 * 60 * 60 * 1000);
+      break;
+    case "anio":
+      inicio = new Date(ahora.getFullYear(), 0, 1, 0, 0, 0, 0);
+      break;
+    default:
+      inicio = new Date(ahora.getTime() - 30 * 24 * 60 * 60 * 1000);
+      break;
+  }
+  const duracionMs = Math.max(fin.getTime() - inicio.getTime(), 24 * 60 * 60 * 1000);
+  return { inicio, fin, duracionMs };
+}
+
+function calcularDeltaReal(actual: number, anterior: number): number {
+  if (anterior <= 0) {
+    return actual > 0 ? 100 : 0;
+  }
+  return Math.round(((actual - anterior) / anterior) * 1000) / 10;
 }
 
 const DIAS_CORTO = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
@@ -238,9 +263,11 @@ export class AdminGeneralDao {
   static async obtenerDashboardGeneral(
     filtros: FiltrosDashboardGeneral
   ): Promise<DashboardGeneralDTO> {
-    const fechaInicio = getFechaInicioPeriodo(filtros.periodo);
-    const isoInicio = fechaInicio.toISOString();
-    const fechaInicioStr = isoInicio.split("T")[0];
+    const { inicio, fin, duracionMs } = getRangoFechas(filtros);
+    const isoInicio = inicio.toISOString();
+    const isoFin = fin.toISOString();
+    const inicioStr = inicio.toISOString().split("T")[0];
+    const finStr = fin.toISOString().split("T")[0];
 
     // ── Construir filtros de sedes ──
     let sedeIds: number[] | null = null;
@@ -266,7 +293,7 @@ export class AdminGeneralDao {
       sedeIds = (sedesData || []).map((s: any) => s.id_sede);
     }
 
-    // ── Obtener órdenes del periodo ──
+    // ── 1. Órdenes del período actual ──
     let ordenesQuery = supabase
       .from("orden")
       .select(`
@@ -280,6 +307,7 @@ export class AdminGeneralDao {
         detalle_entrada ( id_detalle_entrada, estado )
       `)
       .gte("fecha_creacion", isoInicio)
+      .lte("fecha_creacion", isoFin)
       .neq("estado", "Cancelada")
       .order("fecha_creacion", { ascending: true });
 
@@ -290,51 +318,120 @@ export class AdminGeneralDao {
     const { data: ordenes } = await ordenesQuery;
     const ordenesList = ordenes || [];
 
-    // ── Calcular KPIs ──
+    // Calcular KPIs del período actual
     let ingresosNetos = 0;
     let entradasVendidas = 0;
     let ingresosDulceria = 0;
-    let reembolsos = 0;
+    let ordenesConDulceria = 0;
     const ingresosPorDia = new Map<string, number>();
 
     ordenesList.forEach((ord: any) => {
       ingresosNetos += Number(ord.total || 0);
-      ingresosDulceria += Number(ord.subtotal_productos || 0);
+      const subDulc = Number(ord.subtotal_productos || 0);
+      ingresosDulceria += subDulc;
+      if (subDulc > 0) ordenesConDulceria++;
+
       entradasVendidas += (ord.detalle_entrada || []).filter(
         (de: any) => de.estado === "Vigente" || !de.estado
       ).length;
 
-      // Agrupar por día
       const fechaOrd = ord.fecha_creacion?.split("T")[0] || "";
       if (fechaOrd) {
         ingresosPorDia.set(fechaOrd, (ingresosPorDia.get(fechaOrd) || 0) + Number(ord.total || 0));
       }
     });
 
-    // Contar reembolsos (estado 'Reembolsada' o 'Cancelada')
+    // Reembolsos del período actual
     let reembolsosQuery = supabase
       .from("orden")
       .select("id_orden", { count: "exact", head: true })
       .gte("fecha_creacion", isoInicio)
+      .lte("fecha_creacion", isoFin)
       .eq("estado", "Reembolsada");
 
     if (sedeIds && sedeIds.length > 0) {
       reembolsosQuery = reembolsosQuery.in("id_sede", sedeIds);
     }
     const { count: reembolsosCount } = await reembolsosQuery;
-    reembolsos = reembolsosCount || 0;
+    const reembolsos = reembolsosCount || 0;
 
     const ticketPromedio = ordenesList.length > 0 ? ingresosNetos / ordenesList.length : 0;
     const attachDulceriaPct =
-      ingresosNetos > 0 ? Math.round((ingresosDulceria / ingresosNetos) * 100) : 0;
+      ordenesList.length > 0 ? Math.round((ordenesConDulceria / ordenesList.length) * 100) : 0;
 
-    // ── Socios nuevos en el período (a través de usuario.fecha_registro) ──
+    // Socios nuevos en el período actual
     const { count: sociosNuevos } = await supabase
       .from("socio")
       .select("id_usuario, usuario!inner(fecha_registro)", { count: "exact", head: true })
-      .gte("usuario.fecha_registro", isoInicio);
+      .gte("usuario.fecha_registro", isoInicio)
+      .lte("usuario.fecha_registro", isoFin);
 
-    // ── Ingresos diarios (últimos 7 días visualmente) ──
+    // ── 2. Período anterior equivalente para calcular Deltas Reales ──
+    const prevInicio = new Date(inicio.getTime() - duracionMs);
+    const prevFin = new Date(inicio.getTime());
+    const isoPrevInicio = prevInicio.toISOString();
+    const isoPrevFin = prevFin.toISOString();
+
+    let prevOrdenesQuery = supabase
+      .from("orden")
+      .select(`
+        id_orden,
+        total,
+        subtotal_productos,
+        estado,
+        detalle_entrada ( id_detalle_entrada, estado )
+      `)
+      .gte("fecha_creacion", isoPrevInicio)
+      .lt("fecha_creacion", isoPrevFin)
+      .neq("estado", "Cancelada");
+
+    if (sedeIds && sedeIds.length > 0) {
+      prevOrdenesQuery = prevOrdenesQuery.in("id_sede", sedeIds);
+    }
+
+    const { data: prevOrdenes } = await prevOrdenesQuery;
+    const prevOrdenesList = prevOrdenes || [];
+
+    let prevIngresosNetos = 0;
+    let prevEntradasVendidas = 0;
+    let prevIngresosDulceria = 0;
+    let prevOrdenesConDulceria = 0;
+
+    prevOrdenesList.forEach((ord: any) => {
+      prevIngresosNetos += Number(ord.total || 0);
+      const subDulc = Number(ord.subtotal_productos || 0);
+      prevIngresosDulceria += subDulc;
+      if (subDulc > 0) prevOrdenesConDulceria++;
+      prevEntradasVendidas += (ord.detalle_entrada || []).filter(
+        (de: any) => de.estado === "Vigente" || !de.estado
+      ).length;
+    });
+
+    const prevTicketPromedio = prevOrdenesList.length > 0 ? prevIngresosNetos / prevOrdenesList.length : 0;
+    const prevAttachDulceria =
+      prevOrdenesList.length > 0 ? Math.round((prevOrdenesConDulceria / prevOrdenesList.length) * 100) : 0;
+
+    let prevReembolsosQuery = supabase
+      .from("orden")
+      .select("id_orden", { count: "exact", head: true })
+      .gte("fecha_creacion", isoPrevInicio)
+      .lt("fecha_creacion", isoPrevFin)
+      .eq("estado", "Reembolsada");
+
+    if (sedeIds && sedeIds.length > 0) {
+      prevReembolsosQuery = prevReembolsosQuery.in("id_sede", sedeIds);
+    }
+    const { count: prevReembolsosCount } = await prevReembolsosQuery;
+    const prevReembolsos = prevReembolsosCount || 0;
+
+    const { count: prevSociosCount } = await supabase
+      .from("socio")
+      .select("id_usuario, usuario!inner(fecha_registro)", { count: "exact", head: true })
+      .gte("usuario.fecha_registro", isoPrevInicio)
+      .lt("usuario.fecha_registro", isoPrevFin);
+    const prevSociosNuevos = prevSociosCount || 0;
+
+    // ── 3. Ingresos Diarios (últimos 7 días con totales reales) ──
     const hoyStr = getFechaLocalHoy();
     const ingresosDiarios: IngresosDiarioItemDTO[] = [];
     for (let i = 6; i >= 0; i--) {
@@ -349,7 +446,7 @@ export class AdminGeneralDao {
       });
     }
 
-    // ── Top Películas y Funciones del período ──
+    // ── 4. Funciones y Top Películas con recaudación y cuota de taquilla ──
     let funcionesQuery = supabase
       .from("funcion")
       .select(`
@@ -358,10 +455,23 @@ export class AdminGeneralDao {
         id_pelicula,
         fecha,
         hora_inicio,
-        pelicula ( id_pelicula, titulo, url_poster ),
-        asiento_funcion ( estado, detalle_entrada ( precio_unitario, estado ) )
+        pelicula (
+          id_pelicula,
+          titulo,
+          url_poster,
+          duracion_min,
+          clasificacion,
+          genero_pelicula (
+            genero ( nombre )
+          )
+        ),
+        asiento_funcion (
+          estado,
+          detalle_entrada ( precio_unitario, estado )
+        )
       `)
-      .gte("fecha", fechaInicioStr)
+      .gte("fecha", inicioStr)
+      .lte("fecha", finStr)
       .neq("estado", "Cancelada");
 
     if (sedeIds && sedeIds.length > 0) {
@@ -374,12 +484,21 @@ export class AdminGeneralDao {
     (funcionesData || []).forEach((fn: any) => {
       const p = fn.pelicula;
       if (!p) return;
+      const generos = (p.genero_pelicula || [])
+        .map((gp: any) => gp.genero?.nombre)
+        .filter(Boolean);
+
       const existing = peliMap.get(p.id_pelicula) || {
         id_pelicula: p.id_pelicula,
         titulo: p.titulo,
         url_poster: p.url_poster,
         entradas_vendidas: 0,
         recaudacion: 0,
+        ticket_promedio: 0,
+        share_taquilla_pct: 0,
+        duracion_min: p.duracion_min || 115,
+        clasificacion: p.clasificacion || "APT",
+        generos,
         sedesSet: new Set<number>(),
       };
       if (fn.id_sede) existing.sedesSet.add(fn.id_sede);
@@ -387,24 +506,48 @@ export class AdminGeneralDao {
         const est = (af.estado || "").toLowerCase();
         if (est === "ocupado" || est === "vendido") {
           existing.entradas_vendidas++;
-          const de = af.detalle_entrada;
-          if (de) {
-            existing.recaudacion += Number(de.precio_unitario || 0);
+
+          // detalle_entrada es retornado por PostgREST como un array de 1 a N
+          const des = Array.isArray(af.detalle_entrada)
+            ? af.detalle_entrada
+            : af.detalle_entrada
+            ? [af.detalle_entrada]
+            : [];
+
+          let precioEncontrado = 0;
+          for (const de of des) {
+            if (de && (de.estado === "Vigente" || !de.estado)) {
+              const pu = Number(de.precio_unitario || 0);
+              if (pu > 0) precioEncontrado += pu;
+            }
+          }
+
+          if (precioEncontrado > 0) {
+            existing.recaudacion += precioEncontrado;
+          } else {
+            // Fallback con tarifa estándar si el asiento ocupado no tiene detalle de orden asociado
+            existing.recaudacion += 15.0;
           }
         }
       });
       peliMap.set(p.id_pelicula, existing);
     });
 
+    const totalTaquillaPeriodo = Array.from(peliMap.values()).reduce((sum, p) => sum + p.recaudacion, 0);
+
     const topPeliculas: TopPeliculaGeneralDTO[] = Array.from(peliMap.values())
       .map(({ sedesSet, ...rest }) => ({
         ...rest,
         sedes_count: sedesSet.size,
+        ticket_promedio:
+          rest.entradas_vendidas > 0 ? Math.round((rest.recaudacion / rest.entradas_vendidas) * 100) / 100 : 0,
+        share_taquilla_pct:
+          totalTaquillaPeriodo > 0 ? Math.round((rest.recaudacion / totalTaquillaPeriodo) * 100) : 0,
       }))
       .sort((a, b) => b.entradas_vendidas - a.entradas_vendidas || b.recaudacion - a.recaudacion)
       .slice(0, 8);
 
-    // ── Rendimiento y Ranking por sede ──
+    // ── 5. Rendimiento y Ranking por Sede con Share de Ingresos ──
     let sedesListQuery = supabase
       .from("sede")
       .select("id_sede, nombre, ciudad:id_ciudad ( nombre )")
@@ -430,7 +573,6 @@ export class AdminGeneralDao {
         ).length;
       });
 
-      // Cálculo de ocupación de la sede según funciones
       const funcionesSede = (funcionesData || []).filter((fn: any) => fn.id_sede === idS);
       let totalAsientosSede = 0;
       let ocupadosSede = 0;
@@ -442,9 +584,7 @@ export class AdminGeneralDao {
         });
       });
 
-      const ocupacionPct = totalAsientosSede > 0
-        ? Math.round((ocupadosSede / totalAsientosSede) * 100)
-        : (entS > 0 ? Math.min(Math.round(entS * 3.5), 88) : 58);
+      const ocupacionPct = totalAsientosSede > 0 ? Math.round((ocupadosSede / totalAsientosSede) * 100) : 0;
 
       rendimientoSedes.push({
         id_sede: idS,
@@ -453,56 +593,20 @@ export class AdminGeneralDao {
         ingresos: Math.round(ingS),
         entradas: entS,
         ocupacion_pct: ocupacionPct,
+        share_ingresos_pct: 0,
       });
     }
 
-    // ── Matriz Mapa de Ocupación (7 días x 7 horas) ──
-    const HORAS_MAPA = ["11:00", "13:00", "15:00", "17:00", "19:00", "21:00", "23:00"];
-    const mapaOcupacion: any[] = [];
-    for (const hora of HORAS_MAPA) {
-      const horaNum = parseInt(hora.split(":")[0], 10);
-      for (let diaIdx = 0; diaIdx < 7; diaIdx++) {
-        let asientosSlot = 0;
-        let ocupadosSlot = 0;
-        (funcionesData || []).forEach((fn: any) => {
-          if (!fn.fecha) return;
-          const [y, m, d] = fn.fecha.split("-").map(Number);
-          const dt = new Date(y, m - 1, d);
-          const jsDay = dt.getDay(); // 0=Dom, 1=Lun, ..., 6=Sáb
-          const fnDiaIdx = jsDay === 0 ? 6 : jsDay - 1;
-          if (fnDiaIdx !== diaIdx) return;
+    // Calcular share_ingresos_pct según el total facturado en la red
+    const totalIngresosRed = rendimientoSedes.reduce((acc, s) => acc + s.ingresos, 0);
+    rendimientoSedes.forEach((s) => {
+      s.share_ingresos_pct = totalIngresosRed > 0 ? Math.round((s.ingresos / totalIngresosRed) * 100) : 0;
+    });
 
-          const fnHora = fn.hora_inicio ? parseInt(fn.hora_inicio.split(":")[0], 10) : 17;
-          if (Math.abs(fnHora - horaNum) <= 1) {
-            (fn.asiento_funcion || []).forEach((af: any) => {
-              asientosSlot++;
-              const est = (af.estado || "").toLowerCase();
-              if (est === "ocupado" || est === "vendido") ocupadosSlot++;
-            });
-          }
-        });
-
-        let pct = asientosSlot > 0 ? Math.round((ocupadosSlot / asientosSlot) * 100) : 0;
-        if (asientosSlot === 0) {
-          // Patrón visual cinematográfico representativo
-          const esFinDeSemana = diaIdx >= 4; // Vie, Sáb, Dom
-          const esTardeNoche = horaNum >= 17 && horaNum <= 21;
-          pct = esFinDeSemana && esTardeNoche ? 82 : esFinDeSemana ? 58 : esTardeNoche ? 48 : 22;
-        }
-
-        const nivel = pct >= 75 ? 3 : pct >= 50 ? 2 : pct >= 30 ? 1 : 0;
-        mapaOcupacion.push({
-          dia_idx: diaIdx,
-          hora,
-          ocupacion_pct: pct,
-          nivel,
-        });
-      }
-    }
-
-    const ocupacionPromedio = rendimientoSedes.length > 0
-      ? Math.round(rendimientoSedes.reduce((acc, s) => acc + s.ocupacion_pct, 0) / rendimientoSedes.length)
-      : 65;
+    const ocupacionPromedio =
+      rendimientoSedes.length > 0
+        ? Math.round(rendimientoSedes.reduce((acc, s) => acc + s.ocupacion_pct, 0) / rendimientoSedes.length)
+        : 0;
 
     const kpis: KpisGeneralesDTO = {
       ingresos_netos: Math.round(ingresosNetos),
@@ -513,10 +617,13 @@ export class AdminGeneralDao {
       socios_nuevos: sociosNuevos || 0,
       attach_dulceria_pct: attachDulceriaPct,
       reembolsos,
-      delta_ingresos_pct: 12.4,
-      delta_entradas_pct: 8.1,
-      delta_dulceria_pct: 15.7,
-      delta_ticket_pct: 2.3,
+      delta_ingresos_pct: calcularDeltaReal(ingresosNetos, prevIngresosNetos),
+      delta_entradas_pct: calcularDeltaReal(entradasVendidas, prevEntradasVendidas),
+      delta_dulceria_pct: calcularDeltaReal(ingresosDulceria, prevIngresosDulceria),
+      delta_ticket_pct: calcularDeltaReal(ticketPromedio, prevTicketPromedio),
+      delta_socios_pct: calcularDeltaReal(sociosNuevos || 0, prevSociosNuevos),
+      delta_attach_pct: calcularDeltaReal(attachDulceriaPct, prevAttachDulceria),
+      delta_reembolsos_pct: calcularDeltaReal(reembolsos, prevReembolsos),
     };
 
     return {
@@ -524,7 +631,6 @@ export class AdminGeneralDao {
       ingresos_diarios: ingresosDiarios,
       top_peliculas: topPeliculas,
       rendimiento_sedes: rendimientoSedes,
-      mapa_ocupacion: mapaOcupacion,
     };
   }
 

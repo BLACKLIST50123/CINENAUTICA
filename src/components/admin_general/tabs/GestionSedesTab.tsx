@@ -32,12 +32,6 @@ export default function GestionSedesTab({
     setCargando(true);
     const data = await AdminGeneralDao.obtenerTodasSedes();
     setSedes(data);
-    // Por defecto abrimos todas las ciudades para mejor UX
-    const inicial: Record<string, boolean> = {};
-    data.forEach((s) => {
-      inicial[s.ciudad] = true;
-    });
-    setCiudadesAbiertas((prev) => (Object.keys(prev).length === 0 ? inicial : prev));
     setCargando(false);
   }, []);
 
@@ -99,11 +93,18 @@ export default function GestionSedesTab({
     }));
   };
 
-  const alternarExpandirTodo = () => {
-    const todasAbiertas = Object.values(ciudadesAbiertas).every(Boolean);
+  const expandirTodas = () => {
     const nuevoEstado: Record<string, boolean> = {};
-    Object.keys(ciudadesAbiertas).forEach((k) => {
-      nuevoEstado[k] = !todasAbiertas;
+    sedes.forEach((s) => {
+      nuevoEstado[s.ciudad] = true;
+    });
+    setCiudadesAbiertas(nuevoEstado);
+  };
+
+  const colapsarTodas = () => {
+    const nuevoEstado: Record<string, boolean> = {};
+    sedes.forEach((s) => {
+      nuevoEstado[s.ciudad] = false;
     });
     setCiudadesAbiertas(nuevoEstado);
   };
@@ -177,18 +178,30 @@ export default function GestionSedesTab({
         </div>
       </div>
 
-      {/* Contador y Expandir / Contraer todo */}
-      <div className="flex justify-between items-center mb-4">
-        <p className="text-xs text-slate-500">
-          {sedesFiltradas.length} sedes en {totalCiudadesConSedes} ciudades
+      {/* Contador y Botones Expandir todas / Colapsar todas */}
+      <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
+        <p className="text-xs text-slate-400">
+          <span className="font-bold text-white">{sedesFiltradas.length}</span> sedes en{" "}
+          <span className="font-bold text-white">{totalCiudadesConSedes}</span> ciudades
         </p>
-        <button
-          type="button"
-          onClick={alternarExpandirTodo}
-          className="text-xs text-slate-400 hover:text-white underline cursor-pointer"
-        >
-          Expandir / contraer todo
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={expandirTodas}
+            className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 transition-colors cursor-pointer flex items-center gap-1.5"
+          >
+            <i className="fa-solid fa-angles-down text-[11px] text-sky-400"></i>
+            <span>Expandir todas</span>
+          </button>
+          <button
+            type="button"
+            onClick={colapsarTodas}
+            className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 transition-colors cursor-pointer flex items-center gap-1.5"
+          >
+            <i className="fa-solid fa-angles-up text-[11px] text-slate-400"></i>
+            <span>Colapsar todas</span>
+          </button>
+        </div>
       </div>
 
       {/* Lista de resultados agrupados */}
@@ -227,7 +240,7 @@ export default function GestionSedesTab({
 
                 <div className="space-y-3">
                   {Object.entries(ciudadesMap).map(([ciudadNombre, sedesDeCiudad]) => {
-                    const abierto = ciudadesAbiertas[ciudadNombre] ?? true;
+                    const abierto = Boolean(ciudadesAbiertas[ciudadNombre]);
                     const totalFuncionesCiudad = sedesDeCiudad.reduce((sum, s) => sum + (s.funciones_hoy || 0), 0);
 
                     return (

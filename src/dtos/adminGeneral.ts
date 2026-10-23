@@ -39,10 +39,12 @@ export interface EditarSedePayload {
 // Dashboard General
 // ─────────────────────────────────────────────
 
-export type PeriodoDashboardGeneral = "hoy" | "7d" | "30d" | "anio";
+export type PeriodoDashboardGeneral = "hoy" | "7d" | "30d" | "anio" | "personalizado";
 
 export interface FiltrosDashboardGeneral {
   periodo: PeriodoDashboardGeneral;
+  fecha_inicio?: string; // YYYY-MM-DD
+  fecha_fin?: string;    // YYYY-MM-DD
   id_region?: number;
   id_ciudad?: number;
   id_sede?: number;
@@ -61,6 +63,10 @@ export interface KpisGeneralesDTO {
   delta_entradas_pct: number;
   delta_dulceria_pct: number;
   delta_ticket_pct: number;
+  delta_ocupacion_pct?: number;
+  delta_socios_pct?: number;
+  delta_attach_pct?: number;
+  delta_reembolsos_pct?: number;
 }
 
 export interface IngresosDiarioItemDTO {
@@ -77,6 +83,7 @@ export interface RendimientoSedeItemDTO {
   ingresos: number;
   entradas: number;
   ocupacion_pct: number;
+  share_ingresos_pct: number;
 }
 
 export interface TopPeliculaGeneralDTO {
@@ -85,14 +92,12 @@ export interface TopPeliculaGeneralDTO {
   url_poster: string;
   entradas_vendidas: number;
   recaudacion: number;
+  ticket_promedio: number;
+  share_taquilla_pct: number;
   sedes_count?: number;
-}
-
-export interface CeldaMapaOcupacionDTO {
-  dia_idx: number;     // 0 = Lun ... 6 = Dom
-  hora: string;        // "11:00", "13:00", etc.
-  ocupacion_pct: number;
-  nivel: number;       // 0 a 3
+  duracion_min?: number;
+  clasificacion?: string;
+  generos?: string[];
 }
 
 export interface DashboardGeneralDTO {
@@ -100,7 +105,6 @@ export interface DashboardGeneralDTO {
   ingresos_diarios: IngresosDiarioItemDTO[];
   top_peliculas: TopPeliculaGeneralDTO[];
   rendimiento_sedes: RendimientoSedeItemDTO[];
-  mapa_ocupacion?: CeldaMapaOcupacionDTO[];
 }
 
 

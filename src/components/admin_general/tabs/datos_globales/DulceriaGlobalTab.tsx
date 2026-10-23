@@ -35,6 +35,8 @@ export default function DulceriaGlobalTab({ recargarTrigger, onRecargar }: Dulce
   const [modalAbierto, setModalAbierto] = useState<boolean>(false);
   const [productoEditar, setProductoEditar] = useState<ProductoGlobalDTO | null>(null);
   const [form, setForm] = useState<CrearProductoGlobalPayload>(FORM_PRODUCTO_VACIO);
+  const [modoImagen, setModoImagen] = useState<"url" | "archivo">("url");
+  const fileInputImagenRef = React.useRef<HTMLInputElement>(null);
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [guardando, setGuardando] = useState<boolean>(false);
 
@@ -45,6 +47,33 @@ export default function DulceriaGlobalTab({ recargarTrigger, onRecargar }: Dulce
   const [confirmarCancelarPendiente, setConfirmarCancelarPendiente] = useState<boolean>(false);
 
   const [toast, setToast] = useState<{ mensaje: string; tipo: "ok" | "error" } | null>(null);
+
+  const procesarArchivoImagen = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      mostrarToast("Por favor selecciona un archivo de imagen válido (PNG, JPG, WEBP).", "error");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      mostrarToast("La imagen excede el límite recomendado de 5MB.", "error");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      setForm((prev) => ({ ...prev, url_imagen: dataUrl }));
+      setErrores((prev) => {
+        const c = { ...prev };
+        delete c.url_imagen;
+        return c;
+      });
+    };
+    reader.readAsDataURL(file);
+  };
 
   const cargarDatos = useCallback(async () => {
     setCargando(true);
@@ -83,6 +112,7 @@ export default function DulceriaGlobalTab({ recargarTrigger, onRecargar }: Dulce
       ...FORM_PRODUCTO_VACIO,
       id_categoria: primeraCat,
     });
+    setModoImagen("url");
     setProductoEditar(null);
     setErrores({});
     setModalAbierto(true);
@@ -90,13 +120,15 @@ export default function DulceriaGlobalTab({ recargarTrigger, onRecargar }: Dulce
 
   const abrirEditar = (p: ProductoGlobalDTO) => {
     const catId = p.id_categoria || categorias.find((c) => c.nombre === p.categoria_nombre)?.id_categoria || "";
+    const imgUrl = p.url_imagen || "fa-solid fa-bowl-food";
     setForm({
       nombre: p.nombre,
       descripcion: p.descripcion,
       precio_base: p.precio_base,
       id_categoria: catId,
-      url_imagen: p.url_imagen || "fa-solid fa-bowl-food",
+      url_imagen: imgUrl,
     });
+    setModoImagen(imgUrl.startsWith("data:") ? "archivo" : "url");
     setProductoEditar(p);
     setErrores({});
     setModalAbierto(true);
@@ -320,15 +352,28 @@ export default function DulceriaGlobalTab({ recargarTrigger, onRecargar }: Dulce
                     </button>
                   </div>
 
-                  {/* Icono Temático Corporativo (Cero 404s) */}
-                  <div
-                    className={`h-32 flex flex-col items-center justify-center p-3 mb-3.5 rounded-xl border bg-gradient-to-br ${estiloIcono.bgGradiente}`}
-                  >
-                    <i className={`${estiloIcono.icono} text-4xl ${estiloIcono.colorIcono} drop-shadow-md mb-1`}></i>
-                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">
-                      {prod.categoria_nombre}
-                    </span>
-                  </div>
+                  {/* Imagen Real o Icono Temático Corporativo */}
+                  {prod.url_imagen && (prod.url_imagen.startsWith("http") || prod.url_imagen.startsWith("data:image")) ? (
+                    <div className="h-32 mb-3.5 rounded-xl overflow-hidden border border-white/10 bg-[#070e1b] relative group flex items-center justify-center">
+                      <img
+                        src={prod.url_imagen}
+                        alt={prod.nombre}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = "none";
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div
+                      className={`h-32 flex flex-col items-center justify-center p-3 mb-3.5 rounded-xl border bg-gradient-to-br ${estiloIcono.bgGradiente}`}
+                    >
+                      <i className={`${prod.url_imagen?.startsWith("fa-") ? prod.url_imagen : estiloIcono.icono} text-4xl ${estiloIcono.colorIcono} drop-shadow-md mb-1`}></i>
+                      <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">
+                        {prod.categoria_nombre}
+                      </span>
+                    </div>
+                  )}
 
                   {/* Nombre y Descripción */}
                   <h3 className="font-bold text-white text-sm leading-snug line-clamp-1 mb-1">
@@ -484,6 +529,154 @@ export default function DulceriaGlobalTab({ recargarTrigger, onRecargar }: Dulce
                 ></textarea>
                 {errores.descripcion && (
                   <span className="text-[11px] text-rose-400 mt-1 block">{errores.descripcion}</span>
+                )}
+              </div>
+
+              {/* Selector Dual de Imagen / Ícono con Previsualización */}
+              <div className="bg-[#0B1528] border border-white/10 rounded-xl p-3.5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <i className="fa-solid fa-image text-brand-yellow"></i>
+                    <span>Imagen del Producto</span>
+                  </label>
+                  <div className="flex bg-[#070e1b] p-0.5 rounded-lg border border-white/10">
+                    <button
+                      type="button"
+                      onClick={() => setModoImagen("url")}
+                      className={`px-2.5 py-1 rounded text-[10px] font-bold cursor-pointer transition-colors ${
+                        modoImagen === "url" ? "bg-brand-blue text-white" : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      Poner URL
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setModoImagen("archivo")}
+                      className={`px-2.5 py-1 rounded text-[10px] font-bold cursor-pointer transition-colors ${
+                        modoImagen === "archivo" ? "bg-brand-blue text-white" : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      Cargar Archivo
+                    </button>
+                  </div>
+                </div>
+
+                {modoImagen === "url" ? (
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <i className="fa-solid fa-link absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                      <input
+                        type="text"
+                        value={form.url_imagen || ""}
+                        onChange={(e) => setForm({ ...form, url_imagen: e.target.value })}
+                        placeholder="https://ejemplo.com/combo.jpg o fa-solid fa-bowl-food"
+                        className="w-full bg-[#070e1b] border border-white/10 rounded-xl pl-9 pr-3.5 py-2 text-xs text-white focus:outline-none focus:border-brand-blue"
+                      />
+                    </div>
+                    {/* Atajos de íconos temáticos rápidos */}
+                    <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                      <span className="text-[10px] text-slate-400">Atajos de ícono:</span>
+                      {[
+                        { icon: "fa-solid fa-bowl-food", label: "Popcorn" },
+                        { icon: "fa-solid fa-bottle-water", label: "Bebida" },
+                        { icon: "fa-solid fa-hotdog", label: "HotDog" },
+                        { icon: "fa-solid fa-cookie", label: "Snack" },
+                        { icon: "fa-solid fa-ice-cream", label: "Helado" },
+                      ].map((item) => (
+                        <button
+                          key={item.icon}
+                          type="button"
+                          onClick={() => setForm({ ...form, url_imagen: item.icon })}
+                          className={`text-[10px] px-2 py-0.5 rounded-lg border transition-colors cursor-pointer flex items-center gap-1 ${
+                            form.url_imagen === item.icon
+                              ? "bg-brand-yellow/15 border-brand-yellow/40 text-brand-yellow"
+                              : "bg-white/5 border-white/10 text-slate-400 hover:text-white"
+                          }`}
+                        >
+                          <i className={item.icon}></i>
+                          <span>{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="file"
+                      ref={fileInputImagenRef}
+                      accept="image/*"
+                      onChange={procesarArchivoImagen}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputImagenRef.current?.click()}
+                      className="w-full border-2 border-dashed border-white/20 hover:border-brand-blue rounded-xl p-3.5 text-center cursor-pointer transition-colors text-xs text-slate-300 flex items-center justify-center gap-2 group"
+                    >
+                      <i className="fa-solid fa-cloud-arrow-up text-brand-blue group-hover:scale-110 transition-transform"></i>
+                      <span>
+                        {form.url_imagen?.startsWith("data:")
+                          ? "Reemplazar imagen desde tu equipo"
+                          : "Seleccionar imagen desde tu equipo (PNG, JPG, WEBP)"}
+                      </span>
+                    </button>
+                  </div>
+                )}
+
+                {/* Previsualización de la Imagen o Ícono */}
+                {form.url_imagen && (
+                  <div className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-[#070e1b] border border-white/10">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {form.url_imagen.startsWith("http") || form.url_imagen.startsWith("data:image") ? (
+                        <img
+                          src={form.url_imagen}
+                          alt="Preview"
+                          className="w-12 h-12 rounded-lg object-cover border border-white/15 bg-dark-900 shrink-0"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "/img/poster-placeholder.jpg";
+                          }}
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg bg-brand-yellow/10 border border-brand-yellow/30 flex items-center justify-center text-brand-yellow shrink-0">
+                          <i className={`${form.url_imagen.startsWith("fa-") ? form.url_imagen : "fa-solid fa-bowl-food"} text-lg`}></i>
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <span className="text-[11px] text-emerald-400 font-bold block flex items-center gap-1">
+                          <i className="fa-solid fa-circle-check text-[10px]"></i> Imagen configurada
+                        </span>
+                        <p className="text-[10px] text-slate-400 truncate max-w-[220px]">
+                          {form.url_imagen.startsWith("data:")
+                            ? "Archivo local cargado (Data URL base64)"
+                            : form.url_imagen}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {modoImagen === "archivo" && (
+                        <button
+                          type="button"
+                          onClick={() => fileInputImagenRef.current?.click()}
+                          className="px-2 py-1 rounded text-[10px] font-bold bg-white/5 hover:bg-white/10 text-sky-400 border border-white/10 cursor-pointer"
+                        >
+                          Reemplazar
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, url_imagen: "fa-solid fa-bowl-food" })}
+                        className="p-1 text-slate-400 hover:text-rose-400 cursor-pointer"
+                        title="Restablecer ícono por defecto"
+                      >
+                        <i className="fa-solid fa-xmark text-xs"></i>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {errores.url_imagen && (
+                  <span className="text-[11px] text-rose-400 block">{errores.url_imagen}</span>
                 )}
               </div>
 
