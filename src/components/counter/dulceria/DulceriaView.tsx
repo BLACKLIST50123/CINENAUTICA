@@ -15,6 +15,7 @@ import type {
   VentaCounterResultadoDTO,
   OrdenContingenciaDTO,
 } from "@/src/dtos/counter";
+import { DulceriaCardSkeleton } from "@/src/components/comun/skeletons";
 
 export function obtenerIconoProducto(nombre: string, categoria?: string) {
   const n = (nombre || "").toLowerCase();
@@ -376,7 +377,7 @@ export default function DulceriaView() {
                     value={busqueda}
                     onChange={(e) => setBusqueda(e.target.value)}
                     placeholder="Buscar producto..."
-                    className="w-full bg-dark-800 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-white text-xs focus:outline-none focus:border-brand-yellow"
+                    className="w-full bg-dark-800 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-white text-xs focus:outline-none focus:border-cyan-400"
                   />
                 </div>
               </div>
@@ -386,10 +387,10 @@ export default function DulceriaView() {
                 <button
                   type="button"
                   onClick={() => setCategoriaSeleccionada("all")}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors ${
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors cursor-pointer ${
                     categoriaSeleccionada === "all"
-                      ? "bg-brand-yellow text-black border-brand-yellow"
-                      : "bg-dark-900 text-slate-300 border-white/10 hover:border-brand-yellow"
+                      ? "bg-[#0284C7] text-white border-cyan-500 shadow-md shadow-cyan-600/20"
+                      : "bg-dark-900 text-slate-300 border-white/10 hover:border-cyan-500/50"
                   }`}
                 >
                   Todo
@@ -399,10 +400,10 @@ export default function DulceriaView() {
                     key={cat.id_categoria}
                     type="button"
                     onClick={() => setCategoriaSeleccionada(cat.id_categoria)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors ${
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors cursor-pointer ${
                       categoriaSeleccionada === cat.id_categoria
-                        ? "bg-brand-yellow text-black border-brand-yellow"
-                        : "bg-dark-900 text-slate-300 border-white/10 hover:border-brand-yellow"
+                        ? "bg-[#0284C7] text-white border-cyan-500 shadow-md shadow-cyan-600/20"
+                        : "bg-dark-900 text-slate-300 border-white/10 hover:border-cyan-500/50"
                     }`}
                   >
                     {cat.nombre}
@@ -412,9 +413,10 @@ export default function DulceriaView() {
 
               {/* Grid de Productos */}
               {cargandoProductos ? (
-                <div className="text-center py-20 text-slate-400">
-                  <i className="fa-solid fa-spinner fa-spin text-3xl text-brand-yellow mb-3"></i>
-                  <p className="text-sm">Cargando dulcería de {sedeActual.nombre}...</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <DulceriaCardSkeleton key={i} />
+                  ))}
                 </div>
               ) : productosFiltrados.length === 0 ? (
                 <div className="text-center py-16 bg-dark-800 border border-white/5 rounded-2xl p-8">
@@ -439,7 +441,7 @@ export default function DulceriaView() {
                         key={prod.id_producto}
                         className={`bg-dark-800 border rounded-2xl p-3.5 flex flex-col justify-between gap-3 transition-all group shadow-md hover:border-slate-700 ${
                           cantidadEnCarrito > 0
-                            ? "border-brand-yellow/60 bg-dark-800/95 shadow-lg shadow-yellow-500/10 ring-1 ring-brand-yellow/40"
+                            ? "border-cyan-500 bg-dark-800/95 shadow-lg shadow-cyan-500/10 ring-1 ring-cyan-500/40"
                             : "border-white/5 hover:border-white/20"
                         }`}
                       >
@@ -450,7 +452,7 @@ export default function DulceriaView() {
                           >
                             <i className={`${icono} ${colorIcono} text-4xl drop-shadow-md`}></i>
                             {cantidadEnCarrito > 0 && (
-                              <span className="absolute top-2 right-2 bg-brand-yellow text-black text-xs font-black w-6 h-6 rounded-full flex items-center justify-center shadow-lg">
+                              <span className="absolute top-2 right-2 bg-cyan-500 text-white text-xs font-black w-6 h-6 rounded-full flex items-center justify-center shadow-lg">
                                 {cantidadEnCarrito}
                               </span>
                             )}
@@ -467,7 +469,7 @@ export default function DulceriaView() {
                           </p>
 
                           {/* Precio debajo de la descripción */}
-                          <p className="text-brand-yellow font-extrabold text-base font-mono mt-2">
+                          <p className="text-cyan-400 font-extrabold text-base font-mono mt-2">
                             S/ {precio.toFixed(2)}
                           </p>
                         </div>
@@ -490,7 +492,7 @@ export default function DulceriaView() {
                           <button
                             type="button"
                             onClick={() => modificarCantidad(prod, 1)}
-                            className="w-7 h-7 rounded-lg bg-dark-700 text-white hover:bg-brand-yellow hover:text-black flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
+                            className="w-7 h-7 rounded-lg bg-dark-700 text-white hover:bg-[#0284C7] flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
                           >
                             <i className="fa-solid fa-plus text-[10px]"></i>
                           </button>
@@ -535,8 +537,8 @@ export default function DulceriaView() {
         >
           {listaItemsCarrito.length === 0 ? (
             <div className="flex-grow flex flex-col items-center justify-center text-center p-8">
-              <div className="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mb-3">
-                <i className="fa-solid fa-bowl-food text-2xl text-amber-400"></i>
+              <div className="w-16 h-16 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mb-3">
+                <i className="fa-solid fa-bowl-food text-2xl text-cyan-400"></i>
               </div>
               <h3 className="text-lg font-bold text-white mb-1">Nuevo Pedido</h3>
               <p className="text-slate-400 text-xs max-w-[15rem]">
@@ -555,7 +557,7 @@ export default function DulceriaView() {
                   <button
                     type="button"
                     onClick={handleSolicitarCancelar}
-                    className="text-xs text-slate-400 hover:text-brand-red border border-white/10 hover:border-brand-red/40 rounded-lg px-2.5 py-1 transition-colors"
+                    className="text-xs text-slate-400 hover:text-brand-red border border-white/10 hover:border-brand-red/40 rounded-lg px-2.5 py-1 transition-colors cursor-pointer"
                   >
                     <i className="fa-solid fa-xmark mr-1"></i>
                     Cancelar
@@ -577,13 +579,13 @@ export default function DulceriaView() {
                       </div>
 
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className="font-mono text-brand-yellow font-bold text-sm">
+                        <span className="font-mono text-cyan-400 font-bold text-sm">
                           S/ {item.subtotal.toFixed(2)}
                         </span>
                         <button
                           type="button"
                           onClick={() => modificarCantidad(item, -1)}
-                          className="w-6 h-6 rounded bg-dark-700 text-slate-300 hover:text-white flex items-center justify-center text-[10px]"
+                          className="w-6 h-6 rounded bg-dark-700 text-slate-300 hover:text-white flex items-center justify-center text-[10px] cursor-pointer"
                         >
                           <i className="fa-solid fa-minus"></i>
                         </button>
@@ -599,7 +601,7 @@ export default function DulceriaView() {
                   <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">
                     Total Dulcería:
                   </span>
-                  <span className="text-2xl font-black text-brand-yellow font-mono">
+                  <span className="text-2xl font-black text-cyan-400 font-mono">
                     S/ {totalDulceria.toFixed(2)}
                   </span>
                 </div>
@@ -608,7 +610,7 @@ export default function DulceriaView() {
                   <button
                     type="button"
                     onClick={() => setSubvista("cobro")}
-                    className="w-full bg-brand-yellow hover:bg-yellow-400 text-black py-3.5 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/20"
+                    className="w-full bg-[#0284C7] hover:bg-[#0369A1] text-white py-3.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/30 cursor-pointer"
                   >
                     <span>Continuar al Cobro</span>
                     <i className="fa-solid fa-arrow-right"></i>

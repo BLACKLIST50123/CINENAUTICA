@@ -1852,12 +1852,14 @@ body {
 }
 
 .side-tab:hover {
-  background: #1A2845;
+  background: #13243d;
+  color: #38bdf8;
 }
 
 .side-tab.activo {
-  background: var(--brand-blue);
+  background: #0284C7;
   color: #fff;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
 }
 
 .side-tab i {
@@ -2252,4 +2254,27 @@ body {
 .scrollbar-none::-webkit-scrollbar,
 .salas-tabs-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+/* ---------- Skeleton Shimmer Cine Náutica ---------- */
+@keyframes cnShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.cn-skeleton {
+  background: linear-gradient(
+    90deg,
+    #0B1528 0%,
+    #13243d 35%,
+    rgba(2, 132, 199, 0.18) 50%,
+    #13243d 65%,
+    #0B1528 100%
+  );
+  background-size: 200% 100%;
+  animation: cnShimmer 1.7s infinite linear;
 }

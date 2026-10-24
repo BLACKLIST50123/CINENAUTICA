@@ -118,13 +118,13 @@ export default function ModuloPagoPOS({
   };
 
   return (
-    <div id="cv-pago" className="p-4 md:p-6 fade-in max-w-3xl">
+    <div id="cv-pago" className="p-4 md:p-6 fade-in max-w-3xl mx-auto w-full">
       {/* Cabecera del cobro */}
       <div className="flex items-center gap-4 mb-5">
         <button
           type="button"
           onClick={onVolver}
-          className="text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-2 text-sm font-bold flex items-center gap-2 transition-colors"
+          className="text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-2 text-sm font-bold flex items-center gap-2 transition-colors cursor-pointer"
         >
           <i className="fa-solid fa-arrow-left"></i>
           <span>Volver</span>
@@ -149,9 +149,9 @@ export default function ModuloPagoPOS({
             <button
               type="button"
               onClick={() => setTipoComprobante("Boleta")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
                 tipoComprobante === "Boleta"
-                  ? "bg-brand-blue text-white shadow-md shadow-blue-500/20"
+                  ? "bg-[#0284C7] text-white shadow-md shadow-cyan-600/20"
                   : "bg-dark-900 text-slate-400 border border-white/10 hover:text-white"
               }`}
             >
@@ -161,9 +161,9 @@ export default function ModuloPagoPOS({
             <button
               type="button"
               onClick={() => setTipoComprobante("Factura")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
                 tipoComprobante === "Factura"
-                  ? "bg-brand-blue text-white shadow-md shadow-blue-500/20"
+                  ? "bg-[#0284C7] text-white shadow-md shadow-cyan-600/20"
                   : "bg-dark-900 text-slate-400 border border-white/10 hover:text-white"
               }`}
             >
@@ -183,7 +183,7 @@ export default function ModuloPagoPOS({
                 value={numeroDoc}
                 onChange={(e) => setNumeroDoc(e.target.value.replace(/\D/g, ""))}
                 placeholder={tipoComprobante === "Factura" ? "20601234567" : "72481920"}
-                className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-brand-yellow font-mono text-sm"
+                className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-cyan-400 font-mono text-sm"
               />
             </div>
             <div>
@@ -195,12 +195,12 @@ export default function ModuloPagoPOS({
                 value={nombreCliente}
                 onChange={(e) => setNombreCliente(e.target.value)}
                 placeholder={tipoComprobante === "Factura" ? "Empresa SAC" : "Juan Pérez"}
-                className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-brand-yellow text-sm"
+                className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-cyan-400 text-sm"
               />
             </div>
           </div>
           <p className="text-[11px] text-slate-500 mt-2">
-            <i className="fa-solid fa-circle-info text-brand-blue mr-1"></i>
+            <i className="fa-solid fa-circle-info text-cyan-400 mr-1"></i>
             {tipoComprobante === "Factura"
               ? "Exige RUC y Razón Social según normativa tributaria."
               : "En boleta menor a S/ 700 el documento es opcional para el cliente."}
@@ -278,9 +278,9 @@ export default function ModuloPagoPOS({
             <button
               type="button"
               onClick={() => setMetodoPago("Tarjeta")}
-              className={`p-3 rounded-xl text-xs font-bold flex flex-col items-center gap-1.5 transition-colors ${
+              className={`p-3 rounded-xl text-xs font-bold flex flex-col items-center gap-1.5 transition-colors cursor-pointer ${
                 metodoPago === "Tarjeta"
-                  ? "bg-brand-blue text-white shadow-lg shadow-blue-500/30"
+                  ? "bg-[#0284C7] text-white shadow-lg shadow-cyan-600/30"
                   : "bg-dark-900 text-slate-400 border border-white/10 hover:text-white"
               }`}
             >
@@ -291,7 +291,7 @@ export default function ModuloPagoPOS({
             <button
               type="button"
               onClick={() => setMetodoPago("Yape")}
-              className={`p-3 rounded-xl text-xs font-bold flex flex-col items-center gap-1.5 transition-colors ${
+              className={`p-3 rounded-xl text-xs font-bold flex flex-col items-center gap-1.5 transition-colors cursor-pointer ${
                 metodoPago === "Yape"
                   ? "bg-purple-600 text-white shadow-lg shadow-purple-600/30"
                   : "bg-dark-900 text-slate-400 border border-white/10 hover:text-white"
@@ -320,7 +320,7 @@ export default function ModuloPagoPOS({
                       min={0}
                       value={montoRecibido}
                       onChange={(e) => setMontoRecibido(Number(e.target.value) || 0)}
-                      className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-yellow pl-11 text-2xl font-bold font-mono"
+                      className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-400 pl-11 text-2xl font-bold font-mono"
                     />
                   </div>
                 </div>
@@ -342,7 +342,7 @@ export default function ModuloPagoPOS({
                     key={b}
                     type="button"
                     onClick={() => aplicarBillete(b)}
-                    className="bg-dark-900 hover:bg-dark-700 border border-white/10 hover:border-brand-yellow/50 rounded-lg py-2 text-xs font-bold text-white transition-colors"
+                    className="bg-dark-900 hover:bg-dark-700 border border-white/10 hover:border-cyan-500/50 rounded-lg py-2 text-xs font-bold text-white transition-colors cursor-pointer"
                   >
                     S/ {b}
                   </button>
@@ -350,7 +350,7 @@ export default function ModuloPagoPOS({
                 <button
                   type="button"
                   onClick={() => aplicarBillete(totalNeto)}
-                  className="bg-brand-yellow/10 hover:bg-brand-yellow/20 border border-brand-yellow/50 rounded-lg py-2 text-xs font-bold text-brand-yellow transition-colors"
+                  className="bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/50 rounded-lg py-2 text-xs font-bold text-cyan-400 transition-colors cursor-pointer"
                 >
                   Exacto
                 </button>
@@ -361,8 +361,8 @@ export default function ModuloPagoPOS({
           {/* TARJETA: Instrucción de terminal POS */}
           {metodoPago === "Tarjeta" && (
             <div className="text-center py-6 bg-dark-900 border border-white/5 rounded-xl">
-              <div className="w-16 h-16 mx-auto rounded-full bg-brand-blue/10 border border-brand-blue/30 flex items-center justify-center mb-3">
-                <i className="fa-solid fa-credit-card text-2xl text-brand-blue"></i>
+              <div className="w-16 h-16 mx-auto rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mb-3">
+                <i className="fa-solid fa-credit-card text-2xl text-cyan-400"></i>
               </div>
               <p className="text-white font-bold text-base mb-1">
                 Pase o inserte la tarjeta en el POS físico

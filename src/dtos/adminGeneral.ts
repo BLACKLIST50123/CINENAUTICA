@@ -7,10 +7,18 @@
 
 export interface SedeResumenDTO {
   id_sede: number;
+  codigo?: string;
   nombre: string;
+  id_ciudad?: number;
   ciudad: string;
   region: string;
   direccion: string;
+  telefono?: string;
+  latitud?: number | null;
+  longitud?: number | null;
+  url_imagen?: string;
+  serie_boleta?: string;
+  serie_factura?: string;
   cant_salas: number;
   activa: boolean;
   funciones_hoy: number;
@@ -25,13 +33,27 @@ export interface NuevaSedePayload {
   id_ciudad: number;
   direccion: string;
   cant_salas: number;
+  latitud?: number | null;
+  longitud?: number | null;
+  telefono?: string;
+  url_imagen?: string;
+  serie_boleta?: string;
+  serie_factura?: string;
 }
 
 export interface EditarSedePayload {
   id_sede: number;
   nombre: string;
+  codigo?: string;
   id_ciudad: number;
   direccion: string;
+  cant_salas?: number;
+  latitud?: number | null;
+  longitud?: number | null;
+  telefono?: string;
+  url_imagen?: string;
+  serie_boleta?: string;
+  serie_factura?: string;
   activa: boolean;
 }
 

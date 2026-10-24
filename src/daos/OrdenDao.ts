@@ -1,5 +1,6 @@
 // DAO para Órdenes, Pagos, Comprobantes y Validación de Tickets (Fase 6 y 7)
 import { supabase } from "@/src/lib/supabase/cliente";
+import { CuponDao } from "@/src/daos/CuponDao";
 import type {
   CrearOrdenInputDTO,
   CheckoutResultadoDTO,
@@ -237,6 +238,11 @@ export class OrdenDao {
         .from("bloqueo_temporal")
         .delete()
         .eq("id_sesion", input.id_sesion);
+    }
+
+    // 11. Registrar uso de cupón si aplica
+    if (idCupon) {
+      await CuponDao.registrarUsoCupon(idCupon, input.id_sede);
     }
 
     return {

@@ -306,8 +306,11 @@ export function toggleMenuMovil(abrir?, ..._x: any[]) {
 }
 
 /* ---------- Modales con contenido ---------- */
-export const toggleUserProfile = (..._x: any[]) => abrirModal('modal-perfil');
-export const cerrarModalTrailer = (..._x: any[]) => { cerrarModal('modal-trailer'); setTimeout(() => { $('trailer-iframe').src = ''; }, 200); };
+export const cerrarModalTrailer = (..._x: any[]) => {
+    const iframe = $('trailer-iframe');
+    if (iframe) iframe.src = '';
+    cerrarModal('modal-trailer');
+};
 export function abrirModalTrailer(idOrUrl?: string, titulo?: string, ..._x: any[]) {
     let url = "";
     let title = titulo || "Tráiler";

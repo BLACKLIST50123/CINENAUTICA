@@ -186,8 +186,8 @@ export default function ModalesGlobales() {
             <i className="fa-solid fa-xmark text-xl"></i>
           </button>
           {" "}
-          <div className="w-14 h-14 rounded-full bg-brand-yellow/10 border border-brand-yellow/30 flex items-center justify-center mb-4">
-            <i className="fa-solid fa-location-dot text-2xl text-brand-yellow"></i>
+          <div className="w-14 h-14 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mb-4">
+            <i className="fa-solid fa-location-dot text-2xl text-cyan-400"></i>
           </div>
           <h3 className="text-2xl font-bold text-white mb-1">
             ¿En qué sede quieres ver cine?
@@ -196,7 +196,7 @@ export default function ModalesGlobales() {
             Te mostraremos la cartelera y las funciones de esa sede.
           </p>
           <div className="overflow-y-auto hide-scrollbar pr-1 -mr-1 flex-grow">
-            <button className="w-full text-left bg-dark-900 hover:bg-dark-700 border border-white/5 hover:border-brand-yellow rounded-xl p-3 flex items-center gap-3 transition-colors" type="button" onClick={() => { elegirSedeNav(''); }}>
+            <button className="w-full text-left bg-dark-900 hover:bg-dark-700 border border-white/5 hover:border-cyan-500 rounded-xl p-3 flex items-center gap-3 transition-colors" type="button" onClick={() => { elegirSedeNav(''); }}>
               <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center">
                 <i className="fa-solid fa-globe text-slate-400 text-sm"></i>
               </div>
@@ -213,12 +213,12 @@ export default function ModalesGlobales() {
                 {sedesDelGrupo.map((sede) => (
                   <button
                     key={sede.id_sede}
-                    className="w-full text-left bg-dark-900 hover:bg-dark-700 border border-white/5 hover:border-brand-yellow rounded-xl p-3 flex items-center gap-3 transition-colors mb-2"
+                    className="w-full text-left bg-dark-900 hover:bg-dark-700 border border-white/5 hover:border-cyan-500 rounded-xl p-3 flex items-center gap-3 transition-colors mb-2"
                     type="button"
                     onClick={() => { elegirSedeNav(String(sede.id_sede)); }}
                   >
-                    <div className="w-9 h-9 rounded-lg bg-brand-blue/10 border border-brand-blue/30 flex items-center justify-center flex-shrink-0">
-                      <i className="fa-solid fa-location-dot text-brand-blue text-sm"></i>
+                    <div className="w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center flex-shrink-0">
+                      <i className="fa-solid fa-location-dot text-cyan-400 text-sm"></i>
                     </div>
                     <div className="min-w-0 flex-grow">
                       <p className="text-white font-semibold text-sm truncate">
@@ -241,8 +241,8 @@ export default function ModalesGlobales() {
           <button className="absolute top-4 right-4 text-slate-400 hover:text-white cursor-pointer" onClick={() => { cerrarModal('modal-dulceria-sede'); }}>
             <i className="fa-solid fa-xmark text-xl"></i>
           </button>
-          <div className="w-14 h-14 rounded-full bg-brand-yellow/10 border border-brand-yellow/30 flex items-center justify-center mb-4">
-            <i className="fa-solid fa-bowl-food text-2xl text-brand-yellow"></i>
+          <div className="w-14 h-14 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mb-4">
+            <i className="fa-solid fa-bowl-food text-2xl text-cyan-400"></i>
           </div>
           <h3 className="text-2xl font-bold text-white mb-1">
             ¿Dónde recojo mi pedido?
@@ -289,7 +289,7 @@ export default function ModalesGlobales() {
             </div>
           </div>
           <button
-            className="w-full mt-6 bg-brand-yellow hover:bg-yellow-400 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-black py-3.5 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-lg"
+            className="w-full mt-6 bg-[#0284C7] hover:bg-[#0369A1] disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed text-white py-3.5 rounded-xl font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-cyan-900/30"
             disabled={!sedeDulceria}
             id="btn-confirmar-sede-dulceria"
             type="button"

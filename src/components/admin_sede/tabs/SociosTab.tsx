@@ -51,16 +51,16 @@ export default function SociosTab({ idSede }: SociosTabProps) {
           value={termino}
           onChange={(e) => setTermino(e.target.value)}
           placeholder="Buscar por DNI, correo, nombre o código de socio..."
-          className="w-full bg-dark-900 border border-white/10 rounded-2xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-yellow transition-colors shadow-xl"
+          className="w-full bg-dark-900 border border-white/10 rounded-2xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-colors shadow-xl"
         />
         {buscando && (
-          <i className="fa-solid fa-circle-notch fa-spin absolute right-4 top-1/2 -translate-y-1/2 text-brand-yellow text-sm"></i>
+          <i className="fa-solid fa-circle-notch fa-spin absolute right-4 top-1/2 -translate-y-1/2 text-cyan-400 text-sm"></i>
         )}
       </div>
 
       {termino.trim().length < 2 ? (
         <div className="bg-dark-900 border border-white/10 rounded-2xl p-12 text-center shadow-xl">
-          <div className="w-14 h-14 rounded-2xl bg-brand-blue/10 border border-brand-blue/20 flex items-center justify-center text-brand-blue text-2xl mx-auto mb-3">
+          <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 text-2xl mx-auto mb-3">
             <i className="fa-solid fa-id-card"></i>
           </div>
           <h3 className="text-base font-bold text-white mb-1">Ingresa un término de búsqueda</h3>
@@ -87,9 +87,9 @@ export default function SociosTab({ idSede }: SociosTabProps) {
                   key={s.id_usuario}
                   type="button"
                   onClick={() => setSocioSeleccionado(s)}
-                  className={`w-full p-3 rounded-xl text-left border transition-all flex items-center justify-between ${
+                  className={`w-full p-3 rounded-xl text-left border transition-all flex items-center justify-between cursor-pointer ${
                     esSeleccionado
-                      ? "bg-brand-blue/15 border-brand-blue text-white"
+                      ? "bg-cyan-500/15 border-cyan-500 text-white shadow-md shadow-cyan-950/20"
                       : "bg-dark-800 border-white/5 text-slate-300 hover:bg-dark-700 hover:text-white"
                   }`}
                 >

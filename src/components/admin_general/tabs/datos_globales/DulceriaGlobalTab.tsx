@@ -263,7 +263,7 @@ export default function DulceriaGlobalTab({ recargarTrigger, onRecargar }: Dulce
         <button
           type="button"
           onClick={abrirCrear}
-          className="flex items-center gap-2 bg-brand-yellow hover:bg-yellow-400 text-dark-950 font-bold px-4 py-2.5 rounded-xl text-xs transition-all shadow-md shadow-yellow-500/10 cursor-pointer self-start sm:self-auto"
+          className="flex items-center gap-2 bg-[#0284C7] hover:bg-[#0369A1] text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all shadow-md shadow-cyan-500/20 cursor-pointer self-start sm:self-auto"
         >
           <i className="fa-solid fa-plus"></i>
           <span>Nuevo Producto</span>
@@ -280,7 +280,7 @@ export default function DulceriaGlobalTab({ recargarTrigger, onRecargar }: Dulce
               onClick={() => setCategoriaSel(cat)}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border cursor-pointer ${
                 categoriaSel === cat
-                  ? "bg-brand-yellow text-dark-950 border-brand-yellow font-bold shadow-md shadow-yellow-500/10"
+                  ? "bg-[#0284C7] text-white border-[#0284C7] font-bold shadow-md shadow-cyan-500/20"
                   : "bg-[#070e1b] border-white/10 text-slate-400 hover:text-white hover:bg-white/5"
               }`}
             >
@@ -296,7 +296,7 @@ export default function DulceriaGlobalTab({ recargarTrigger, onRecargar }: Dulce
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             placeholder="Buscar producto..."
-            className="w-full bg-[#070e1b] border border-white/10 rounded-xl pl-9 pr-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-blue transition-colors"
+            className="w-full bg-[#070e1b] border border-white/10 rounded-xl pl-9 pr-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
           />
         </div>
       </div>
@@ -389,7 +389,7 @@ export default function DulceriaGlobalTab({ recargarTrigger, onRecargar }: Dulce
                   <div className="flex items-baseline justify-between mb-3">
                     <div>
                       <span className="text-[10px] text-slate-400 block font-medium">Precio Base Global</span>
-                      <span className="text-base font-extrabold text-brand-yellow font-mono tracking-tight">
+                      <span className="text-base font-extrabold text-cyan-400 font-mono tracking-tight">
                         S/ {prod.precio_base.toFixed(2)}
                       </span>
                     </div>
@@ -414,11 +414,11 @@ export default function DulceriaGlobalTab({ recargarTrigger, onRecargar }: Dulce
                     <button
                       type="button"
                       onClick={() => setProductoEliminar(prod)}
-                      className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-semibold py-2 px-3 rounded-xl text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 border border-rose-500/20"
+                      className="bg-[#DC2026] hover:bg-red-700 text-white font-semibold py-2 px-3 rounded-xl text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                       title="Eliminar producto"
                     >
                       <i className="fa-solid fa-trash text-[10px]"></i>
-                      <span className="hidden sm:inline">Borrar</span>
+                      <span className="hidden sm:inline">Eliminar</span>
                     </button>
                   </div>
                 </div>
@@ -433,11 +433,11 @@ export default function DulceriaGlobalTab({ recargarTrigger, onRecargar }: Dulce
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative bg-dark-900 border border-white/10 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden text-white"
+            className="relative bg-[#0B1528] border border-white/10 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden text-white"
           >
-            <div className="flex items-center justify-between p-5 border-b border-white/10 bg-dark-950/50">
+            <div className="flex items-center justify-between p-5 border-b border-white/10 bg-[#070e1b]/60">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-brand-yellow/10 border border-brand-yellow/30 flex items-center justify-center text-brand-yellow">
+                <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
                   <i className="fa-solid fa-bowl-food"></i>
                 </div>
                 <div>
@@ -691,7 +691,7 @@ export default function DulceriaGlobalTab({ recargarTrigger, onRecargar }: Dulce
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl text-xs font-bold bg-brand-yellow hover:bg-yellow-400 text-dark-950 shadow-lg shadow-yellow-500/10 transition-all cursor-pointer flex items-center gap-2"
+                  className="px-6 py-2.5 rounded-xl text-xs font-bold bg-[#0284C7] hover:bg-[#0369A1] text-white shadow-lg shadow-cyan-500/20 transition-all cursor-pointer flex items-center gap-2"
                 >
                   <i className="fa-solid fa-floppy-disk"></i>
                   <span>{productoEditar ? "Guardar Cambios" : "Crear Producto"}</span>

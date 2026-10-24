@@ -6,6 +6,7 @@ import { abrirDetallePelicula, cambiarVista, intentarSalirDelFlujoDeCompra, S, v
 import { useSesion } from "@/src/context/SesionContext";
 import { CarteleraService, type DatosInicioDTO } from "@/src/services/carteleraService";
 import type { PeliculaCarteleraDTO } from "@/src/dtos/cartelera";
+import { PeliculaCardSkeleton } from "@/src/components/comun/skeletons";
 
 export default function Inicio() {
   const { socio, usuario } = useSesion();
@@ -475,12 +476,8 @@ export default function Inicio() {
         {/* Skeletons durante la carga */}
         {cargando && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 md:gap-8 mb-20">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="flex flex-col animate-pulse">
-                <div className="aspect-[2/3] bg-white/5 rounded-xl mb-4"></div>
-                <div className="h-5 w-3/4 bg-white/10 rounded mb-2"></div>
-                <div className="h-4 w-1/2 bg-white/5 rounded"></div>
-              </div>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
+              <PeliculaCardSkeleton key={i} />
             ))}
           </div>
         )}

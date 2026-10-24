@@ -62,7 +62,7 @@ export default function Navbar() {
         </a>
 
         <button className="hidden lg:flex items-center gap-2 ml-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full pl-3 pr-4 py-1.5 text-left transition-colors cursor-pointer" id="chip-sede-nav" title="Cambiar de sede" onClick={() => abrirModal('modal-sede')}>
-          <i className="fa-solid fa-location-dot text-brand-yellow"></i>
+          <i className="fa-solid fa-location-dot text-cyan-400"></i>
           <span className="leading-tight">
             <span className="block text-[9px] uppercase tracking-wider text-slate-400 font-bold">Tu sede</span>
             <span className="block text-xs font-bold text-white" id="sede-nav-label">Todas las sedes</span>
@@ -71,43 +71,43 @@ export default function Navbar() {
         </button>
 
         <nav className="hidden md:flex items-center gap-8 font-semibold text-sm">
-          <a className="text-white hover:text-brand-yellow transition-colors cursor-pointer" href="#" onClick={(event) => { intentarSalirDelFlujoDeCompra(() => cambiarVista(vistaActual(), 'vista-inicio')); event.preventDefault(); }}>Inicio</a>
-          <a className="text-white hover:text-brand-yellow transition-colors cursor-pointer" href="#" onClick={(event) => { intentarSalirDelFlujoDeCompra(() => abrirVistaPromociones()); event.preventDefault(); }}>Promociones</a>
-          <a className="text-white hover:text-brand-yellow transition-colors cursor-pointer" href="#" onClick={(event) => { intentarSalirDelFlujoDeCompra(() => pedirSedeParaDulceria()); event.preventDefault(); }}>Dulcería</a>
-          <a className="drop-shadow-[0_0_8px_rgba(252,194,82,0.8)] text-white hover:text-brand-yellow transition-colors font-bold cursor-pointer" href="#" id="link-nav-socio" onClick={(event) => { intentarSalirDelFlujoDeCompra(() => router.push("/socio")); event.preventDefault(); }}>Socio Náutica</a>
-          <a className="text-white hover:text-brand-yellow transition-colors cursor-pointer" href="#" onClick={(event) => { intentarSalirDelFlujoDeCompra(() => abrirVistaUbicacion()); event.preventDefault(); }}>Ubicación</a>
-          <a className="text-white hover:text-brand-yellow transition-colors cursor-pointer" href="#" onClick={(event) => { intentarSalirDelFlujoDeCompra(() => irAVistaContacto()); event.preventDefault(); }}>Contáctenos</a>
+          <a className="text-white hover:text-cyan-400 transition-colors cursor-pointer" href="#" onClick={(event) => { intentarSalirDelFlujoDeCompra(() => cambiarVista(vistaActual(), 'vista-inicio')); event.preventDefault(); }}>Inicio</a>
+          <a className="text-white hover:text-cyan-400 transition-colors cursor-pointer" href="#" onClick={(event) => { intentarSalirDelFlujoDeCompra(() => abrirVistaPromociones()); event.preventDefault(); }}>Promociones</a>
+          <a className="text-white hover:text-cyan-400 transition-colors cursor-pointer" href="#" onClick={(event) => { intentarSalirDelFlujoDeCompra(() => pedirSedeParaDulceria()); event.preventDefault(); }}>Dulcería</a>
+          <a className="text-white hover:text-cyan-400 drop-shadow-[0_0_8px_rgba(6,182,212,0.6)] transition-colors font-bold cursor-pointer" href="#" id="link-nav-socio" onClick={(event) => { intentarSalirDelFlujoDeCompra(() => router.push("/socio")); event.preventDefault(); }}>Socio Náutica</a>
+          <a className="text-white hover:text-cyan-400 transition-colors cursor-pointer" href="#" onClick={(event) => { intentarSalirDelFlujoDeCompra(() => abrirVistaUbicacion()); event.preventDefault(); }}>Ubicación</a>
+          <a className="text-white hover:text-cyan-400 transition-colors cursor-pointer" href="#" onClick={(event) => { intentarSalirDelFlujoDeCompra(() => irAVistaContacto()); event.preventDefault(); }}>Contáctenos</a>
         </nav>
 
         {/* ── Menú de usuario (desktop) ── */}
         <div className="hidden md:flex items-center gap-4">
           {!haySesion ? (
             <div className="flex items-center gap-4" id="menu-invitado">
-              <button className="text-white hover:text-brand-yellow transition-colors font-semibold text-sm cursor-pointer" onClick={() => abrirModalLogin()}>
+              <button className="text-white hover:text-cyan-400 transition-colors font-semibold text-sm cursor-pointer" onClick={() => abrirModalLogin()}>
                 Ingresar
               </button>
-              <button className="bg-brand-blue hover:bg-brand-dark-blue text-white px-5 py-2 rounded-full font-bold text-sm shadow-lg shadow-blue-500/30 transition-all transform hover:scale-105 cursor-pointer" onClick={() => abrirModalRegistro()}>
+              <button className="bg-[#0284C7] hover:bg-[#0369A1] text-white px-5 py-2 rounded-full font-bold text-sm shadow-lg shadow-cyan-900/40 transition-all transform hover:scale-105 cursor-pointer" onClick={() => abrirModalRegistro()}>
                 Únete
               </button>
             </div>
           ) : (
             <div className="flex items-center gap-4" id="menu-usuario">
               {esCliente && socio && (
-                <span className="hidden lg:flex items-center gap-1.5 text-brand-yellow text-sm font-bold">
+                <span className="hidden lg:flex items-center gap-1.5 text-cyan-400 text-sm font-bold">
                   <i className="fa-solid fa-star text-xs"></i>
                   {socio.puntos} pts
                 </span>
               )}
-              <button className="text-white hover:text-brand-yellow transition-colors font-semibold text-sm flex items-center gap-2 cursor-pointer" id="btn-mis-compras" onClick={() => intentarSalirDelFlujoDeCompra(() => router.push("/socio?tab=compras"))}>
+              <button className="text-white hover:text-cyan-400 transition-colors font-semibold text-sm flex items-center gap-2 cursor-pointer" id="btn-mis-compras" onClick={() => intentarSalirDelFlujoDeCompra(() => router.push("/socio?tab=compras"))}>
                 <i className="fa-solid fa-receipt"></i>
                 Mis Compras
               </button>
               <div className="relative group cursor-pointer" title={`Mi perfil — ${nombreCorto}`} onClick={() => abrirModal('modal-perfil')}>
-                <div className="w-10 h-10 rounded-full bg-dark-800 border-2 border-brand-blue flex items-center justify-center overflow-hidden" id="avatar-navbar-usuario">
+                <div className="w-10 h-10 rounded-full bg-dark-800 border-2 border-cyan-500 flex items-center justify-center overflow-hidden" id="avatar-navbar-usuario">
                   {inicialesAvatar ? (
-                    <span className="text-brand-yellow font-bold text-sm">{inicialesAvatar}</span>
+                    <span className="text-cyan-400 font-bold text-sm">{inicialesAvatar}</span>
                   ) : (
-                    <i className="fa-solid fa-user text-brand-yellow"></i>
+                    <i className="fa-solid fa-user text-cyan-400"></i>
                   )}
                 </div>
               </div>
@@ -139,26 +139,26 @@ export default function Navbar() {
           </button>
         </div>
         <nav className="flex flex-col p-6 gap-1 font-semibold text-white overflow-y-auto">
-          <a className="py-3 mb-1 border-b border-brand-yellow/30 text-brand-yellow font-bold cursor-pointer flex items-center" href="#" onClick={(event) => { toggleMenuMovil(false); abrirModal('modal-sede'); event.preventDefault(); }}>
+          <a className="py-3 mb-1 border-b border-cyan-500/30 text-cyan-400 font-bold cursor-pointer flex items-center" href="#" onClick={(event) => { toggleMenuMovil(false); abrirModal('modal-sede'); event.preventDefault(); }}>
             <i className="fa-solid fa-location-dot w-6"></i>
             <span id="sede-nav-label-movil">Elegir sede</span>
           </a>
-          <a className="py-3 border-b border-white/5 hover:text-brand-yellow transition-colors cursor-pointer flex items-center" href="#" onClick={(event) => { toggleMenuMovil(false); intentarSalirDelFlujoDeCompra(() => cambiarVista(vistaActual(), 'vista-inicio')); event.preventDefault(); }}>
+          <a className="py-3 border-b border-white/5 hover:text-cyan-400 transition-colors cursor-pointer flex items-center" href="#" onClick={(event) => { toggleMenuMovil(false); intentarSalirDelFlujoDeCompra(() => cambiarVista(vistaActual(), 'vista-inicio')); event.preventDefault(); }}>
             <i className="fa-solid fa-house w-6"></i> Inicio
           </a>
-          <a className="py-3 border-b border-white/5 hover:text-brand-yellow transition-colors cursor-pointer flex items-center" href="#" onClick={(event) => { toggleMenuMovil(false); intentarSalirDelFlujoDeCompra(() => abrirVistaPromociones()); event.preventDefault(); }}>
+          <a className="py-3 border-b border-white/5 hover:text-cyan-400 transition-colors cursor-pointer flex items-center" href="#" onClick={(event) => { toggleMenuMovil(false); intentarSalirDelFlujoDeCompra(() => abrirVistaPromociones()); event.preventDefault(); }}>
             <i className="fa-solid fa-tags w-6"></i> Promociones
           </a>
-          <a className="py-3 border-b border-white/5 hover:text-brand-yellow transition-colors cursor-pointer flex items-center" href="#" onClick={(event) => { toggleMenuMovil(false); intentarSalirDelFlujoDeCompra(() => pedirSedeParaDulceria()); event.preventDefault(); }}>
+          <a className="py-3 border-b border-white/5 hover:text-cyan-400 transition-colors cursor-pointer flex items-center" href="#" onClick={(event) => { toggleMenuMovil(false); intentarSalirDelFlujoDeCompra(() => pedirSedeParaDulceria()); event.preventDefault(); }}>
             <i className="fa-solid fa-bowl-food w-6"></i> Dulcería
           </a>
-          <a className="py-3 border-b border-white/5 hover:text-brand-yellow transition-colors cursor-pointer flex items-center" href="#" id="link-nav-socio-movil" onClick={(event) => { toggleMenuMovil(false); intentarSalirDelFlujoDeCompra(() => router.push("/socio")); event.preventDefault(); }}>
+          <a className="py-3 border-b border-white/5 hover:text-cyan-400 transition-colors cursor-pointer flex items-center" href="#" id="link-nav-socio-movil" onClick={(event) => { toggleMenuMovil(false); intentarSalirDelFlujoDeCompra(() => router.push("/socio")); event.preventDefault(); }}>
             <i className="fa-solid fa-star w-6"></i> Socio Náutica
           </a>
-          <a className="py-3 border-b border-white/5 hover:text-brand-yellow transition-colors cursor-pointer flex items-center" href="#" onClick={(event) => { toggleMenuMovil(false); intentarSalirDelFlujoDeCompra(() => abrirVistaUbicacion()); event.preventDefault(); }}>
+          <a className="py-3 border-b border-white/5 hover:text-cyan-400 transition-colors cursor-pointer flex items-center" href="#" onClick={(event) => { toggleMenuMovil(false); intentarSalirDelFlujoDeCompra(() => abrirVistaUbicacion()); event.preventDefault(); }}>
             <i className="fa-solid fa-location-dot w-6"></i> Ubicación
           </a>
-          <a className="py-3 border-b border-white/5 hover:text-brand-yellow transition-colors cursor-pointer flex items-center" href="#" onClick={(event) => { toggleMenuMovil(false); intentarSalirDelFlujoDeCompra(() => irAVistaContacto()); event.preventDefault(); }}>
+          <a className="py-3 border-b border-white/5 hover:text-cyan-400 transition-colors cursor-pointer flex items-center" href="#" onClick={(event) => { toggleMenuMovil(false); intentarSalirDelFlujoDeCompra(() => irAVistaContacto()); event.preventDefault(); }}>
             <i className="fa-solid fa-envelope w-6"></i> Contáctenos
           </a>
         </nav>
@@ -170,20 +170,20 @@ export default function Navbar() {
               <button className="w-full text-center text-white border border-white/20 py-2.5 rounded-full font-bold text-sm cursor-pointer hover:bg-white/5 transition-colors" onClick={() => { toggleMenuMovil(false); abrirModalLogin(); }}>
                 Ingresar
               </button>
-              <button className="w-full text-center bg-brand-blue text-white py-2.5 rounded-full font-bold text-sm cursor-pointer hover:bg-brand-dark-blue transition-colors" onClick={() => { toggleMenuMovil(false); abrirModalRegistro(); }}>
+              <button className="w-full text-center bg-[#0284C7] hover:bg-[#0369A1] text-white py-2.5 rounded-full font-bold text-sm cursor-pointer shadow-lg shadow-cyan-900/40 transition-colors" onClick={() => { toggleMenuMovil(false); abrirModalRegistro(); }}>
                 Únete
               </button>
             </div>
           ) : (
             <div className="flex flex-col gap-3" id="menu-usuario-movil">
               <div className="flex items-center gap-3 mb-1">
-                <div className="w-10 h-10 rounded-full bg-dark-900 border-2 border-brand-blue flex items-center justify-center flex-shrink-0">
-                  <span className="text-brand-yellow font-bold text-sm">{inicialesAvatar}</span>
+                <div className="w-10 h-10 rounded-full bg-dark-900 border-2 border-cyan-500 flex items-center justify-center flex-shrink-0">
+                  <span className="text-cyan-400 font-bold text-sm">{inicialesAvatar}</span>
                 </div>
                 <div className="min-w-0">
                   <p className="text-white font-bold text-sm truncate">{usuario?.nombre} {usuario?.apellido}</p>
                   {esCliente && socio && (
-                    <p className="text-brand-yellow text-xs"><i className="fa-solid fa-star text-xs mr-1"></i>{socio.puntos} puntos</p>
+                    <p className="text-cyan-400 text-xs"><i className="fa-solid fa-star text-xs mr-1"></i>{socio.puntos} puntos</p>
                   )}
                 </div>
               </div>

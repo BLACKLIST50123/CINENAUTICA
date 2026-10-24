@@ -17,6 +17,7 @@ import type {
   VentaCounterResultadoDTO,
   OrdenContingenciaDTO,
 } from "@/src/dtos/counter";
+import { AsientosMapaSkeleton } from "@/src/components/comun/skeletons";
 
 export default function BoleteriaView() {
   // ── 1. Sedes y Contexto Operativo ──
@@ -612,10 +613,7 @@ export default function BoleteriaView() {
               {/* Contenedor del Mapa de Asientos */}
               <div className="bg-[#0B1528] border border-slate-800/80 rounded-2xl p-6 shadow-xl">
                 {cargandoSala ? (
-                  <div className="text-center py-20 text-slate-400">
-                    <i className="fa-solid fa-spinner fa-spin text-3xl text-cyan-400 mb-3"></i>
-                    <p className="text-sm">Cargando distribución de sala y disponibilidad...</p>
-                  </div>
+                  <AsientosMapaSkeleton filas={6} columnas={10} className="border-0 bg-transparent p-4 shadow-none" />
                 ) : (
                   <div>
                     {/* Pantalla Curva del Cine */}

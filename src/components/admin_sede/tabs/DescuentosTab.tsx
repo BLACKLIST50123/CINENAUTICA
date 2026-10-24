@@ -20,6 +20,8 @@ export default function DescuentosTab({
   const [cargando, setCargando] = useState<boolean>(true);
   const [cuponAlternar, setCuponAlternar] = useState<CuponSedeDTO | null>(null);
 
+  const [cuponEliminar, setCuponEliminar] = useState<CuponSedeDTO | null>(null);
+
   const cargarCupones = useCallback(async () => {
     setCargando(true);
     const data = await AdminSedeDao.obtenerCuponesSede(idSede);
@@ -46,6 +48,14 @@ export default function DescuentosTab({
     setCuponAlternar(null);
   };
 
+  const confirmarEliminarCupon = async () => {
+    if (!cuponEliminar) return;
+
+    setCupones((prev) => prev.filter((c) => c.id_cupon !== cuponEliminar.id_cupon));
+    await AdminSedeDao.eliminarCuponSede(idSede, cuponEliminar.id_cupon);
+    setCuponEliminar(null);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -59,7 +69,7 @@ export default function DescuentosTab({
         <button
           type="button"
           onClick={onAbrirCrearCuponLocal}
-          className="px-4 py-2 bg-brand-yellow hover:bg-yellow-400 text-dark-950 font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5 shadow-sm self-start sm:self-auto"
+          className="px-4 py-2 bg-[#0284C7] hover:bg-[#0369A1] text-white font-bold rounded-xl text-xs transition-all flex items-center gap-1.5 shadow-md shadow-cyan-950/40 self-start sm:self-auto cursor-pointer"
         >
           <i className="fa-solid fa-plus text-[11px]"></i>
           <span>Crear Cupón Local</span>
@@ -89,20 +99,20 @@ export default function DescuentosTab({
                 key={c.id_cupon}
                 className={`bg-dark-900 border rounded-2xl p-4 shadow-xl flex flex-col justify-between transition-all ${
                   c.habilitado_sede
-                    ? "border-white/10 hover:border-white/20"
+                    ? "border-white/10 hover:border-cyan-500/30"
                     : "border-white/5 opacity-60 bg-dark-950/40"
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-2">
-                    <span className="font-mono font-bold text-sm tracking-wider px-2.5 py-1 bg-brand-yellow/10 border border-brand-yellow/30 text-brand-yellow rounded-lg">
+                    <span className="font-mono font-bold text-sm tracking-wider px-2.5 py-1 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 rounded-lg">
                       {c.codigo}
                     </span>
                     <span
                       className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                         c.es_local
                           ? "bg-purple-500/10 text-purple-400 border border-purple-500/20"
-                          : "bg-brand-blue/10 text-brand-blue border border-brand-blue/20"
+                          : "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
                       }`}
                     >
                       {c.es_local ? "Local Sede" : "Corporativo"}
@@ -127,7 +137,7 @@ export default function DescuentosTab({
                       </div>
                       <div className="w-full bg-dark-950 rounded-full h-1.5 overflow-hidden border border-white/5">
                         <div
-                          className="bg-brand-yellow h-full rounded-full transition-all duration-300"
+                          className="bg-cyan-500 h-full rounded-full transition-all duration-300"
                           style={{ width: `${porcentaje || 0}%` }}
                         ></div>
                       </div>
@@ -135,23 +145,37 @@ export default function DescuentosTab({
                   )}
                 </div>
 
-                <div className="pt-3 border-t border-white/5 flex items-center justify-between">
-                  <span className="text-[11px] text-slate-500">
+                <div className="pt-3 border-t border-white/5 flex items-center justify-between gap-2">
+                  <span className="text-[11px] text-slate-500 truncate">
                     Hasta {c.fecha_fin || "Vigente"}
                   </span>
 
-                  <button
-                    type="button"
-                    onClick={() => setCuponAlternar(c)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors flex items-center gap-1.5 ${
-                      c.habilitado_sede
-                        ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20"
-                        : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white"
-                    }`}
-                  >
-                    <i className={`fa-solid ${c.habilitado_sede ? "fa-toggle-on" : "fa-toggle-off"}`}></i>
-                    <span>{c.habilitado_sede ? "Activo" : "Pausado"}</span>
-                  </button>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setCuponAlternar(c)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 cursor-pointer ${
+                        c.habilitado_sede
+                          ? "bg-emerald-600/20 border-emerald-500/40 text-emerald-400 hover:bg-emerald-600/30"
+                          : "bg-slate-800 border-white/10 text-slate-400 hover:bg-slate-700 hover:text-white"
+                      }`}
+                    >
+                      <i className={`fa-solid ${c.habilitado_sede ? "fa-toggle-on text-sm" : "fa-toggle-off text-sm"}`}></i>
+                      <span>{c.habilitado_sede ? "Activo" : "Pausado"}</span>
+                    </button>
+
+                    {c.es_local && (
+                      <button
+                        type="button"
+                        onClick={() => setCuponEliminar(c)}
+                        className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-[#DC2026]/10 hover:bg-[#DC2026] text-[#DC2026] hover:text-white border border-[#DC2026]/30 transition-all flex items-center gap-1 cursor-pointer"
+                        title="Eliminar cupón de la sede"
+                      >
+                        <i className="fa-solid fa-trash-can text-[11px]"></i>
+                        <span>Eliminar</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -177,6 +201,18 @@ export default function DescuentosTab({
         textoCancelar="Cancelar"
         onConfirmar={confirmarAlternarCupon}
         onCancelar={() => setCuponAlternar(null)}
+      />
+
+      {/* Modal de confirmación para eliminar cupón local */}
+      <ModalConfirmacion
+        abierto={!!cuponEliminar}
+        titulo="¿Eliminar Cupón Local?"
+        mensaje={`¿Estás seguro de que deseas eliminar permanentemente el cupón '${cuponEliminar?.codigo}' de esta sede?`}
+        tipo="peligro"
+        textoConfirmar="Sí, Eliminar"
+        textoCancelar="Cancelar"
+        onConfirmar={confirmarEliminarCupon}
+        onCancelar={() => setCuponEliminar(null)}
       />
     </div>
   );

@@ -71,14 +71,14 @@ export default function StepperCompra() {
           const hecho = i < actual,
             ahora = i === actual;
           const txt = hecho
-            ? "text-brand-yellow"
+            ? "text-cyan-400"
             : ahora
             ? "text-white"
             : "text-slate-600";
           const circ = hecho
-            ? "bg-brand-yellow text-black"
+            ? "bg-cyan-500 text-black font-extrabold shadow-[0_0_12px_rgba(6,182,212,0.5)]"
             : ahora
-            ? "bg-brand-blue text-white shadow-[0_0_10px_rgba(10,126,177,0.6)]"
+            ? "bg-[#0284C7] text-white border-2 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.7)]"
             : "bg-dark-700 text-slate-500 border border-white/10";
           return (
             <div
@@ -103,8 +103,8 @@ export default function StepperCompra() {
               </div>
               {i < pasos.length - 1 && (
                 <div
-                  className={`flex-1 h-0.5 mx-2 md:mx-3 ${
-                    hecho ? "bg-brand-yellow" : "bg-dark-700"
+                  className={`flex-1 h-0.5 mx-2 md:mx-3 transition-colors ${
+                    hecho ? "bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.4)]" : "bg-dark-700"
                   }`}
                 ></div>
               )}

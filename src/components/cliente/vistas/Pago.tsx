@@ -415,7 +415,7 @@ export default function Pago() {
     return (
       <div className="w-full bg-dark-900 min-h-screen pt-36 pb-40 px-4 flex items-center justify-center text-white">
         <div className="text-center">
-          <i className="fa-solid fa-circle-notch fa-spin text-brand-yellow text-4xl mb-3"></i>
+          <i className="fa-solid fa-circle-notch fa-spin text-cyan-400 text-4xl mb-3"></i>
           <p className="text-slate-400 text-sm">Cargando detalles de tu compra...</p>
         </div>
       </div>
@@ -441,7 +441,7 @@ export default function Pago() {
             <span className="hidden sm:inline">
               {esFlujoDirecto ? "Paso 2 de 3:" : "Paso 4 de 5:"}
             </span>
-            <span className="text-brand-yellow font-bold uppercase tracking-wider">
+            <span className="text-cyan-400 font-bold uppercase tracking-wider">
               Pago Seguro y Comprobante
             </span>
           </div>
@@ -456,7 +456,7 @@ export default function Pago() {
             <div className="bg-dark-800 p-6 md:p-8 rounded-2xl border border-white/5 shadow-xl">
               <div className="flex items-center justify-between mb-6 pb-3 border-b border-white/5">
                 <h3 className="text-xl font-bold flex items-center gap-2.5">
-                  <i className="fa-solid fa-file-invoice text-brand-blue"></i>
+                  <i className="fa-solid fa-file-invoice text-cyan-400"></i>
                   Comprobante de Pago
                 </h3>
                 <span className="text-xs text-slate-400 bg-white/5 px-2.5 py-1 rounded-full border border-white/10">
@@ -469,13 +469,13 @@ export default function Pago() {
                 <label
                   className={`flex-1 flex items-center justify-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
                     tipoComprobante === "Boleta"
-                      ? "bg-brand-blue/10 border-brand-blue text-white shadow-lg shadow-blue-500/10"
+                      ? "bg-cyan-500/10 border-cyan-500 text-white shadow-lg shadow-cyan-500/10"
                       : "bg-dark-900 border-white/10 text-slate-400 hover:border-white/20"
                   }`}
                 >
                   <input
                     checked={tipoComprobante === "Boleta"}
-                    className="accent-brand-blue w-4 h-4 cursor-pointer"
+                    className="accent-cyan-500 w-4 h-4 cursor-pointer"
                     name="tipo_comprobante"
                     type="radio"
                     value="Boleta"
@@ -500,13 +500,13 @@ export default function Pago() {
                 <label
                   className={`flex-1 flex items-center justify-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
                     tipoComprobante === "Factura"
-                      ? "bg-brand-blue/10 border-brand-blue text-white shadow-lg shadow-blue-500/10"
+                      ? "bg-cyan-500/10 border-cyan-500 text-white shadow-lg shadow-cyan-500/10"
                       : "bg-dark-900 border-white/10 text-slate-400 hover:border-white/20"
                   }`}
                 >
                   <input
                     checked={tipoComprobante === "Factura"}
-                    className="accent-brand-blue w-4 h-4 cursor-pointer"
+                    className="accent-cyan-500 w-4 h-4 cursor-pointer"
                     name="tipo_comprobante"
                     type="radio"
                     value="Factura"
@@ -534,7 +534,7 @@ export default function Pago() {
                     </label>
                     {tipoComprobante === "Boleta" && usuario?.dni && (
                       <span className="text-[10px] text-slate-400 flex items-center gap-1 font-mono">
-                        <i className="fa-solid fa-lock text-[9px] text-brand-blue"></i> Socio
+                        <i className="fa-solid fa-lock text-[9px] text-cyan-400"></i> Socio
                       </span>
                     )}
                   </div>
@@ -542,7 +542,7 @@ export default function Pago() {
                     className={`w-full rounded-xl px-4 py-3 text-sm font-mono tracking-wider transition-colors ${
                       tipoComprobante === "Boleta" && usuario?.dni
                         ? "bg-dark-950/70 border border-white/5 text-slate-300 cursor-not-allowed select-none opacity-85"
-                        : "bg-dark-900 border border-white/10 text-white focus:outline-none focus:border-brand-blue"
+                        : "bg-dark-900 border border-white/10 text-white focus:outline-none focus:border-cyan-400"
                     }`}
                     inputMode="numeric"
                     maxLength={tipoComprobante === "Boleta" ? 8 : 11}
@@ -565,7 +565,7 @@ export default function Pago() {
                     </label>
                     {tipoComprobante === "Boleta" && usuario && (
                       <span className="text-[10px] text-slate-400 flex items-center gap-1 font-mono">
-                        <i className="fa-solid fa-lock text-[9px] text-brand-blue"></i> Socio
+                        <i className="fa-solid fa-lock text-[9px] text-cyan-400"></i> Socio
                       </span>
                     )}
                   </div>
@@ -573,7 +573,7 @@ export default function Pago() {
                     className={`w-full rounded-xl px-4 py-3 text-sm transition-colors ${
                       tipoComprobante === "Boleta" && usuario
                         ? "bg-dark-950/70 border border-white/5 text-slate-300 cursor-not-allowed select-none opacity-85"
-                        : "bg-dark-900 border border-white/10 text-white focus:outline-none focus:border-brand-blue"
+                        : "bg-dark-900 border border-white/10 text-white focus:outline-none focus:border-cyan-400"
                     }`}
                     placeholder={tipoComprobante === "Boleta" ? "Ej: Juan Pérez Morales" : "Ej: Cine Inversiones SAC"}
                     type="text"
@@ -602,7 +602,7 @@ export default function Pago() {
                     </label>
                     {usuario && (
                       <span className="text-[10px] text-slate-400 flex items-center gap-1 font-mono">
-                        <i className="fa-solid fa-lock text-[9px] text-brand-blue"></i> Socio
+                        <i className="fa-solid fa-lock text-[9px] text-cyan-400"></i> Socio
                       </span>
                     )}
                   </div>
@@ -610,7 +610,7 @@ export default function Pago() {
                     className={`w-full rounded-xl px-4 py-3 text-sm transition-colors ${
                       usuario
                         ? "bg-dark-950/70 border border-white/5 text-slate-300 cursor-not-allowed select-none opacity-85"
-                        : "bg-dark-900 border border-white/10 text-white focus:outline-none focus:border-brand-blue"
+                        : "bg-dark-900 border border-white/10 text-white focus:outline-none focus:border-cyan-400"
                     }`}
                     placeholder="Ej: tu-correo@ejemplo.com"
                     type="email"
@@ -628,14 +628,14 @@ export default function Pago() {
               <label className="flex items-start gap-2.5 text-xs text-slate-400 cursor-pointer select-none mt-5">
                 <input
                   checked={aceptaPoliticas}
-                  className="mt-0.5 accent-brand-blue w-4 h-4 flex-shrink-0 cursor-pointer"
+                  className="mt-0.5 accent-cyan-500 w-4 h-4 flex-shrink-0 cursor-pointer"
                   type="checkbox"
                   onChange={(e) => setAceptaPoliticas(e.target.checked)}
                 />
                 <span>
                   He leído y acepto las{" "}
                   <button
-                    className="text-brand-yellow hover:underline font-semibold"
+                    className="text-cyan-400 hover:text-cyan-300 hover:underline font-semibold"
                     type="button"
                     onClick={(e) => {
                       e.preventDefault();
@@ -646,7 +646,7 @@ export default function Pago() {
                   </button>{" "}
                   y los{" "}
                   <button
-                    className="text-brand-yellow hover:underline font-semibold"
+                    className="text-cyan-400 hover:text-cyan-300 hover:underline font-semibold"
                     type="button"
                     onClick={(e) => {
                       e.preventDefault();
@@ -663,7 +663,7 @@ export default function Pago() {
             {/* 2. Cupón de Descuento */}
             <div className="bg-dark-800 p-6 md:p-8 rounded-2xl border border-white/5 shadow-xl">
               <h3 className="text-xl font-bold flex items-center gap-2.5 mb-3">
-                <i className="fa-solid fa-tag text-brand-yellow"></i>
+                <i className="fa-solid fa-tag text-cyan-400"></i>
                 Cupón de Descuento
               </h3>
               <p className="text-xs text-slate-400 mb-4">
@@ -695,7 +695,7 @@ export default function Pago() {
               ) : (
                 <div className="flex gap-3">
                   <input
-                    className="flex-1 bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white uppercase focus:outline-none focus:border-brand-yellow transition-colors font-mono tracking-wider text-sm"
+                    className="flex-1 bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white uppercase focus:outline-none focus:border-cyan-400 transition-colors font-mono tracking-wider text-sm"
                     placeholder="Ej: VERANO20 o CINELOVER"
                     type="text"
                     value={codigoCuponInput}
@@ -703,7 +703,7 @@ export default function Pago() {
                     onKeyDown={(e) => e.key === "Enter" && aplicarCupon()}
                   />
                   <button
-                    className="bg-brand-yellow hover:bg-yellow-400 text-black px-6 py-3 rounded-xl font-bold transition-all transform hover:scale-[1.02] active:scale-[0.98] text-sm cursor-pointer disabled:opacity-50"
+                    className="bg-[#0284C7] hover:bg-[#0369A1] text-white shadow-lg shadow-cyan-900/30 px-6 py-3 rounded-xl font-bold transition-all transform hover:scale-[1.02] active:scale-[0.98] text-sm cursor-pointer disabled:opacity-50"
                     disabled={validandoCupon}
                     type="button"
                     onClick={aplicarCupon}
@@ -799,7 +799,7 @@ export default function Pago() {
                 <button
                   className={`flex-1 flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl font-bold text-sm transition-all cursor-pointer border ${
                     metodoPago === "Tarjeta"
-                      ? "bg-brand-yellow text-black border-brand-yellow shadow-lg shadow-yellow-500/20"
+                      ? "bg-[#0284C7] text-white border-cyan-500 shadow-lg shadow-cyan-500/20"
                       : "bg-dark-900 text-slate-400 border-white/10 hover:text-white"
                   }`}
                   type="button"
@@ -832,7 +832,7 @@ export default function Pago() {
                     </label>
                     <div className="relative">
                       <input
-                        className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-yellow font-mono text-sm tracking-widest pl-12"
+                        className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-400 font-mono text-sm tracking-widest pl-12"
                         inputMode="numeric"
                         maxLength={19}
                         placeholder="4557 1234 5678 9010"
@@ -850,7 +850,7 @@ export default function Pago() {
                         Expiración (MM/AA):
                       </label>
                       <input
-                        className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-yellow font-mono text-sm tracking-widest text-center"
+                        className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-400 font-mono text-sm tracking-widest text-center"
                         inputMode="numeric"
                         maxLength={5}
                         placeholder="12/28"
@@ -865,7 +865,7 @@ export default function Pago() {
                         CVV / CVC (3 dígitos):
                       </label>
                       <input
-                        className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-yellow font-mono text-sm tracking-widest text-center"
+                        className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-400 font-mono text-sm tracking-widest text-center"
                         inputMode="numeric"
                         maxLength={3}
                         placeholder="123"
@@ -884,7 +884,7 @@ export default function Pago() {
                       Nombre del Titular:
                     </label>
                     <input
-                      className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-yellow text-sm uppercase"
+                      className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-400 text-sm uppercase"
                       placeholder="COMO APARECE EN LA TARJETA"
                       type="text"
                       value={titularTarjeta}
@@ -943,11 +943,11 @@ export default function Pago() {
 
           {/* ── COLUMNA DERECHA: Resumen de Compra Sticky (4 cols) ── */}
           <div className="lg:col-span-5 xl:col-span-4 sticky top-28 space-y-4">
-            <div className="bg-dark-800 p-6 rounded-2xl border border-brand-yellow/20 shadow-2xl">
+            <div className="bg-dark-800 p-6 rounded-2xl border border-white/10 shadow-2xl">
               
               <h3 className="text-lg font-bold pb-4 border-b border-white/10 flex items-center justify-between">
                 <span>Resumen de tu Orden</span>
-                <span className="text-xs text-brand-yellow font-bold bg-brand-yellow/10 px-2 py-0.5 rounded">
+                <span className="text-xs text-cyan-400 font-bold bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded">
                   {nombreSede}
                 </span>
               </h3>
@@ -975,7 +975,7 @@ export default function Pago() {
                       <p className="font-bold text-sm text-white line-clamp-1">
                         {datosFuncion.titulo_pelicula || "Película"}
                       </p>
-                      <p className="text-xs text-brand-yellow font-semibold">
+                      <p className="text-xs text-cyan-400 font-semibold">
                         {datosFuncion.formato || "2D"} • {datosFuncion.nombre_sala || "Sala"}
                       </p>
                       <p className="text-[11px] text-slate-400">
@@ -1013,7 +1013,7 @@ export default function Pago() {
                     {itemsDulceria.map((prod, idx) => (
                       <div key={idx} className="flex justify-between items-center text-xs">
                         <span className="text-slate-300 truncate pr-2">
-                          <span className="text-brand-yellow font-bold mr-1">
+                          <span className="text-cyan-400 font-bold mr-1">
                             {prod.cantidad}x
                           </span>
                           {prod.nombre}
@@ -1073,7 +1073,7 @@ export default function Pago() {
               <div className="pt-4 pb-2">
                 <div className="flex items-baseline justify-between mb-2">
                   <span className="text-sm font-bold text-slate-200">TOTAL A PAGAR:</span>
-                  <span className="text-3xl font-black text-brand-yellow font-mono">
+                  <span className="text-3xl font-black text-cyan-400 font-mono">
                     S/ {totalPagar.toFixed(2)}
                   </span>
                 </div>
@@ -1082,8 +1082,8 @@ export default function Pago() {
                 </p>
 
                 {puntosGanados > 0 && (
-                  <div className="mt-3 bg-brand-yellow/10 border border-brand-yellow/20 p-2.5 rounded-xl text-center">
-                    <p className="text-xs text-brand-yellow font-bold flex items-center justify-center gap-1.5">
+                  <div className="mt-3 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl text-center">
+                    <p className="text-xs text-amber-400 font-bold flex items-center justify-center gap-1.5">
                       <i className="fa-solid fa-gift"></i>
                       Ganarás +{puntosGanados} Puntos Náutica con esta compra
                     </p>
@@ -1093,7 +1093,7 @@ export default function Pago() {
 
               {/* Botón Principal de Pago */}
               <button
-                className="w-full mt-4 bg-brand-yellow hover:bg-yellow-400 text-black py-4 rounded-xl font-black text-base transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-yellow-500/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full mt-4 bg-[#0284C7] hover:bg-[#0369A1] text-white py-4 rounded-xl font-black text-base transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-cyan-600/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={procesandoPago || (subtotalGeneral <= 0)}
                 type="button"
                 onClick={manejarPago}

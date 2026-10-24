@@ -331,7 +331,7 @@ export default function PeliculasGlobalTab({ recargarTrigger, onRecargar }: Peli
         <button
           type="button"
           onClick={abrirCrear}
-          className="flex items-center gap-2 bg-brand-yellow hover:bg-yellow-400 text-dark-950 font-bold px-4 py-2.5 rounded-xl text-xs transition-all shadow-md shadow-yellow-500/10 cursor-pointer self-start sm:self-auto"
+          className="flex items-center gap-2 bg-[#0284C7] hover:bg-[#0369A1] text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all shadow-md shadow-cyan-500/20 cursor-pointer self-start sm:self-auto"
         >
           <i className="fa-solid fa-plus"></i>
           <span>Nueva Película</span>
@@ -346,7 +346,7 @@ export default function PeliculasGlobalTab({ recargarTrigger, onRecargar }: Peli
             placeholder="Buscar película por título o sinopsis..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            className="w-full bg-[#070e1b] border border-white/10 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-blue transition-colors"
+            className="w-full bg-[#070e1b] border border-white/10 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
           />
         </div>
 
@@ -355,7 +355,7 @@ export default function PeliculasGlobalTab({ recargarTrigger, onRecargar }: Peli
           <select
             value={filtroTipo}
             onChange={(e) => setFiltroTipo(e.target.value)}
-            className="bg-[#070e1b] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-blue cursor-pointer"
+            className="bg-[#070e1b] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500 cursor-pointer"
           >
             <option value="all">Todos los estados</option>
             {TIPOS_LANZAMIENTO.map((t) => (
@@ -409,7 +409,7 @@ export default function PeliculasGlobalTab({ recargarTrigger, onRecargar }: Peli
                     <button
                       type="button"
                       onClick={() => abrirEditar(p)}
-                      className="flex-1 bg-brand-blue hover:bg-sky-500 text-white text-xs font-bold py-2 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1 shadow-md"
+                      className="flex-1 bg-[#0284C7] hover:bg-[#0369A1] text-white text-xs font-bold py-2 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1 shadow-md"
                     >
                       <i className="fa-solid fa-pen text-[10px]"></i>
                       <span>Editar</span>
@@ -417,16 +417,16 @@ export default function PeliculasGlobalTab({ recargarTrigger, onRecargar }: Peli
                     <button
                       type="button"
                       onClick={() => setPeliculaEliminar(p)}
-                      className="flex-1 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold py-2 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1 shadow-md"
+                      className="flex-1 bg-[#DC2026] hover:bg-red-700 text-white text-xs font-bold py-2 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1 shadow-md"
                     >
                       <i className="fa-solid fa-trash text-[10px]"></i>
-                      <span>Borrar</span>
+                      <span>Eliminar</span>
                     </button>
                   </div>
 
                   {/* Badges superiores */}
                   <div className="absolute top-2 left-2 flex flex-col gap-1">
-                    <span className="bg-[#070e1b]/80 backdrop-blur-sm text-brand-yellow font-black text-[10px] px-2 py-0.5 rounded-md border border-brand-yellow/30">
+                    <span className="bg-[#070e1b]/90 backdrop-blur-sm text-cyan-400 font-black text-[10px] px-2 py-0.5 rounded-md border border-cyan-500/30">
                       {p.clasificacion}
                     </span>
                   </div>
@@ -488,12 +488,12 @@ export default function PeliculasGlobalTab({ recargarTrigger, onRecargar }: Peli
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative bg-dark-900 border border-white/10 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden text-white"
+            className="relative bg-[#0B1528] border border-white/10 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden text-white"
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-5 border-b border-white/10 bg-dark-950/50">
+            <div className="flex items-center justify-between p-5 border-b border-white/10 bg-[#070e1b]/60">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-brand-blue/10 border border-brand-blue/30 flex items-center justify-center text-brand-blue">
+                <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
                   <i className={`fa-solid ${peliculaEditar ? "fa-pen-to-square" : "fa-film"}`}></i>
                 </div>
                 <div>
@@ -881,7 +881,7 @@ export default function PeliculasGlobalTab({ recargarTrigger, onRecargar }: Peli
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl text-xs font-bold bg-brand-yellow hover:bg-yellow-400 text-dark-950 shadow-lg shadow-yellow-500/10 transition-all cursor-pointer flex items-center gap-2"
+                  className="px-6 py-2.5 rounded-xl text-xs font-bold bg-[#0284C7] hover:bg-[#0369A1] text-white shadow-lg shadow-cyan-500/20 transition-all cursor-pointer flex items-center gap-2"
                 >
                   <i className="fa-solid fa-floppy-disk"></i>
                   <span>{peliculaEditar ? "Guardar Cambios" : "Registrar Película"}</span>

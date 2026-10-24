@@ -19,6 +19,7 @@ import type {
 import { SEL, intentarSalirDelFlujoDeCompra } from "@/src/lib/ui/nav";
 import { mostrarToast } from "@/src/lib/ui/common";
 import { FuncionDao } from "@/src/daos/FuncionDao";
+import { AsientosMapaSkeleton, SkeletonBase } from "@/src/components/comun/skeletons";
 
 export default function Asientos({ idFuncionParam }: { idFuncionParam?: string } = {}) {
   const router = useRouter();
@@ -632,13 +633,30 @@ export default function Asientos({ idFuncionParam }: { idFuncionParam?: string }
   // ── Pantalla de Carga y Manejo de Errores ──
   if (cargando) {
     return (
-      <div className="w-full bg-dark-900 min-h-screen pt-36 pb-40 px-4 md:px-8 max-w-[1600px] mx-auto text-white">
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <i className="fa-solid fa-circle-notch fa-spin text-brand-yellow text-5xl mb-4"></i>
-          <h2 className="text-2xl font-bold mb-2">Cargando sala y disponibilidad...</h2>
-          <p className="text-slate-400 text-sm">
-            Consultando distribución y bloqueos de butacas en tiempo real.
-          </p>
+      <div className="w-full bg-dark-900 min-h-screen pb-40 pt-36 overflow-x-hidden">
+        <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Columna Izquierda: Skeleton Ficha de Película */}
+          <div className="w-full lg:col-span-1">
+            <div className="bg-dark-800 p-6 rounded-2xl border border-white/5 shadow-xl space-y-4">
+              <SkeletonBase className="h-4 w-32 rounded mb-4" />
+              <SkeletonBase className="aspect-[2/3] w-full rounded-xl mb-4" />
+              <SkeletonBase className="h-6 w-3/4 rounded" />
+              <div className="flex gap-2">
+                <SkeletonBase className="h-5 w-12 rounded" />
+                <SkeletonBase className="h-5 w-20 rounded" />
+              </div>
+              <div className="p-4 bg-dark-900 rounded-xl space-y-3 mt-4">
+                <SkeletonBase className="h-4 w-full rounded" />
+                <SkeletonBase className="h-4 w-4/5 rounded" />
+                <SkeletonBase className="h-4 w-3/5 rounded" />
+              </div>
+            </div>
+          </div>
+
+          {/* Columna Derecha: Mapa de Asientos con Pantalla y Shimmer */}
+          <div className="w-full lg:col-span-3">
+            <AsientosMapaSkeleton filas={8} columnas={14} />
+          </div>
         </div>
       </div>
     );
@@ -732,7 +750,7 @@ export default function Asientos({ idFuncionParam }: { idFuncionParam?: string }
 
               <div className="text-xs text-slate-400 bg-white/5 p-3 rounded-lg border border-white/5">
                 <p className="flex items-center gap-2 mb-1 text-slate-300 font-semibold">
-                  <i className="fa-solid fa-circle-info text-brand-yellow"></i>
+                  <i className="fa-solid fa-circle-info text-cyan-400"></i>
                   Reglas de reserva:
                 </p>
                 <ul className="space-y-1 list-disc list-inside text-slate-400">
@@ -756,7 +774,7 @@ export default function Asientos({ idFuncionParam }: { idFuncionParam?: string }
               </p>
             </div>
 
-            <div className="bg-dark-800 border border-brand-yellow/30 text-brand-yellow font-bold px-4 py-2 rounded-full text-sm flex items-center gap-2 shadow-lg">
+            <div className="bg-dark-800 border border-cyan-500/30 text-cyan-400 font-bold px-4 py-2 rounded-full text-sm flex items-center gap-2 shadow-lg">
               <i className="fa-solid fa-ticket"></i>
               <span>
                 Tarifa base: S/ {tarifaVigente?.precio_base_con_formato.toFixed(2)} c/u
@@ -766,11 +784,11 @@ export default function Asientos({ idFuncionParam }: { idFuncionParam?: string }
 
           <div className="bg-dark-800 p-6 md:p-10 rounded-2xl border border-white/5 shadow-2xl flex flex-col items-center overflow-x-auto relative">
             
-            {/* Pantalla Curva con Reflejo */}
-            <div className="w-full max-w-[500px] mb-12 text-center">
-              <div className="w-full h-10 screen-curve rounded-t-[50%] border-t-4 border-brand-blue/60 shadow-[0_-15px_30px_rgba(10,126,177,0.3)]"></div>
-              <span className="text-slate-500 font-bold uppercase tracking-widest text-xs mt-3 block">
-                PANTALLA
+            {/* Pantalla Neón Estilo Counter */}
+            <div className="w-full max-w-md mx-auto mb-10 text-center px-4">
+              <div className="h-2 bg-gradient-to-r from-transparent via-cyan-400/80 to-transparent rounded-full shadow-[0_0_20px_rgba(6,182,212,0.6)]"></div>
+              <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-2 block">
+                Pantalla
               </span>
             </div>
 
@@ -902,7 +920,7 @@ export default function Asientos({ idFuncionParam }: { idFuncionParam?: string }
               <p className="text-slate-400 text-xs mt-0.5">
                 {datosFuncion.dia_label || datosFuncion.fecha} • {datosFuncion.hora || "19:00"} • {datosFuncion.formato}
               </p>
-              <p className="text-brand-yellow text-xs font-semibold mt-1">
+              <p className="text-cyan-400 text-xs font-semibold mt-1">
                 {datosFuncion.nombre_sede} — {matriz.nombre_sala}
               </p>
             </div>
@@ -972,7 +990,7 @@ export default function Asientos({ idFuncionParam }: { idFuncionParam?: string }
             </div>
 
             <button
-              className="w-full bg-brand-blue disabled:bg-slate-700 disabled:text-slate-500 hover:bg-brand-dark-blue text-white py-3.5 rounded-xl font-bold transition-all shadow-lg shadow-brand-blue/30 flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+              className="w-full bg-[#0284C7] disabled:bg-slate-700 disabled:text-slate-500 hover:bg-[#0369A1] text-white py-3.5 rounded-xl font-bold transition-all shadow-lg shadow-cyan-900/40 flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
               disabled={asientosSeleccionados.length === 0}
               id="btn-ir-dulceria"
               type="button"
@@ -1002,7 +1020,7 @@ export default function Asientos({ idFuncionParam }: { idFuncionParam?: string }
               Elegir tipo de entrada
             </h3>
             <p className="text-slate-400 text-sm mb-5">
-              Para el asiento <strong className="text-brand-yellow font-bold">{asientoParaModalTipo.codigo}</strong>
+              Para el asiento <strong className="text-cyan-400 font-bold">{asientoParaModalTipo.codigo}</strong>
             </p>
 
             <div className="space-y-3">

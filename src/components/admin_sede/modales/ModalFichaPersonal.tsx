@@ -40,10 +40,10 @@ export default function ModalFichaPersonal({
   return (
     <>
       <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-        <div className="relative w-full max-w-md bg-dark-900 border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl text-white">
+        <div className="relative w-full max-w-md bg-[#0B1528] border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl text-white">
           <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-brand-blue/10 border border-brand-blue/30 flex items-center justify-center text-brand-blue text-lg">
+              <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-lg">
                 <i className="fa-solid fa-id-badge"></i>
               </div>
               <div>
@@ -54,7 +54,7 @@ export default function ModalFichaPersonal({
             <button
               type="button"
               onClick={onCerrar}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             >
               <i className="fa-solid fa-xmark"></i>
             </button>
@@ -62,14 +62,14 @@ export default function ModalFichaPersonal({
 
           <div className="space-y-4">
             <div className="flex items-center gap-4 bg-dark-800 border border-white/10 rounded-xl p-4">
-              <div className="w-14 h-14 rounded-full bg-brand-blue/20 border-2 border-brand-blue flex items-center justify-center text-brand-yellow text-xl font-bold">
+              <div className="w-14 h-14 rounded-full bg-cyan-500/20 border-2 border-cyan-500 flex items-center justify-center text-cyan-400 text-xl font-bold">
                 {personal.nombre.charAt(0)}{personal.apellido.charAt(0)}
               </div>
               <div>
                 <h4 className="font-bold text-white text-base">
                   {personal.nombre} {personal.apellido}
                 </h4>
-                <p className="text-xs text-brand-yellow font-semibold">{personal.rol_nombre}</p>
+                <p className="text-xs text-cyan-400 font-semibold">{personal.rol_nombre}</p>
                 <span
                   className={`inline-block mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                     personal.activo

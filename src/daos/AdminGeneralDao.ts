@@ -140,10 +140,18 @@ export class AdminGeneralDao {
       .from("sede")
       .select(`
         id_sede,
+        codigo,
         nombre,
         direccion,
+        telefono,
         cant_salas,
+        latitud,
+        longitud,
+        url_imagen,
+        serie_boleta,
+        serie_factura,
         activa,
+        id_ciudad,
         ciudad:id_ciudad (
           id_ciudad,
           nombre,
@@ -205,10 +213,18 @@ export class AdminGeneralDao {
 
       resultados.push({
         id_sede: (sede as any).id_sede,
+        codigo: (sede as any).codigo || undefined,
         nombre: (sede as any).nombre,
+        id_ciudad: (sede as any).id_ciudad || ciudad?.id_ciudad,
         ciudad: ciudad?.nombre || "—",
         region: ciudad?.region?.nombre || "—",
         direccion: (sede as any).direccion || "",
+        telefono: (sede as any).telefono || "",
+        latitud: (sede as any).latitud != null ? Number((sede as any).latitud) : null,
+        longitud: (sede as any).longitud != null ? Number((sede as any).longitud) : null,
+        url_imagen: (sede as any).url_imagen || "",
+        serie_boleta: (sede as any).serie_boleta || "",
+        serie_factura: (sede as any).serie_factura || "",
         cant_salas: (sede as any).cant_salas || 0,
         activa: (sede as any).activa ?? true,
         funciones_hoy: funcionesHoy || 0,
@@ -227,7 +243,14 @@ export class AdminGeneralDao {
       codigo: payload.codigo || payload.nombre.slice(0, 4).toUpperCase().replace(/\s+/g, ""),
       id_ciudad: payload.id_ciudad,
       direccion: payload.direccion,
-      cant_salas: payload.cant_salas,
+      cant_salas: payload.cant_salas || 4,
+      latitud: payload.latitud ?? null,
+      longitud: payload.longitud ?? null,
+      telefono: payload.telefono || null,
+      url_imagen: payload.url_imagen || null,
+      serie_boleta: payload.serie_boleta || null,
+      serie_factura: payload.serie_factura || null,
+      zona_horaria: "America/Lima",
       activa: true,
     });
 
@@ -239,14 +262,25 @@ export class AdminGeneralDao {
   }
 
   static async editarSede(payload: EditarSedePayload): Promise<{ ok: boolean; error?: string }> {
+    const updateData: Record<string, any> = {
+      nombre: payload.nombre,
+      id_ciudad: payload.id_ciudad,
+      direccion: payload.direccion,
+      activa: payload.activa,
+    };
+
+    if (payload.codigo !== undefined) updateData.codigo = payload.codigo;
+    if (payload.cant_salas !== undefined) updateData.cant_salas = payload.cant_salas;
+    if (payload.latitud !== undefined) updateData.latitud = payload.latitud;
+    if (payload.longitud !== undefined) updateData.longitud = payload.longitud;
+    if (payload.telefono !== undefined) updateData.telefono = payload.telefono || null;
+    if (payload.url_imagen !== undefined) updateData.url_imagen = payload.url_imagen || null;
+    if (payload.serie_boleta !== undefined) updateData.serie_boleta = payload.serie_boleta || null;
+    if (payload.serie_factura !== undefined) updateData.serie_factura = payload.serie_factura || null;
+
     const { error } = await supabase
       .from("sede")
-      .update({
-        nombre: payload.nombre,
-        id_ciudad: payload.id_ciudad,
-        direccion: payload.direccion,
-        activa: payload.activa,
-      })
+      .update(updateData as any)
       .eq("id_sede", payload.id_sede);
 
     if (error) {

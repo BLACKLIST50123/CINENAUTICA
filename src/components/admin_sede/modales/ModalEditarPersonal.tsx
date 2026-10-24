@@ -121,11 +121,11 @@ export default function ModalEditarPersonal({
   return (
     <>
       <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-        <div className="relative w-full max-w-lg bg-[#0D1627] border border-white/15 rounded-2xl p-6 md:p-8 shadow-2xl text-white">
+        <div className="relative w-full max-w-lg bg-[#0B1528] border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl text-white">
           {/* Header */}
           <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-brand-blue/15 border border-brand-blue/30 flex items-center justify-center text-brand-blue text-lg">
+              <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-lg">
                 <i className="fa-solid fa-user-pen"></i>
               </div>
               <div>
@@ -136,7 +136,7 @@ export default function ModalEditarPersonal({
             <button
               type="button"
               onClick={onCerrar}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             >
               <i className="fa-solid fa-xmark"></i>
             </button>
@@ -275,13 +275,13 @@ export default function ModalEditarPersonal({
               <button
                 type="button"
                 onClick={onCerrar}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-white/5 transition-colors"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-white/5 transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 rounded-xl text-xs font-bold bg-brand-yellow hover:bg-yellow-400 text-dark-950 transition-colors shadow-md shadow-yellow-500/10 flex items-center gap-1.5"
+                className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#0284C7] hover:bg-[#0369A1] text-white transition-all shadow-md shadow-cyan-950/40 flex items-center gap-1.5 cursor-pointer"
               >
                 <i className="fa-solid fa-floppy-disk text-[11px]"></i>
                 <span>Guardar Cambios</span>

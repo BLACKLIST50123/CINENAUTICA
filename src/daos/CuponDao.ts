@@ -101,5 +101,52 @@ export class CuponDao {
       usos_maximos: c.usos_maximos,
     }));
   }
+
+  /**
+   * Registra e incrementa el uso de un cupón tanto a nivel global como de sede
+   */
+  static async registrarUsoCupon(idCupon: string, idSede: number): Promise<void> {
+    try {
+      // 1. Incrementar usos_actuales en la tabla cupon
+      const { data: cup } = await supabase
+        .from("cupon")
+        .select("usos_actuales, usos_maximos")
+        .eq("id_cupon", idCupon)
+        .maybeSingle();
+
+      if (cup) {
+        const nuevosUsos = (cup.usos_actuales || 0) + 1;
+        await supabase
+          .from("cupon")
+          .update({
+            usos_actuales: nuevosUsos,
+            activo: cup.usos_maximos > 0 ? nuevosUsos < cup.usos_maximos : true,
+          })
+          .eq("id_cupon", idCupon);
+      }
+
+      // 2. Incrementar usos_sede en la tabla cupon_sede
+      const { data: cupSede } = await supabase
+        .from("cupon_sede")
+        .select("usos_sede, usos_maximos_sede")
+        .eq("id_cupon", idCupon)
+        .eq("id_sede", idSede)
+        .maybeSingle();
+
+      if (cupSede) {
+        const nuevosUsosSede = (cupSede.usos_sede || 0) + 1;
+        await supabase
+          .from("cupon_sede")
+          .update({
+            usos_sede: nuevosUsosSede,
+            habilitado: cupSede.usos_maximos_sede ? nuevosUsosSede < cupSede.usos_maximos_sede : true,
+          })
+          .eq("id_cupon", idCupon)
+          .eq("id_sede", idSede);
+      }
+    } catch (err) {
+      console.error("Error al registrar uso del cupón:", err);
+    }
+  }
 }
 

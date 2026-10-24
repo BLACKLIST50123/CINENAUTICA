@@ -6,6 +6,7 @@ import { DulceriaService } from "@/src/services/dulceriaService";
 import type { CategoriaProductoDTO, ProductoDTO, ItemPedidoDulceriaDTO } from "@/src/dtos/producto";
 import { SEL, S, intentarSalirDelFlujoDeCompra, limpiarEstadoCompraGlobal } from "@/src/lib/ui/nav";
 import { mostrarToast } from "@/src/lib/ui/common";
+import { DulceriaCardSkeleton, SkeletonBase } from "@/src/components/comun/skeletons";
 
 export default function Dulceria() {
   const router = useRouter();
@@ -334,13 +335,45 @@ export default function Dulceria() {
 
   if (cargando) {
     return (
-      <div className="w-full bg-dark-900 min-h-screen pt-36 pb-40 px-4 md:px-12 max-w-[1400px] mx-auto text-white">
-        <div className="flex flex-col items-center justify-center py-28 text-center animate-pulse">
-          <i className="fa-solid fa-circle-notch fa-spin text-brand-yellow text-5xl mb-4"></i>
-          <h2 className="text-2xl font-bold mb-2">Cargando Dulcería...</h2>
-          <p className="text-slate-400 text-sm">
-            Consultando combos, productos y stock disponible en {nombreSede}.
-          </p>
+      <div className="w-full bg-dark-900 min-h-screen pb-40 pt-36">
+        <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-4 flex flex-col lg:flex-row gap-8">
+          {/* Columna Izquierda: Skeleton Catálogo */}
+          <div className="w-full lg:w-2/3">
+            <SkeletonBase className="h-4 w-32 rounded mb-6" />
+            <div className="flex items-center gap-3 mb-8">
+              <SkeletonBase className="w-12 h-12 rounded-2xl" />
+              <div className="space-y-2">
+                <SkeletonBase className="h-7 w-48 rounded" />
+                <SkeletonBase className="h-4 w-32 rounded" />
+              </div>
+            </div>
+            {/* Categorías tabs skeleton */}
+            <div className="flex gap-3 mb-8 border-b border-white/10 pb-3">
+              <SkeletonBase className="h-8 w-24 rounded-lg" />
+              <SkeletonBase className="h-8 w-28 rounded-lg" />
+              <SkeletonBase className="h-8 w-24 rounded-lg" />
+              <SkeletonBase className="h-8 w-28 rounded-lg" />
+            </div>
+            {/* Grid de productos skeleton */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <DulceriaCardSkeleton key={i} />
+              ))}
+            </div>
+          </div>
+
+          {/* Columna Derecha: Skeleton Resumen de Pedido */}
+          <div className="w-full lg:w-1/3">
+            <div className="bg-dark-800 p-6 rounded-2xl border border-white/5 shadow-xl space-y-4">
+              <SkeletonBase className="h-6 w-40 rounded" />
+              <SkeletonBase className="h-20 w-full rounded-xl" />
+              <div className="pt-4 border-t border-white/5 space-y-2">
+                <SkeletonBase className="h-4 w-full rounded" />
+                <SkeletonBase className="h-4 w-3/4 rounded" />
+              </div>
+              <SkeletonBase className="h-12 w-full rounded-xl mt-4" />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -384,7 +417,7 @@ export default function Dulceria() {
           {/* Encabezado de la Dulcería */}
           <div className="mb-8">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-brand-yellow/20 border border-brand-yellow/30 flex items-center justify-center text-brand-yellow shadow-lg shadow-yellow-500/10">
+              <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-lg shadow-cyan-900/20">
                 <i className="fa-solid fa-bowl-food text-2xl"></i>
               </div>
               <div>
@@ -392,7 +425,7 @@ export default function Dulceria() {
                   Dulcería Náutica
                 </h1>
                 <p className="text-slate-400 text-xs md:text-sm mt-0.5 flex items-center gap-1.5 font-medium">
-                  <i className="fa-solid fa-location-dot text-brand-yellow"></i>
+                  <i className="fa-solid fa-location-dot text-cyan-400"></i>
                   <span>{nombreSede}</span>
                   {esFlujoDirecto && (
                     <span className="bg-brand-blue/20 text-brand-blue px-2 py-0.5 rounded text-[10px] font-bold border border-brand-blue/30 ml-1">
@@ -412,7 +445,7 @@ export default function Dulceria() {
             <button
               className={`px-4 py-2 font-bold text-sm whitespace-nowrap border-b-2 transition-all cursor-pointer ${
                 categoriaActiva === "all"
-                  ? "text-brand-yellow border-brand-yellow scale-105"
+                  ? "text-cyan-400 border-cyan-400 scale-105"
                   : "text-slate-400 hover:text-white border-transparent"
               }`}
               onClick={() => setCategoriaActiva("all")}
@@ -429,7 +462,7 @@ export default function Dulceria() {
                   key={cat.id_categoria}
                   className={`px-4 py-2 font-bold text-sm whitespace-nowrap border-b-2 transition-all cursor-pointer ${
                     activo
-                      ? "text-brand-yellow border-brand-yellow scale-105"
+                      ? "text-cyan-400 border-cyan-400 scale-105"
                       : "text-slate-400 hover:text-white border-transparent"
                   }`}
                   onClick={() => setCategoriaActiva(cat.id_categoria)}
@@ -462,7 +495,7 @@ export default function Dulceria() {
                     key={prod.id_producto}
                     className={`bg-dark-800 rounded-2xl border transition-all duration-300 p-4 flex gap-4 shadow-xl group hover:border-white/20 relative overflow-hidden ${
                       cantidadActual > 0
-                        ? "border-brand-yellow/50 bg-dark-800/90 ring-1 ring-brand-yellow/30"
+                        ? "border-cyan-500/50 bg-dark-800/90 ring-1 ring-cyan-500/30"
                         : "border-white/5"
                     }`}
                   >
@@ -481,10 +514,10 @@ export default function Dulceria() {
                     {/* Información del Producto */}
                     <div className="flex-grow flex flex-col justify-between min-w-0">
                       <div>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-brand-yellow/80">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400/80">
                           {prod.nombre_categoria}
                         </span>
-                        <h3 className="text-white font-bold text-base leading-tight mt-0.5 truncate group-hover:text-brand-yellow transition-colors">
+                        <h3 className="text-white font-bold text-base leading-tight mt-0.5 truncate group-hover:text-cyan-400 transition-colors">
                           {prod.nombre}
                         </h3>
                         <p className="text-slate-400 text-xs leading-snug line-clamp-2 mt-1">
@@ -525,7 +558,7 @@ export default function Dulceria() {
 
                             <button
                               aria-label={`Aumentar ${prod.nombre}`}
-                              className="w-7 h-7 rounded-full bg-dark-700 text-white flex items-center justify-center hover:bg-brand-yellow hover:text-black disabled:opacity-30 disabled:hover:bg-dark-700 disabled:hover:text-white transition-colors cursor-pointer"
+                              className="w-7 h-7 rounded-full bg-dark-700 text-white flex items-center justify-center hover:bg-[#0284C7] hover:text-white disabled:opacity-30 disabled:hover:bg-dark-700 disabled:hover:text-white transition-colors cursor-pointer"
                               disabled={cantidadActual >= prod.stock}
                               type="button"
                               onClick={() => modificarCantidad(prod.id_producto, 1)}
@@ -562,7 +595,7 @@ export default function Dulceria() {
               {!esFlujoDirecto && (
                 <div className="bg-dark-900/60 p-4 rounded-xl border border-white/5" id="bloque-entradas-resumen-dulceria">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-xs text-brand-yellow font-bold uppercase tracking-wider flex items-center gap-1.5">
+                    <h3 className="text-xs text-cyan-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
                       <i className="fa-solid fa-ticket"></i>
                       <span>Entradas de Cine</span>
                     </h3>
@@ -601,7 +634,7 @@ export default function Dulceria() {
               {/* Sección Dulcería Seleccionada */}
               <div className="bg-dark-900/60 p-4 rounded-xl border border-white/5">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-xs text-brand-yellow font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <h3 className="text-xs text-cyan-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
                     <i className="fa-solid fa-bowl-food"></i>
                     <span>Productos Dulcería</span>
                   </h3>
@@ -624,7 +657,7 @@ export default function Dulceria() {
                       >
                         <div className="min-w-0 pr-2">
                           <p className="text-white font-semibold truncate leading-tight">
-                            <span className="text-brand-yellow font-black mr-1">
+                            <span className="text-cyan-400 font-black mr-1">
                               {item.cantidad}x
                             </span>
                             {item.nombre}
@@ -677,13 +710,13 @@ export default function Dulceria() {
                 <span className="text-slate-300 font-bold text-sm">
                   TOTAL A PAGAR:
                 </span>
-                <span className="text-2xl md:text-3xl font-black text-brand-yellow" id="total-general-dulceria">
+                <span className="text-2xl md:text-3xl font-black text-cyan-400" id="total-general-dulceria">
                   S/ {totalGeneral.toFixed(2)}
                 </span>
               </div>
 
               <button
-                className="w-full bg-brand-yellow hover:bg-yellow-400 text-black py-4 rounded-xl font-black transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 text-base shadow-xl shadow-yellow-500/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-[#0284C7] hover:bg-[#0369A1] text-white py-4 rounded-xl font-black transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 text-base shadow-xl shadow-cyan-900/40 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={esFlujoDirecto && resumenPedido.total_productos === 0}
                 onClick={continuarAPago}
               >

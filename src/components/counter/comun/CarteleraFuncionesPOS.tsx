@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
+import { SkeletonBase } from "@/src/components/comun/skeletons";
 
 export interface FuncionPOSItem {
   id_funcion: string;
@@ -354,9 +355,29 @@ export default function CarteleraFuncionesPOS({
 
       {/* ── Contenido de Funciones ── */}
       {cargando ? (
-        <div className="text-center py-24 text-slate-400 bg-[#0B1528]/40 border border-slate-800/80 rounded-2xl">
-          <i className="fa-solid fa-spinner fa-spin text-3xl text-cyan-400 mb-3"></i>
-          <p className="text-sm">Cargando funciones y disponibilidad...</p>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="bg-[#0B1528] border border-slate-800/80 rounded-2xl p-4 md:p-5 flex gap-4 md:gap-5 min-h-[340px] md:min-h-[360px]"
+            >
+              <SkeletonBase className="w-28 md:w-36 aspect-[2/3] rounded-xl shrink-0" />
+              <div className="flex-1 flex flex-col justify-between py-1 space-y-4">
+                <div className="space-y-2">
+                  <SkeletonBase className="h-6 w-3/4 rounded" />
+                  <SkeletonBase className="h-4 w-1/2 rounded" />
+                </div>
+                <div className="space-y-3">
+                  <SkeletonBase className="h-4 w-28 rounded" />
+                  <div className="flex flex-wrap gap-2">
+                    <SkeletonBase className="h-10 w-24 rounded-xl" />
+                    <SkeletonBase className="h-10 w-24 rounded-xl" />
+                    <SkeletonBase className="h-10 w-24 rounded-xl" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       ) : funcionesFiltradas.length === 0 ? (
         <div className="text-center py-20 bg-[#0B1528]/40 border border-slate-800/80 rounded-2xl p-8">

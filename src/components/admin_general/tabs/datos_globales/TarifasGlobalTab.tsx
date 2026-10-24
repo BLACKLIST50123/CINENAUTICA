@@ -219,14 +219,14 @@ export default function TarifasGlobalTab({ recargarTrigger, onRecargar }: Tarifa
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-4">
               <div>
                 <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                  <i className="fa-solid fa-calendar-week text-brand-yellow"></i>
+                  <i className="fa-solid fa-calendar-week text-cyan-400"></i>
                   <span>Tarifas por Día de Semana</span>
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
                   Precios base corporativos para cada día. Las sedes aplican estos valores salvo sobreescritura local autorizada.
                 </p>
               </div>
-              <span className="text-xs font-bold text-brand-yellow bg-brand-yellow/10 border border-brand-yellow/30 px-3 py-1 rounded-xl self-start sm:self-auto">
+              <span className="text-xs font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/30 px-3 py-1 rounded-xl self-start sm:self-auto">
                 Boletería Base
               </span>
             </div>
@@ -254,7 +254,7 @@ export default function TarifasGlobalTab({ recargarTrigger, onRecargar }: Tarifa
                   <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
                     <div>
                       <span className="text-[10px] text-slate-500 block">Precio General</span>
-                      <span className="text-lg font-black text-brand-yellow font-mono">
+                      <span className="text-lg font-black text-cyan-400 font-mono">
                         S/ {t.precio_general.toFixed(2)}
                       </span>
                     </div>
@@ -280,14 +280,14 @@ export default function TarifasGlobalTab({ recargarTrigger, onRecargar }: Tarifa
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-4">
               <div>
                 <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                  <i className="fa-solid fa-clapperboard text-brand-blue"></i>
+                  <i className="fa-solid fa-clapperboard text-cyan-400"></i>
                   <span>Formatos de Proyección Cinematográfica</span>
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
                   Recargo adicional en soles por tecnología de sala sobre la tarifa general del boleto
                 </p>
               </div>
-              <span className="text-xs font-bold text-brand-blue bg-brand-blue/10 border border-brand-blue/30 px-3 py-1 rounded-xl self-start sm:self-auto">
+              <span className="text-xs font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/30 px-3 py-1 rounded-xl self-start sm:self-auto">
                 Tecnología Audiovisual
               </span>
             </div>
@@ -400,7 +400,7 @@ export default function TarifasGlobalTab({ recargarTrigger, onRecargar }: Tarifa
       {/* ── Modal Editar Tarifa por Día ── */}
       {tarifaEditar && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="relative bg-dark-900 border border-white/10 rounded-2xl shadow-2xl w-full max-w-md p-6 text-white">
+          <div className="relative bg-[#0B1528] border border-white/10 rounded-2xl shadow-2xl w-full max-w-md p-6 text-white">
             <h3 className="text-lg font-bold text-white mb-1">
               Editar Tarifa: {tarifaEditar.dia_nombre || tarifaEditar.tipo_tarifa}
             </h3>
@@ -419,7 +419,7 @@ export default function TarifasGlobalTab({ recargarTrigger, onRecargar }: Tarifa
                   min="0.5"
                   value={nuevoPrecioTarifa}
                   onChange={(e) => setNuevoPrecioTarifa(e.target.value)}
-                  className="w-full bg-[#0B1528] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand-blue"
+                  className="w-full bg-[#070e1b] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500"
                   autoFocus
                 />
                 {errorValidacion && (
@@ -437,7 +437,7 @@ export default function TarifasGlobalTab({ recargarTrigger, onRecargar }: Tarifa
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl text-xs font-bold bg-brand-yellow hover:bg-yellow-400 text-dark-950 shadow-md"
+                  className="px-5 py-2 rounded-xl text-xs font-bold bg-[#0284C7] hover:bg-[#0369A1] text-white shadow-md shadow-cyan-500/20"
                 >
                   Guardar Tarifa
                 </button>
@@ -450,7 +450,7 @@ export default function TarifasGlobalTab({ recargarTrigger, onRecargar }: Tarifa
       {/* ── Modal Editar Formato de Proyección ── */}
       {formatoEditar && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="relative bg-dark-900 border border-white/10 rounded-2xl shadow-2xl w-full max-w-md p-6 text-white">
+          <div className="relative bg-[#0B1528] border border-white/10 rounded-2xl shadow-2xl w-full max-w-md p-6 text-white">
             <h3 className="text-lg font-bold text-white mb-1">
               Editar Formato: {formatoEditar.nombre} ({formatoEditar.codigo})
             </h3>
@@ -469,7 +469,7 @@ export default function TarifasGlobalTab({ recargarTrigger, onRecargar }: Tarifa
                   min="0"
                   value={nuevoRecargoFormato}
                   onChange={(e) => setNuevoRecargoFormato(e.target.value)}
-                  className="w-full bg-[#0B1528] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand-blue"
+                  className="w-full bg-[#070e1b] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500"
                   autoFocus
                 />
                 {errorValidacion && (
@@ -487,7 +487,7 @@ export default function TarifasGlobalTab({ recargarTrigger, onRecargar }: Tarifa
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl text-xs font-bold bg-brand-blue hover:bg-sky-400 text-white shadow-md"
+                  className="px-5 py-2 rounded-xl text-xs font-bold bg-[#0284C7] hover:bg-[#0369A1] text-white shadow-md shadow-cyan-500/20"
                 >
                   Actualizar Formato
                 </button>
@@ -500,7 +500,7 @@ export default function TarifasGlobalTab({ recargarTrigger, onRecargar }: Tarifa
       {/* ── Modal Editar Tipo de Entrada ── */}
       {tipoEntradaEditar && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="relative bg-dark-900 border border-white/10 rounded-2xl shadow-2xl w-full max-w-md p-6 text-white">
+          <div className="relative bg-[#0B1528] border border-white/10 rounded-2xl shadow-2xl w-full max-w-md p-6 text-white">
             <h3 className="text-lg font-bold text-white mb-1">
               Editar Tipo de Entrada: {tipoEntradaEditar.nombre}
             </h3>
@@ -520,7 +520,7 @@ export default function TarifasGlobalTab({ recargarTrigger, onRecargar }: Tarifa
                   max="100"
                   value={nuevoDescuentoEntrada}
                   onChange={(e) => setNuevoDescuentoEntrada(e.target.value)}
-                  className="w-full bg-[#0B1528] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand-blue"
+                  className="w-full bg-[#070e1b] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500"
                   autoFocus
                 />
                 {errorValidacion && (
@@ -538,7 +538,7 @@ export default function TarifasGlobalTab({ recargarTrigger, onRecargar }: Tarifa
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-white shadow-md"
+                  className="px-5 py-2 rounded-xl text-xs font-bold bg-[#0284C7] hover:bg-[#0369A1] text-white shadow-md shadow-cyan-500/20"
                 >
                   Actualizar Descuento
                 </button>

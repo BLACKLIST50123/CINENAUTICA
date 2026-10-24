@@ -84,10 +84,10 @@ export default function ModalPrecioDulce({
   return (
     <>
       <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-        <div className="relative w-full max-w-md bg-[#0D1627] border border-white/15 rounded-2xl p-6 md:p-8 shadow-2xl text-white">
+        <div className="relative w-full max-w-md bg-[#0B1528] border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl text-white">
           <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-brand-yellow/10 border border-brand-yellow/30 flex items-center justify-center text-brand-yellow text-lg">
+              <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-lg">
                 <i className="fa-solid fa-bowl-food"></i>
               </div>
               <div>
@@ -98,7 +98,7 @@ export default function ModalPrecioDulce({
             <button
               type="button"
               onClick={onCerrar}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             >
               <i className="fa-solid fa-xmark"></i>
             </button>
@@ -113,7 +113,7 @@ export default function ModalPrecioDulce({
             <div className="min-w-0">
               <h4 className="font-bold text-white text-sm truncate">{producto.nombre}</h4>
               <p className="text-xs text-slate-400">{producto.categoria_nombre}</p>
-              <p className="text-xs text-brand-yellow font-semibold mt-1">
+              <p className="text-xs text-cyan-400 font-semibold mt-1">
                 Precio base general: S/ {producto.precio_base.toFixed(2)}
               </p>
             </div>
@@ -159,7 +159,7 @@ export default function ModalPrecioDulce({
                 <button
                   type="button"
                   onClick={() => setMostrarConfirmacionRestablecer(true)}
-                  className="text-[11px] text-brand-blue hover:underline"
+                  className="text-[11px] text-cyan-400 hover:underline cursor-pointer"
                 >
                   Restablecer a base
                 </button>
@@ -174,7 +174,7 @@ export default function ModalPrecioDulce({
                   min="0"
                   value={precioLocal}
                   onChange={(e) => setPrecioLocal(e.target.value)}
-                  className="w-full bg-dark-800 border border-white/10 rounded-xl pl-9 pr-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-brand-yellow font-semibold"
+                  className="w-full bg-dark-800 border border-white/10 rounded-xl pl-9 pr-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-400 font-semibold"
                 />
               </div>
             </div>
@@ -183,13 +183,13 @@ export default function ModalPrecioDulce({
               <button
                 type="button"
                 onClick={onCerrar}
-                className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+                className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                className="px-5 py-2.5 rounded-xl text-sm font-bold bg-brand-yellow hover:bg-yellow-400 text-dark-950 shadow-lg shadow-yellow-500/10 transition-all flex items-center gap-2"
+                className="px-5 py-2.5 rounded-xl text-sm font-bold bg-[#0284C7] hover:bg-[#0369A1] text-white shadow-lg shadow-cyan-950/40 transition-all flex items-center gap-2 cursor-pointer"
               >
                 <i className="fa-solid fa-floppy-disk"></i>
                 <span>Continuar</span>

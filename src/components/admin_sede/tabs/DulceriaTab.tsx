@@ -5,6 +5,7 @@ import { AdminSedeDao } from "@/src/daos/AdminSedeDao";
 import type { ProductoDulceriaSedeDTO } from "@/src/dtos/adminSede";
 import ModalConfirmacion from "../comun/ModalConfirmacion";
 import { obtenerIconoProducto } from "@/src/components/counter/dulceria/DulceriaView";
+import { DulceriaCardSkeleton } from "@/src/components/comun/skeletons";
 
 interface DulceriaTabProps {
   idSede: number;
@@ -81,7 +82,7 @@ export default function DulceriaTab({
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             placeholder="Buscar producto o combo..."
-            className="w-full bg-dark-900 border border-white/10 rounded-xl pl-9 pr-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-yellow transition-colors"
+            className="w-full bg-dark-900 border border-white/10 rounded-xl pl-9 pr-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-colors"
           />
         </div>
       </div>
@@ -93,9 +94,9 @@ export default function DulceriaTab({
             key={cat}
             type="button"
             onClick={() => setCategoriaSel(cat)}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border cursor-pointer ${
               categoriaSel === cat
-                ? "bg-brand-yellow text-dark-950 border-brand-yellow font-bold shadow-md shadow-yellow-500/10"
+                ? "bg-[#0284C7] text-white border-cyan-500 font-bold shadow-md shadow-cyan-600/20"
                 : "bg-dark-900 border-white/10 text-slate-400 hover:text-white hover:bg-white/5"
             }`}
           >
@@ -106,11 +107,10 @@ export default function DulceriaTab({
 
       {/* Grilla de Productos */}
       {cargando ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-pulse">
-          <div className="h-64 bg-[#0D1627] border border-white/10 rounded-2xl"></div>
-          <div className="h-64 bg-[#0D1627] border border-white/10 rounded-2xl"></div>
-          <div className="h-64 bg-[#0D1627] border border-white/10 rounded-2xl"></div>
-          <div className="h-64 bg-[#0D1627] border border-white/10 rounded-2xl"></div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <DulceriaCardSkeleton key={i} />
+          ))}
         </div>
       ) : productosFiltrados.length === 0 ? (
         <div className="bg-[#0D1627] border border-white/10 rounded-2xl p-10 text-center">
@@ -127,7 +127,7 @@ export default function DulceriaTab({
               <div
                 key={prod.id_producto}
                 className={`bg-[#0D1627] border rounded-2xl p-4 shadow-xl flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 ${
-                  prod.habilitado ? "border-white/15 hover:border-brand-yellow/40 hover:shadow-yellow-500/5" : "border-white/5 opacity-60 bg-[#070d18]"
+                  prod.habilitado ? "border-white/15 hover:border-cyan-500/40 hover:shadow-cyan-500/5" : "border-white/5 opacity-60 bg-[#070d18]"
                 }`}
               >
                 <div>
@@ -139,13 +139,13 @@ export default function DulceriaTab({
                     <button
                       type="button"
                       onClick={() => setProductoAlternar(prod)}
-                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1.5 transition-colors ${
+                      className={`px-3 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
                         prod.habilitado
-                          ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25"
-                          : "bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10"
+                          ? "bg-emerald-600/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-600/30"
+                          : "bg-slate-800 text-slate-400 border border-white/10 hover:bg-slate-700 hover:text-white"
                       }`}
                     >
-                      <span className={`w-1.5 h-1.5 rounded-full ${prod.habilitado ? "bg-emerald-400 animate-pulse" : "bg-slate-500"}`}></span>
+                      <span className={`w-2 h-2 rounded-full ${prod.habilitado ? "bg-emerald-400 animate-pulse" : "bg-slate-500"}`}></span>
                       <span>{prod.habilitado ? "Visible" : "Oculto"}</span>
                     </button>
                   </div>
@@ -174,7 +174,7 @@ export default function DulceriaTab({
                   <div className="flex items-baseline justify-between mb-3">
                     <div>
                       <span className="text-[10px] text-slate-400 block font-medium">Precio en Sede</span>
-                      <span className="text-base font-extrabold text-brand-yellow font-mono tracking-tight">
+                      <span className="text-base font-extrabold text-cyan-400 font-mono tracking-tight">
                         S/ {prod.precio_local.toFixed(2)}
                       </span>
                     </div>
@@ -192,9 +192,9 @@ export default function DulceriaTab({
                   <button
                     type="button"
                     onClick={() => onEditarProducto(prod)}
-                    className="w-full py-2 bg-white/5 hover:bg-white/10 text-white font-semibold rounded-xl text-xs transition-colors border border-white/15 flex items-center justify-center gap-2 shadow-sm"
+                    className="w-full py-2.5 bg-white/10 hover:bg-white/15 text-white font-bold rounded-xl text-xs transition-all border border-white/20 hover:border-cyan-500/40 flex items-center justify-center gap-2 shadow-sm cursor-pointer"
                   >
-                    <i className="fa-solid fa-sliders text-brand-yellow text-xs"></i>
+                    <i className="fa-solid fa-sliders text-cyan-400 text-xs"></i>
                     <span>Configurar Producto</span>
                   </button>
                 </div>

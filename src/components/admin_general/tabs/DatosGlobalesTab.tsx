@@ -52,7 +52,7 @@ export default function DatosGlobalesTab({ recargarTrigger, onRecargar }: DatosG
       <div className="flex-grow min-w-0">
         {/* Breadcrumb idéntico al monolito */}
         <div className="flex items-center gap-3 mb-6 text-sm text-slate-400">
-          <i className="fa-solid fa-globe text-brand-blue"></i>
+          <i className="fa-solid fa-globe text-cyan-400"></i>
           <span>Datos Globales</span>
           <i className="fa-solid fa-chevron-right text-[10px]"></i>
           <span className="text-white font-bold">{subTabActual.label}</span>

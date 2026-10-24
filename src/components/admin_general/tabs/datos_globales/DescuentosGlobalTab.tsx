@@ -232,7 +232,7 @@ export default function DescuentosGlobalTab({
         <button
           type="button"
           onClick={abrirCrear}
-          className="flex items-center gap-2 bg-brand-yellow hover:bg-yellow-400 text-dark-950 font-bold px-4 py-2.5 rounded-xl text-xs transition-all shadow-md shadow-yellow-500/10 cursor-pointer self-start sm:self-auto"
+          className="flex items-center gap-2 bg-[#0284C7] hover:bg-[#0369A1] text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all shadow-md shadow-cyan-500/20 cursor-pointer self-start sm:self-auto"
         >
           <i className="fa-solid fa-plus"></i>
           <span>Nuevo Cupón</span>
@@ -248,7 +248,7 @@ export default function DescuentosGlobalTab({
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             placeholder="Buscar por código de cupón o descripción..."
-            className="w-full bg-[#070e1b] border border-white/10 rounded-xl pl-9 pr-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-blue transition-colors"
+            className="w-full bg-[#070e1b] border border-white/10 rounded-xl pl-9 pr-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
           />
         </div>
         <span className="text-xs text-slate-400 font-mono">
@@ -361,10 +361,11 @@ export default function DescuentosGlobalTab({
                     <button
                       type="button"
                       onClick={() => setCuponEliminar(c)}
-                      className="p-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs border border-rose-500/20 transition-colors cursor-pointer"
+                      className="px-2.5 py-1.5 rounded-xl bg-[#DC2026] hover:bg-red-700 text-white text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1"
                       title="Eliminar cupón"
                     >
-                      <i className="fa-solid fa-trash text-[11px]"></i>
+                      <i className="fa-solid fa-trash text-[10px]"></i>
+                      <span>Eliminar</span>
                     </button>
                   </div>
                 </div>
@@ -379,11 +380,11 @@ export default function DescuentosGlobalTab({
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative bg-dark-900 border border-white/10 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden text-white"
+            className="relative bg-[#0B1528] border border-white/10 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden text-white"
           >
-            <div className="flex items-center justify-between p-5 border-b border-white/10 bg-dark-950/50">
+            <div className="flex items-center justify-between p-5 border-b border-white/10 bg-[#070e1b]/60">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-brand-yellow/10 border border-brand-yellow/30 flex items-center justify-center text-brand-yellow">
+                <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
                   <i className="fa-solid fa-tags"></i>
                 </div>
                 <div>
@@ -407,7 +408,7 @@ export default function DescuentosGlobalTab({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 mb-1 uppercase tracking-wider">
-                    Código <span className="text-brand-yellow">*</span>
+                    Código <span className="text-cyan-400">*</span>
                   </label>
                   <input
                     type="text"
@@ -415,8 +416,8 @@ export default function DescuentosGlobalTab({
                     value={form.codigo}
                     onChange={(e) => setForm({ ...form, codigo: e.target.value.toUpperCase() })}
                     placeholder="NAUTICA20"
-                    className={`w-full bg-[#0B1528] border rounded-xl px-3.5 py-2.5 text-xs text-white font-mono font-bold focus:outline-none transition-colors uppercase disabled:opacity-50 ${
-                      errores.codigo ? "border-rose-500" : "border-white/10 focus:border-brand-blue"
+                    className={`w-full bg-[#070e1b] border rounded-xl px-3.5 py-2.5 text-xs text-white font-mono font-bold focus:outline-none transition-colors uppercase disabled:opacity-50 ${
+                      errores.codigo ? "border-rose-500" : "border-white/10 focus:border-cyan-500"
                     }`}
                   />
                   {errores.codigo && (
@@ -426,7 +427,7 @@ export default function DescuentosGlobalTab({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-300 mb-1 uppercase tracking-wider">
-                    Descuento (%) <span className="text-brand-yellow">*</span>
+                    Descuento (%) <span className="text-cyan-400">*</span>
                   </label>
                   <input
                     type="number"
@@ -436,8 +437,8 @@ export default function DescuentosGlobalTab({
                     onChange={(e) =>
                       setForm({ ...form, porcentaje_descuento: parseInt(e.target.value, 10) || 0 })
                     }
-                    className={`w-full bg-[#0B1528] border rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none transition-colors ${
-                      errores.porcentaje_descuento ? "border-rose-500" : "border-white/10 focus:border-brand-blue"
+                    className={`w-full bg-[#070e1b] border rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none transition-colors ${
+                      errores.porcentaje_descuento ? "border-rose-500" : "border-white/10 focus:border-cyan-500"
                     }`}
                   />
                   {errores.porcentaje_descuento && (
@@ -452,26 +453,26 @@ export default function DescuentosGlobalTab({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 mb-1 uppercase tracking-wider">
-                    Fecha Inicio <span className="text-brand-yellow">*</span>
+                    Fecha Inicio <span className="text-cyan-400">*</span>
                   </label>
                   <input
                     type="date"
                     value={form.fecha_inicio}
                     onChange={(e) => setForm({ ...form, fecha_inicio: e.target.value })}
-                    className="w-full bg-[#0B1528] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-brand-blue cursor-pointer"
+                    className="w-full bg-[#070e1b] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-500 cursor-pointer"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-300 mb-1 uppercase tracking-wider">
-                    Fecha Fin <span className="text-brand-yellow">*</span>
+                    Fecha Fin <span className="text-cyan-400">*</span>
                   </label>
                   <input
                     type="date"
                     value={form.fecha_fin}
                     onChange={(e) => setForm({ ...form, fecha_fin: e.target.value })}
-                    className={`w-full bg-[#0B1528] border rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none transition-colors cursor-pointer ${
-                      errores.fecha_fin ? "border-rose-500" : "border-white/10 focus:border-brand-blue"
+                    className={`w-full bg-[#070e1b] border rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none transition-colors cursor-pointer ${
+                      errores.fecha_fin ? "border-rose-500" : "border-white/10 focus:border-cyan-500"
                     }`}
                   />
                   {errores.fecha_fin && (
@@ -492,22 +493,22 @@ export default function DescuentosGlobalTab({
                   onChange={(e) =>
                     setForm({ ...form, usos_maximos: parseInt(e.target.value, 10) || 1000 })
                   }
-                  className="w-full bg-[#0B1528] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-brand-blue"
+                  className="w-full bg-[#070e1b] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-500"
                 />
               </div>
 
               {/* Descripción */}
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1 uppercase tracking-wider">
-                  Descripción Promocional <span className="text-brand-yellow">*</span>
+                  Descripción Promocional <span className="text-cyan-400">*</span>
                 </label>
                 <textarea
                   rows={2}
                   value={form.descripcion}
                   onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
                   placeholder="Ej. 20% de descuento en boletos para socios y público en general"
-                  className={`w-full bg-[#0B1528] border rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none transition-colors resize-none ${
-                    errores.descripcion ? "border-rose-500" : "border-white/10 focus:border-brand-blue"
+                  className={`w-full bg-[#070e1b] border rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none transition-colors resize-none ${
+                    errores.descripcion ? "border-rose-500" : "border-white/10 focus:border-cyan-500"
                   }`}
                 ></textarea>
                 {errores.descripcion && (
@@ -526,7 +527,7 @@ export default function DescuentosGlobalTab({
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl text-xs font-bold bg-brand-yellow hover:bg-yellow-400 text-dark-950 shadow-lg shadow-yellow-500/10 transition-all cursor-pointer flex items-center gap-2"
+                  className="px-6 py-2.5 rounded-xl text-xs font-bold bg-[#0284C7] hover:bg-[#0369A1] text-white shadow-lg shadow-cyan-500/20 transition-all cursor-pointer flex items-center gap-2"
                 >
                   <i className="fa-solid fa-floppy-disk"></i>
                   <span>{cuponEditar ? "Guardar Cambios" : "Crear Cupón"}</span>

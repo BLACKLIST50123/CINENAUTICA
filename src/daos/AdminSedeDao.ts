@@ -1252,6 +1252,19 @@ export class AdminSedeDao {
   }
 
   /**
+   * Elimina la asignación de un cupón en la sede (o cupón local).
+   */
+  static async eliminarCuponSede(idSede: number, idCupon: string): Promise<boolean> {
+    const { error: errSede } = await supabase
+      .from("cupon_sede")
+      .delete()
+      .eq("id_sede", idSede)
+      .eq("id_cupon", idCupon);
+
+    return !errSede;
+  }
+
+  /**
    * 20. Búsqueda reactiva de socios por DNI, correo o nombre.
    */
   static async buscarSociosSede(termino: string): Promise<SocioConsultaSedeDTO[]> {

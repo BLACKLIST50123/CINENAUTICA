@@ -178,10 +178,22 @@ export function init() {
     if (__inited || typeof document === "undefined") return;
     __inited = true;
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') $$('[id^="modal-"]:not(.hidden)').forEach(m => cerrarModal(m.id));
+        if (e.key === 'Escape') {
+            $$('[id^="modal-"]:not(.hidden)').forEach(m => {
+                if (m.id === 'modal-trailer') {
+                    const iframe = document.getElementById('trailer-iframe') as HTMLIFrameElement | null;
+                    if (iframe) iframe.src = '';
+                }
+                cerrarModal(m.id);
+            });
+        }
     });
     document.addEventListener('mousedown', (e) => {
-        if (e.target.id && e.target.id.startsWith('modal-') && e.target.classList.contains('fixed')) cerrarModal(e.target.id);
+        if (e.target.id && e.target.id.startsWith('modal-') && e.target.classList.contains('fixed')) {
+            // El trailer solo se cierra con la 'X' para evitar cierres accidentales y fuga de audio
+            if (e.target.id === 'modal-trailer') return;
+            cerrarModal(e.target.id);
+        }
     });
     
     document.addEventListener('click', (e) => {

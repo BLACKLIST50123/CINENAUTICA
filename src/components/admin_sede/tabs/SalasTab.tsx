@@ -387,7 +387,7 @@ export default function SalasTab({
         <button
           type="button"
           onClick={onAbrirCrearSala}
-          className="px-4 py-2 bg-brand-yellow hover:bg-yellow-400 text-dark-950 font-bold rounded-xl text-xs transition-colors"
+          className="px-4 py-2 bg-[#0284C7] hover:bg-[#0369A1] text-white font-bold rounded-xl text-xs transition-colors shadow-md shadow-cyan-500/20"
         >
           Crear Primera Sala
         </button>
@@ -417,7 +417,7 @@ export default function SalasTab({
         <button
           type="button"
           onClick={onAbrirCrearSala}
-          className="px-4 py-2.5 bg-brand-yellow hover:bg-yellow-400 text-dark-950 font-bold rounded-xl text-xs transition-all flex items-center gap-1.5 shadow-md shadow-yellow-500/10 self-start sm:self-auto"
+          className="px-4 py-2.5 bg-[#0284C7] hover:bg-[#0369A1] text-white font-bold rounded-xl text-xs transition-all flex items-center gap-1.5 shadow-md shadow-cyan-950/30 self-start sm:self-auto cursor-pointer"
         >
           <i className="fa-solid fa-plus text-[11px]"></i>
           <span>Nueva Sala</span>
@@ -455,7 +455,7 @@ export default function SalasTab({
           disabled={!puedeScrollIzq}
           aria-label="Desplazar salas a la izquierda"
           title="Desplazar salas a la izquierda"
-          className="w-8 h-8 rounded-xl bg-[#0D1627] border border-white/10 text-slate-300 hover:text-white hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center shrink-0 shadow-md transition-all active:scale-95"
+          className="w-8 h-8 rounded-xl bg-[#0D1627] border border-white/10 text-slate-300 hover:text-white hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center shrink-0 shadow-md transition-all active:scale-95 cursor-pointer"
         >
           <i className="fa-solid fa-chevron-left text-xs"></i>
         </button>
@@ -474,9 +474,9 @@ export default function SalasTab({
                 key={s.id_sala}
                 type="button"
                 onClick={() => handleSeleccionarSala(idx)}
-                className={`px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border flex items-center gap-2.5 shrink-0 ${
+                className={`px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border flex items-center gap-2.5 shrink-0 cursor-pointer ${
                   seleccionada
-                    ? "bg-brand-blue text-white border-brand-blue font-bold shadow-lg shadow-sky-500/20"
+                    ? "bg-[#0284C7] text-white border-cyan-500 font-bold shadow-lg shadow-cyan-600/30"
                     : "bg-[#0D1627] border-white/10 text-slate-400 hover:text-white hover:bg-white/5"
                 }`}
               >
@@ -486,7 +486,7 @@ export default function SalasTab({
                   className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
                     s.estado === "ACTIVA"
                       ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                      : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                      : "bg-[#DC2026]/20 text-red-400 border border-[#DC2026]/30"
                   }`}
                 >
                   {s.estado === "ACTIVA" ? "Activa" : "Mant."}
@@ -503,7 +503,7 @@ export default function SalasTab({
           disabled={!puedeScrollDer}
           aria-label="Desplazar salas a la derecha"
           title="Desplazar salas a la derecha"
-          className="w-8 h-8 rounded-xl bg-[#0D1627] border border-white/10 text-slate-300 hover:text-white hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center shrink-0 shadow-md transition-all active:scale-95"
+          className="w-8 h-8 rounded-xl bg-[#0D1627] border border-white/10 text-slate-300 hover:text-white hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center shrink-0 shadow-md transition-all active:scale-95 cursor-pointer"
         >
           <i className="fa-solid fa-chevron-right text-xs"></i>
         </button>
@@ -523,7 +523,7 @@ export default function SalasTab({
                   {butacasMantenimientoCount} / {capacidadCalculada}
                 </span>
                 {butacasMantenimientoCount > 0 && (
-                  <span className="text-[10px] text-amber-400 font-semibold">({butacasMantenimientoCount} mant.)</span>
+                  <span className="text-[10px] text-red-400 font-semibold">({butacasMantenimientoCount} mant.)</span>
                 )}
               </div>
             </div>
@@ -552,9 +552,9 @@ export default function SalasTab({
                     key={idStr}
                     type="button"
                     onClick={() => alternarFormato(idStr)}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all border ${
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all border cursor-pointer ${
                       activo
-                        ? "bg-brand-blue/20 text-brand-blue border-brand-blue/50 shadow-sm shadow-sky-500/20"
+                        ? "bg-[#0284C7] text-white border-cyan-500 shadow-sm shadow-cyan-600/30"
                         : "bg-white/5 text-slate-400 border-white/10 hover:text-white hover:bg-white/10"
                     }`}
                   >
@@ -574,9 +574,9 @@ export default function SalasTab({
               <button
                 type="button"
                 onClick={() => setEstadoOperativo("ACTIVA")}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   estadoOperativo === "ACTIVA"
-                    ? "bg-emerald-500 text-dark-950 font-extrabold shadow-sm"
+                    ? "bg-[#10B981] text-white font-extrabold shadow-sm"
                     : "text-slate-400 hover:text-white"
                 }`}
               >
@@ -585,9 +585,9 @@ export default function SalasTab({
               <button
                 type="button"
                 onClick={() => setEstadoOperativo("MANTENIMIENTO")}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   estadoOperativo === "MANTENIMIENTO"
-                    ? "bg-amber-500 text-dark-950 font-extrabold shadow-sm"
+                    ? "bg-[#DC2026] text-white font-extrabold shadow-sm shadow-red-900/40"
                     : "text-slate-400 hover:text-white"
                 }`}
               >
@@ -598,11 +598,11 @@ export default function SalasTab({
             <button
               type="button"
               onClick={() => setEliminarSalaPendiente(salaActual)}
-              className="px-3 py-2 rounded-xl text-xs font-semibold text-brand-red hover:bg-red-500/10 border border-brand-red/30 transition-colors flex items-center gap-1.5"
+              className="px-3.5 py-2 rounded-xl text-xs font-bold bg-[#DC2026] hover:bg-[#b91c1c] text-white border border-[#DC2026] shadow-sm shadow-red-950/40 transition-all flex items-center gap-1.5 cursor-pointer"
               title="Eliminar Sala"
             >
               <i className="fa-solid fa-trash-can text-[11px]"></i>
-              <span className="hidden sm:inline">Eliminar</span>
+              <span>Eliminar Sala</span>
             </button>
           </div>
         </div>
@@ -659,14 +659,14 @@ export default function SalasTab({
                   max="30"
                   value={columnasInput}
                   onChange={(e) => setColumnasInput(parseInt(e.target.value) || 1)}
-                  className="w-16 bg-[#070d18] border border-white/20 rounded-lg px-2.5 py-1 text-xs text-white text-center font-bold focus:outline-none focus:border-brand-yellow"
+                  className="w-16 bg-[#070d18] border border-white/20 rounded-lg px-2.5 py-1 text-xs text-white text-center font-bold focus:outline-none focus:border-cyan-400"
                 />
               </div>
 
               <button
                 type="button"
                 onClick={generarCuadriculaBase}
-                className="px-3.5 py-1.5 bg-brand-yellow hover:bg-yellow-400 text-dark-950 font-bold rounded-lg text-xs transition-colors flex items-center gap-1.5 shadow-sm"
+                className="px-3.5 py-1.5 bg-[#0284C7] hover:bg-[#0369A1] text-white font-bold rounded-lg text-xs transition-all flex items-center gap-1.5 shadow-sm shadow-cyan-950/40 cursor-pointer"
               >
                 <i className="fa-solid fa-rotate text-[11px]"></i>
                 <span>Generar Cuadrícula Base</span>
@@ -674,7 +674,7 @@ export default function SalasTab({
             </div>
 
             <p className="text-xs text-slate-400 flex items-center gap-1.5">
-              <i className="fa-solid fa-circle-info text-sky-400"></i>
+              <i className="fa-solid fa-circle-info text-cyan-400"></i>
               <span>Haz clic en el número de columna o en una butaca para convertir la columna en <b>pasillo</b>.</span>
             </p>
           </div>
@@ -684,22 +684,22 @@ export default function SalasTab({
         {subtab === "estados" && (
           <div className="bg-white/5 p-4 rounded-xl border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs">
             <div className="flex items-center gap-2 text-slate-300">
-              <i className="fa-solid fa-hand-pointer text-brand-yellow"></i>
+              <i className="fa-solid fa-hand-pointer text-cyan-400"></i>
               <span>Haz clic en cada butaca para alternar: <b>Disponible</b> → <b>Mantenimiento</b> → <b>Accesible</b>.</span>
             </div>
 
             {/* Leyenda de Estados */}
             <div className="flex flex-wrap items-center gap-4">
-              <span className="flex items-center gap-1.5 text-slate-300">
-                <span className="w-3.5 h-3.5 rounded bg-emerald-500/20 border border-emerald-400 inline-block"></span>
+              <span className="flex items-center gap-1.5 text-slate-300 font-medium">
+                <span className="w-3.5 h-3.5 rounded bg-[#10B981] border border-emerald-400 inline-block shadow-sm"></span>
                 <span>Disponible ({capacidadCalculada - butacasMantenimientoCount - butacasAccesiblesCount})</span>
               </span>
-              <span className="flex items-center gap-1.5 text-slate-300">
-                <span className="w-3.5 h-3.5 rounded bg-rose-500/20 border border-rose-400 inline-block"></span>
+              <span className="flex items-center gap-1.5 text-slate-300 font-medium">
+                <span className="w-3.5 h-3.5 rounded bg-[#DC2026] border border-red-500 inline-block shadow-sm"></span>
                 <span>Mantenimiento ({butacasMantenimientoCount})</span>
               </span>
-              <span className="flex items-center gap-1.5 text-slate-300">
-                <span className="w-3.5 h-3.5 rounded bg-brand-blue/20 border border-brand-blue inline-block"></span>
+              <span className="flex items-center gap-1.5 text-slate-300 font-medium">
+                <span className="w-3.5 h-3.5 rounded bg-[#0284C7] border border-cyan-400 inline-block shadow-sm"></span>
                 <span>Accesible ({butacasAccesiblesCount})</span>
               </span>
               <span className="flex items-center gap-1.5 text-slate-400">

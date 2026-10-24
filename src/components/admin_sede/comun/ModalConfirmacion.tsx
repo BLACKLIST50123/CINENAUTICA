@@ -43,9 +43,9 @@ export default function ModalConfirmacion({
   }[tipo];
 
   const coloresBoton = {
-    peligro: "bg-brand-red hover:bg-red-600 text-white",
-    advertencia: "bg-brand-yellow hover:bg-yellow-400 text-dark-950 font-bold",
-    info: "bg-brand-blue hover:bg-sky-400 text-white",
+    peligro: "bg-[#DC2026] hover:bg-red-700 text-white",
+    advertencia: "bg-[#0284C7] hover:bg-[#0369A1] text-white font-semibold",
+    info: "bg-[#0284C7] hover:bg-[#0369A1] text-white",
     exito: "bg-emerald-500 hover:bg-emerald-600 text-white",
   }[tipo];
 
@@ -80,9 +80,9 @@ export default function ModalConfirmacion({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`relative w-full max-w-md bg-dark-900 border border-white/10 rounded-2xl p-6 shadow-2xl text-white transform transition-transform duration-150 ${
+        className={`relative w-full max-w-md bg-[#0B1528] border border-white/10 rounded-2xl p-6 shadow-2xl text-white transform transition-transform duration-150 ${
           sacudir
-            ? "scale-[1.03] border-brand-yellow/50 shadow-[0_0_30px_rgba(220,158,63,0.25)]"
+            ? "scale-[1.03] border-cyan-500/50 shadow-[0_0_30px_rgba(2,132,199,0.25)]"
             : "scale-100"
         }`}
       >

@@ -5,6 +5,7 @@ import { AdminGeneralDao } from "@/src/daos/AdminGeneralDao";
 import type { SedeResumenDTO, RegionDTO, CiudadDTO } from "@/src/dtos/adminGeneral";
 import AdminSedeContainer from "@/src/components/admin_sede/AdminSedeContainer";
 import ModalNuevaSede from "../modales/ModalNuevaSede";
+import ModalEditarSede from "../modales/ModalEditarSede";
 
 interface GestionSedesTabProps {
   regiones: RegionDTO[];
@@ -26,6 +27,7 @@ export default function GestionSedesTab({
   const [regionFiltro, setRegionFiltro] = useState<string>("");
   const [ciudadFiltro, setCiudadFiltro] = useState<string>("");
   const [modalNuevaSedeAbierto, setModalNuevaSedeAbierto] = useState<boolean>(false);
+  const [sedeAEditar, setSedeAEditar] = useState<SedeResumenDTO | null>(null);
   const [ciudadesAbiertas, setCiudadesAbiertas] = useState<Record<string, boolean>>({});
 
   const cargarSedes = useCallback(async () => {
@@ -122,7 +124,7 @@ export default function GestionSedesTab({
         <button
           type="button"
           onClick={() => setModalNuevaSedeAbierto(true)}
-          className="bg-brand-yellow hover:bg-yellow-400 text-black px-5 py-3 rounded-xl font-bold text-sm transition-colors shadow-lg shadow-yellow-500/20 cursor-pointer flex items-center gap-2"
+          className="bg-[#0284C7] hover:bg-[#0369A1] text-white px-5 py-3 rounded-xl font-bold text-sm transition-colors shadow-lg shadow-cyan-900/30 cursor-pointer flex items-center gap-2"
         >
           <i className="fa-solid fa-plus"></i>
           <span>Nueva sede</span>
@@ -283,16 +285,29 @@ export default function GestionSedesTab({
                                     onClick={() => setSedeSeleccionadaId(sede.id_sede)}
                                   >
                                     <div className="flex items-start justify-between gap-2">
-                                      <div className="w-10 h-10 rounded-xl bg-brand-blue/10 border border-brand-blue/30 flex items-center justify-center">
-                                        <i className="fa-solid fa-store text-brand-blue"></i>
+                                      <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center">
+                                        <i className="fa-solid fa-store text-cyan-400"></i>
                                       </div>
-                                      <span className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400">
-                                        <span className={`dot ${sede.activa ? "bg-green-500" : "bg-red-500"}`}></span>
-                                        {sede.activa ? "Operativa" : "Inactiva"}
-                                      </span>
+                                      <div className="flex items-center gap-2">
+                                        <span className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400">
+                                          <span className={`dot ${sede.activa ? "bg-emerald-500" : "bg-rose-500"}`}></span>
+                                          {sede.activa ? "Operativa" : "Inactiva"}
+                                        </span>
+                                        <button
+                                          type="button"
+                                          title="Editar sede"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSedeAEditar(sede);
+                                          }}
+                                          className="w-7 h-7 rounded-lg bg-white/5 hover:bg-cyan-500/20 text-slate-400 hover:text-cyan-400 border border-white/10 hover:border-cyan-500/30 flex items-center justify-center transition-colors cursor-pointer"
+                                        >
+                                          <i className="fa-solid fa-pen text-[11px]"></i>
+                                        </button>
+                                      </div>
                                     </div>
 
-                                    <h4 className="text-white font-bold mt-3 leading-tight group-hover:text-brand-blue transition-colors">
+                                    <h4 className="text-white font-bold mt-3 leading-tight group-hover:text-cyan-400 transition-colors">
                                       {sede.nombre}
                                     </h4>
                                     <p className="text-slate-500 text-xs mt-1 line-clamp-2 min-h-[2rem]">
@@ -309,24 +324,24 @@ export default function GestionSedesTab({
                                         <p className="text-[9px] text-slate-500 uppercase font-bold">Hoy</p>
                                       </div>
                                       <div className="bg-dark-900 rounded-lg py-2">
-                                        <p className="text-brand-yellow font-bold text-sm">{sede.ocupacion_hoy_pct}%</p>
+                                        <p className="text-cyan-400 font-bold text-sm">{sede.ocupacion_hoy_pct}%</p>
                                         <p className="text-[9px] text-slate-500 uppercase font-bold">Ocup.</p>
                                       </div>
                                     </div>
 
                                     <div className="barra-mini mt-3 bg-dark-900 rounded-full h-1.5 overflow-hidden">
                                       <i
-                                        className="block h-full bg-brand-blue rounded-full transition-all duration-300"
+                                        className="block h-full bg-cyan-500 rounded-full transition-all duration-300"
                                         style={{ width: `${Math.min(sede.ocupacion_hoy_pct || 40, 100)}%` }}
                                       ></i>
                                     </div>
 
                                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/5 text-xs text-slate-400">
-                                      <span className="truncate flex items-center gap-1.5 text-brand-blue font-semibold">
+                                      <span className="truncate flex items-center gap-1.5 text-cyan-400 font-semibold group-hover:text-cyan-300">
                                         <i className="fa-solid fa-arrow-right-to-bracket text-xs"></i>
                                         Administrar sede
                                       </span>
-                                      <i className="fa-solid fa-arrow-right text-slate-500 group-hover:translate-x-1 transition-transform"></i>
+                                      <i className="fa-solid fa-arrow-right text-slate-500 group-hover:translate-x-1 group-hover:text-cyan-400 transition-all"></i>
                                     </div>
                                   </button>
                                 ))}
@@ -351,6 +366,19 @@ export default function GestionSedesTab({
         ciudades={ciudades}
         onCerrar={() => setModalNuevaSedeAbierto(false)}
         onSedeCreada={() => {
+          cargarSedes();
+          onRecargar();
+        }}
+      />
+
+      {/* Modal para editar sede existente */}
+      <ModalEditarSede
+        abierto={!!sedeAEditar}
+        sede={sedeAEditar}
+        regiones={regiones}
+        ciudades={ciudades}
+        onCerrar={() => setSedeAEditar(null)}
+        onSedeActualizada={() => {
           cargarSedes();
           onRecargar();
         }}

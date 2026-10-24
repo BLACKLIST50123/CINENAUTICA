@@ -125,10 +125,10 @@ export default function ModalCrearFuncion({
   return (
     <>
       <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-        <div className="relative w-full max-w-lg bg-dark-900 border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl text-white max-h-[90vh] overflow-y-auto">
+        <div className="relative w-full max-w-lg bg-[#0B1528] border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl text-white max-h-[90vh] overflow-y-auto">
           <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-brand-yellow/10 border border-brand-yellow/30 flex items-center justify-center text-brand-yellow text-lg">
+              <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-lg">
                 <i className="fa-solid fa-film"></i>
               </div>
               <div>
@@ -139,7 +139,7 @@ export default function ModalCrearFuncion({
             <button
               type="button"
               onClick={onCerrar}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             >
               <i className="fa-solid fa-xmark"></i>
             </button>
@@ -262,11 +262,11 @@ export default function ModalCrearFuncion({
             <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-slate-300 flex items-center justify-between">
               <div>
                 <span className="text-slate-400">Duración:</span>{" "}
-                <b className="text-white">{duracionMin} min</b> + <span className="text-brand-yellow">30 min limpieza</span>
+                <b className="text-white">{duracionMin} min</b> + <span className="text-cyan-400">30 min limpieza</span>
               </div>
               <div>
                 <span className="text-slate-400">Fin estimado:</span>{" "}
-                <b className="text-brand-yellow font-mono text-sm">{horaFinEstimada}</b>
+                <b className="text-cyan-400 font-mono text-sm">{horaFinEstimada}</b>
               </div>
             </div>
 
@@ -274,13 +274,13 @@ export default function ModalCrearFuncion({
               <button
                 type="button"
                 onClick={onCerrar}
-                className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+                className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                className="px-5 py-2.5 rounded-xl text-sm font-bold bg-brand-yellow hover:bg-yellow-400 text-dark-950 shadow-lg shadow-yellow-500/10 transition-all flex items-center gap-2"
+                className="px-5 py-2.5 rounded-xl text-sm font-bold bg-[#0284C7] hover:bg-[#0369A1] text-white shadow-lg shadow-cyan-950/40 transition-all flex items-center gap-2 cursor-pointer"
               >
                 <i className="fa-solid fa-floppy-disk"></i>
                 <span>Continuar</span>
